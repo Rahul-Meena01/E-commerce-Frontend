@@ -1,0 +1,18 @@
+.shop-page {
+  width: 100%;
+}
+
+.shop-section {
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.shop-section h1 {
+  font-size: 60px;
+  font-weight: 700;
+}
