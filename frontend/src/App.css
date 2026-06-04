@@ -1,0 +1,24 @@
+@import "./styles/global.css";
+@import "./styles/buttons.css";
+@import "./styles/CartDrawer.css";
+@import "./styles/Newsletter.css";
+@import "./styles/Reveal.css";
+
+.page-wrap {
+  position: relative;
+}
+.page-transition {
+  animation: pageFadeIn 0.36s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

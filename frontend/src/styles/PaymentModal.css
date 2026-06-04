@@ -1,0 +1,422 @@
+.loft-pm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(26, 26, 26, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.loft-pm-modal {
+  background-color: #ffffff;
+  border-radius: var(--border-radius-sm, 0px);
+  border: 1px solid var(--color-border, #f0f0f0);
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.05));
+  width: 90%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+.loft-pm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--color-border, #f0f0f0);
+}
+
+.loft-pm-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.loft-pm-brand {
+  font-family: var(--font-family, "Montserrat", sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--color-gold, #a89968);
+  margin-bottom: 2px;
+}
+
+.loft-pm-title {
+  font-family: var(--font-family, "Montserrat", sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-dark, #1a1a1a);
+}
+
+.loft-pm-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-light-gray, #999999);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.loft-pm-close:hover {
+  color: var(--color-dark, #1a1a1a);
+}
+
+.loft-pm-body {
+  padding: 28px;
+  background-color: var(--color-background, #faf8f6);
+}
+
+.loft-pm-amount-badge {
+  background-color: var(--color-light, #ffffff);
+  border: 1px dashed var(--color-gold, #a89968);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.loft-pm-amount-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-gray, #666666);
+}
+
+.loft-pm-amount-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-dark, #1a1a1a);
+  font-family: var(--font-family, "Montserrat", sans-serif);
+}
+
+/* Simulation Settings styling */
+.loft-pm-sim-options {
+  background-color: var(--color-light, #ffffff);
+  border: 1px solid var(--color-border, #f0f0f0);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.loft-pm-sim-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-gold, #a89968);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.loft-pm-sim-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.loft-pm-sim-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 10px;
+  background-color: var(--color-background, #faf8f6);
+  border: 1px solid var(--color-border, #f0f0f0);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.loft-pm-sim-btn input {
+  display: none;
+}
+
+.loft-pm-sim-btn.active {
+  background-color: #e8f5e9;
+  border-color: var(--color-success, #2e7d32);
+  color: var(--color-success, #2e7d32);
+  font-weight: 600;
+}
+
+.loft-pm-sim-btn.decline.active {
+  background-color: #ffebee;
+  border-color: var(--color-error, #c62828);
+  color: var(--color-error, #c62828);
+}
+
+/* Tabs */
+.loft-pm-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--color-border, #f0f0f0);
+}
+
+.loft-pm-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-light-gray, #999999);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.loft-pm-tab-item:hover {
+  color: var(--color-dark, #1a1a1a);
+}
+
+.loft-pm-tab-item.active {
+  color: var(--color-dark, #1a1a1a);
+  border-bottom-color: var(--color-gold, #a89968);
+  font-weight: 600;
+}
+
+/* Form Styles */
+.loft-pm-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.loft-pm-form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.loft-pm-form-group.half {
+  flex: 1;
+}
+
+.loft-pm-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-gray, #666666);
+}
+
+.loft-pm-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border, #f0f0f0);
+  background-color: var(--color-light, #ffffff);
+  font-size: 14px;
+  color: var(--color-dark, #1a1a1a);
+  transition: border-color 0.2s ease;
+}
+
+.loft-pm-input:focus {
+  outline: none;
+  border-color: var(--color-gold, #a89968);
+}
+
+.loft-pm-input-wrapper {
+  position: relative;
+}
+
+.loft-pm-input-err {
+  font-size: 11px;
+  color: var(--color-error, #c62828);
+  margin-top: 4px;
+}
+
+.loft-pm-upi-hint {
+  font-size: 11px;
+  color: var(--color-gray, #666666);
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+.loft-pm-wallet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.loft-pm-wallet-btn {
+  padding: 14px;
+  background-color: var(--color-light, #ffffff);
+  border: 1px solid var(--color-border, #f0f0f0);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-dark, #1a1a1a);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.loft-pm-wallet-btn.active {
+  border-color: var(--color-gold, #a89968);
+  background-color: var(--color-background, #faf8f6);
+  font-weight: 600;
+}
+
+.loft-pm-security-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--color-light-gray, #999999);
+  margin: 18px 0;
+}
+
+.loft-pm-submit {
+  width: 100%;
+  padding: 16px;
+  background-color: var(--color-dark, #1a1a1a);
+  color: var(--color-light, #ffffff);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.loft-pm-submit:hover {
+  background-color: var(--color-dark-hover, #333333);
+}
+
+/* Status Screen Animation Styles */
+.loft-pm-status-screen {
+  padding: 60px 40px;
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-light, #ffffff);
+}
+
+.loft-pm-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.loft-pm-spinner {
+  width: 48px;
+  height: 48px;
+  border: 2px solid rgba(168, 153, 104, 0.15);
+  border-top-color: var(--color-gold, #a89968);
+  border-radius: 50%;
+  animation: loft-spin 0.8s linear infinite;
+  margin-bottom: 24px;
+}
+
+.loft-pm-status-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dark, #1a1a1a);
+  margin-bottom: 6px;
+}
+
+.loft-pm-status-sub {
+  font-size: 12px;
+  color: var(--color-light-gray, #999999);
+}
+
+.loft-pm-result-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: loft-pop-in 0.4s ease forwards;
+}
+
+.loft-pm-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.loft-pm-icon-wrapper.success {
+  background-color: rgba(46, 125, 50, 0.1);
+  color: var(--color-success, #2e7d32);
+}
+
+.loft-pm-icon-wrapper.failure {
+  background-color: rgba(198, 40, 40, 0.1);
+  color: var(--color-error, #c62828);
+}
+
+.loft-pm-pulse-icon {
+  animation: loft-icon-pulse 1.4s infinite ease-in-out;
+}
+
+.loft-pm-result-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-dark, #1a1a1a);
+  margin-bottom: 8px;
+}
+
+.loft-pm-result-text {
+  font-size: 13px;
+  color: var(--color-gray, #666666);
+}
+
+/* Animations */
+@keyframes loft-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes loft-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes loft-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes loft-pop-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes loft-icon-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .loft-pm-modal {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .loft-pm-body {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+}

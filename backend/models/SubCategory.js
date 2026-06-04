@@ -1,0 +1,39 @@
+/*
+ * Handover note: Subcategory schema.
+ * Each subcategory belongs to one Category and is used by products for finer catalog filtering.
+ */
+// const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
+const subCategorySchema = new mongoose.Schema(
+  {
+    parentCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    status: {
+      type: String,
+      enum: ["Active", "Inactive"],
+      default: "Active",
+      required: true,
+    },
+  },
+  { timestamps: true },
+);
+
+subCategorySchema.index({ parentCategory: 1, status: 1 });
+
+// module.exports = mongoose.model("SubCategory", subCategorySchema);
+const SubCategory = mongoose.model("SubCategory", subCategorySchema);
+export default SubCategory;

@@ -1,0 +1,115 @@
+/* Layout Wrapper */
+.admin-layout-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f1f5f9;
+}
+
+.admin-layout-main {
+  flex: 1;
+  padding: 24px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+/* Mobile top header to toggle sidebar */
+.admin-mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.admin-mobile-logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
+}
+
+.admin-mobile-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; /* Touch target minimum */
+  height: 44px; /* Touch target minimum */
+  color: #1a1a1a;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.admin-mobile-toggle:hover {
+  background-color: #f1f5f9;
+}
+
+/* Sidebar wrapper positioning */
+.admin-sidebar-wrapper {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 250px;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive Overrides */
+@media screen and (max-width: 1024px) {
+  .admin-layout-main {
+    margin-left: 0 !important;
+    padding: 16px;
+  }
+  
+  .admin-mobile-header {
+    display: flex;
+  }
+  
+  .admin-sidebar-wrapper {
+    transform: translateX(-100%);
+  }
+  
+  .admin-sidebar-wrapper.open {
+    transform: translateX(0);
+    box-shadow: 10px 0 30px rgba(15, 23, 42, 0.15);
+  }
+  
+  .admin-sidebar-backdrop.open {
+    display: block;
+  }
+}
+
+/* Vendor Sidebar layout normalization inside responsive wrapper */
+.admin-sidebar-wrapper .vendor-sidebar,
+.admin-sidebar-wrapper > div {
+  position: static !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}

@@ -1,0 +1,271 @@
+.loft-osp-wrapper {
+  background-color: var(--color-background, #faf8f6);
+  min-height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.loft-osp-container {
+  max-width: 580px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Animated luxury checkmark */
+.loft-osp-check-ring {
+  width: 90px;
+  height: 90px;
+  background-color: #ffffff;
+  border: 1px solid var(--color-border, #f0f0f0);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+  position: relative;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.02);
+}
+
+.loft-osp-check-ring::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  border: 1px solid var(--color-gold, #a89968);
+  opacity: 0.3;
+  animation: osp-pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+.loft-osp-check-icon {
+  width: 60px;
+  height: 60px;
+  background-color: var(--color-dark, #1a1a1a);
+  color: var(--color-light, #ffffff);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loft-osp-brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--color-gold, #a89968);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.loft-osp-title {
+  font-family: var(--font-family-serif, "Georgia", serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--color-dark, #1a1a1a);
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+.loft-osp-subtitle {
+  font-size: 15px;
+  color: var(--color-gray, #666666);
+  max-width: 480px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.loft-osp-subtitle strong {
+  color: var(--color-dark, #1a1a1a);
+}
+
+/* Order Details Card */
+.loft-osp-card {
+  background-color: var(--color-light, #ffffff);
+  border: 1px solid var(--color-border, #f0f0f0);
+  border-radius: var(--border-radius-sm, 0px);
+  padding: 30px;
+  width: 100%;
+  margin-bottom: 40px;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.loft-osp-row {
+  display: flex;
+  gap: 16px;
+}
+
+.loft-osp-row.align-center {
+  align-items: center;
+}
+
+.loft-osp-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.loft-osp-col.text-right {
+  text-align: right;
+}
+
+.loft-osp-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-light-gray, #999999);
+  margin-bottom: 6px;
+}
+
+.loft-osp-val {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dark, #1a1a1a);
+}
+
+.loft-osp-val.highlight {
+  font-family: monospace;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  color: var(--color-gold, #a89968);
+}
+
+.loft-osp-val italic {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.loft-osp-val.font-sm {
+  font-size: 13px;
+}
+
+.loft-osp-val a {
+  color: var(--color-gold, #a89968);
+  text-decoration: underline;
+}
+
+.loft-osp-val a:hover {
+  color: var(--color-dark, #1a1a1a);
+}
+
+.loft-osp-card-icon {
+  color: var(--color-gold, #a89968);
+  flex-shrink: 0;
+}
+
+.loft-osp-divider {
+  height: 1px;
+  background-color: var(--color-border, #f0f0f0);
+  margin: 20px 0;
+}
+
+/* Actions Button Grid */
+.loft-osp-actions {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.loft-osp-btn {
+  flex: 1;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+  border-radius: var(--border-radius-sm, 0px);
+}
+
+.loft-osp-btn.primary {
+  background-color: var(--color-dark, #1a1a1a);
+  color: var(--color-light, #ffffff);
+  border: none;
+}
+
+.loft-osp-btn.primary:hover {
+  background-color: var(--color-dark-hover, #333333);
+  transform: translateY(-2px);
+}
+
+.loft-osp-btn.secondary {
+  background-color: transparent;
+  color: var(--color-dark, #1a1a1a);
+  border: 1px solid var(--color-dark, #1a1a1a);
+}
+
+.loft-osp-btn.secondary:hover {
+  background-color: var(--color-dark, #1a1a1a);
+  color: var(--color-light, #ffffff);
+  transform: translateY(-2px);
+}
+
+/* Loading state */
+.loft-osp-loading {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-background, #faf8f6);
+  color: var(--color-gray, #666666);
+}
+
+.loft-osp-shimmer {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(168, 153, 104, 0.1);
+  border-top-color: var(--color-gold, #a89968);
+  border-radius: 50%;
+  animation: osp-shimmer-spin 0.8s linear infinite;
+  margin-bottom: 20px;
+}
+
+/* Keyframes */
+@keyframes osp-scale-up {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes osp-pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+@keyframes osp-icon-rotate {
+  from { transform: rotate(-45deg) scale(0.8); opacity: 0; }
+  to { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+@keyframes osp-shimmer-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive details */
+@media (max-width: 580px) {
+  .loft-osp-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .loft-osp-btn {
+    width: 100%;
+  }
+  .loft-osp-title {
+    font-size: 26px;
+  }
+  .loft-osp-card {
+    padding: 20px;
+  }
+}

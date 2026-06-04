@@ -1,0 +1,86 @@
+import { Link } from "react-router-dom";
+import { Heart } from "lucide-react";
+import "@/styles/ProductCard.css";
+import { useWishlist } from '@/features/wishlist/hooks/useWishlist';
+import { useCart } from '@/features/cart/hooks/useCart';
+import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { CURRENCY } from "@/constants/currency";
+
+const ProductCard = ({ product }) => {
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addToCart } = useCart();
+  const productId = product.slug || product.productId || (product.id ? `${product.category}_${product.id}` : product._id);
+  const wishlisted = isInWishlist(productId);
+
+  const handleWishlistToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist({
+      id: productId,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      brand: product.brand,
+      category: product.category,
+    });
+  };
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({ ...product, productId }, "", "", 1);
+  };
+
+  return (
+    <div className="pc-card">
+      <Link to={`/product/${productId}`} className="pc-link">
+        <div className="pc-media">
+          <OptimizedImage
+            src={product.image}
+            alt={product.name}
+          />
+        </div>
+      </Link>
+
+      <div className="pc-body">
+        <div className="pc-meta">
+          <span className="pc-brand">{product.brand}</span>
+          <button
+            className={`pc-wishlist ${wishlisted ? "active" : ""}`}
+            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            onClick={handleWishlistToggle}
+          >
+            <Heart
+              size={16}
+              fill={wishlisted ? "#c0392b" : "none"}
+              color={wishlisted ? "#c0392b" : "currentColor"}
+            />
+          </button>
+        </div>
+        <h4 className="pc-title">{product.name}</h4>
+        <div className="pc-price-row">
+          <span className="pc-price">
+            {new Intl.NumberFormat("en-IN", {
+              style: "currency",
+              currency: CURRENCY.code,
+              maximumFractionDigits: 0,
+            }).format(product.price)}
+          </span>
+          {product.discount && (
+            <span className="pc-discount">-{product.discount}%</span>
+          )}
+        </div>
+        <button
+          className="pc-add"
+          type="button"
+          onClick={handleAddToCart}
+          aria-label={`Add ${product.name} to cart`}
+        >
+          Add to cart
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ProductCard;

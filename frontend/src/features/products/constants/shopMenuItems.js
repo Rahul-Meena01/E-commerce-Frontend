@@ -1,0 +1,150 @@
+export const SHOP_MENU_ITEMS = [
+  {
+    key: "men",
+    label: "Men",
+    route: "/shop/men",
+    note: "Tailored essentials",
+    description:
+      "Refined staples, outerwear, and elevated layers designed for a clean modern wardrobe.",
+    subCategories: [
+      "Tailoring",
+      "Shirts",
+      "Trousers",
+      "Knitwear",
+      "Outerwear",
+      "Denim",
+      "Shoes",
+      "Accessories",
+    ],
+  },
+  {
+    key: "women",
+    label: "Women",
+    route: "/shop/women",
+    note: "Modern silhouettes",
+    description:
+      "Polished dresses, separates, and contemporary layers curated with an editorial edge.",
+    subCategories: [
+      "Dresses",
+      "Tops",
+      "Knitwear",
+      "Tailoring",
+      "Skirts",
+      "Outerwear",
+      "Bags",
+      "Shoes",
+    ],
+  },
+  {
+    key: "kids",
+    label: "Kids",
+    route: "/shop/kids",
+    note: "Clean essentials",
+    description:
+      "Thoughtfully edited pieces for everyday wear, special moments, and seasonal layering.",
+    subCategories: [
+      "Newborn",
+      "Girls",
+      "Boys",
+      "Clothing",
+      "Shoes",
+      "Accessories",
+    ],
+  },
+  {
+    key: "accessories",
+    label: "Accessories",
+    route: "/shop/accessories",
+    note: "Finishing touches",
+    description:
+      "Luxury detail pieces that complete the look with understated confidence.",
+    subCategories: [
+      "Watches",
+      "Sunglasses",
+      "Bags",
+      "Wallets",
+      "Jewelry",
+      "Belts",
+      "Caps",
+      "Scarves",
+      "Perfumes",
+    ],
+  },
+  {
+    key: "footwear",
+    label: "Footwear",
+    route: "/shop/footwear",
+    note: "Walkable luxury",
+    description:
+      "From sharp heels to relaxed sneakers, the line balances comfort with a polished profile.",
+    subCategories: [
+      "Sneakers",
+      "Loafers",
+      "Boots",
+      "Heels",
+      "Sandals",
+      "Flats",
+      "Trainers",
+    ],
+  },
+  {
+    key: "beauty",
+    label: "Beauty",
+    route: "/shop/beauty",
+    note: "Refined rituals",
+    description:
+      "Skincare, fragrance, and grooming essentials selected for a polished everyday routine.",
+    subCategories: [
+      "Skincare",
+      "Makeup",
+      "Fragrance",
+      "Haircare",
+      "Body",
+      "Gifts",
+    ],
+  },
+  {
+    key: "collections",
+    label: "Collections",
+    route: "/shop/collections",
+    note: "Curated stories",
+    description:
+      "Seasonal narratives, capsule wardrobes, and directional edits that feel considered and current.",
+    subCategories: [
+      "Editorial",
+      "Seasonal",
+      "Capsule",
+      "Travel",
+      "Occasion",
+      "Essentials",
+    ],
+  },
+  {
+    key: "new-arrivals",
+    label: "New Arrivals",
+    route: "/shop/new-arrivals",
+    note: "Freshly landed",
+    description:
+      "The latest drops from the Loft edit, balanced between directional and everyday pieces.",
+    subCategories: [
+      "New in Women",
+      "New in Men",
+      "New in Accessories",
+      "Latest Drops",
+    ],
+  },
+  {
+    key: "sale",
+    label: "Sale",
+    route: "/shop/sale",
+    note: "Selected reductions",
+    description:
+      "A restrained sale edit with pieces worth keeping, now at elevated seasonal value.",
+    subCategories: [
+      "Women Sale",
+      "Men Sale",
+      "Accessories Sale",
+      "Footwear Sale",
+    ],
+  },
+];

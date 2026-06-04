@@ -1,0 +1,27 @@
+.reveal {
+  opacity: 0;
+  transition-property: opacity, transform;
+  transition-timing-function: var(--ds-ease-standard, cubic-bezier(0.2, 0.8, 0.2, 1));
+  will-change: opacity, transform;
+}
+
+.reveal-active {
+  opacity: 1;
+  transform: translate(0, 0) !important;
+}
+
+.reveal-up {
+  transform: translateY(16px);
+}
+
+.reveal-down {
+  transform: translateY(-16px);
+}
+
+.reveal-left {
+  transform: translateX(16px);
+}
+
+.reveal-right {
+  transform: translateX(-16px);
+}

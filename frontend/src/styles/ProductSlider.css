@@ -1,0 +1,110 @@
+.product-slider-section {
+  padding: 4rem 5%;
+  background: var(--color-white);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+}
+
+.slider-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.slider-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.view-all-link {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: var(--color-text-light);
+  transition: color 0.2s ease;
+  margin-right: 1rem;
+}
+
+.view-all-link:hover {
+  color: var(--color-primary);
+}
+
+.arrow-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--color-primary);
+}
+
+.arrow-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.arrow-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.slider-grid {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  scroll-snap-type: x mandatory;
+}
+
+.slider-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.slider-grid > * {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
+
+.slider-loading {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .product-slider-section {
+    padding: 3rem 5%;
+  }
+
+  .slider-title {
+    font-size: 1.25rem;
+  }
+
+  .slider-grid > * {
+    flex: 0 0 240px;
+  }
+}

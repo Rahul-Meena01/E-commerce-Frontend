@@ -1,0 +1,68 @@
+.pi-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.pi-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.pi-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.pi-price {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+}
+.pi-old {
+  font-size: 14px;
+  color: #9a9a9a;
+  text-decoration: line-through;
+}
+.pi-discount-badge {
+  font-weight: 800;
+  background: #b81d1d;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.pi-stock-and-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+.pi-sku {
+  font-size: 0.9rem;
+  color: #555;
+}
+.pi-savings {
+  font-size: 0.95rem;
+  color: #0b6623;
+}
+.pi-trust-shipping {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.pi-trust,
+.pi-shipping {
+  padding: 0.5rem 0.6rem;
+  background: #f7f7f7;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+@media (max-width: 820px) {
+  .pi-root {
+    gap: 0.6rem;
+  }
+  .pi-trust-shipping {
+    flex-direction: column;
+  }
+}

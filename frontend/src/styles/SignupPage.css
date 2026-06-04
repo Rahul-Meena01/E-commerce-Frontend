@@ -1,0 +1,138 @@
+@import "./LoginPage.css";
+
+.signup-page .login-form-wrapper {
+  padding: 0 76px 20px;
+  max-width: 620px;
+}
+
+.signup-page .login-heading {
+  font-size: 34px;
+  margin-bottom: 4px;
+}
+
+.signup-page .login-subheading {
+  margin-bottom: 18px;
+}
+
+.signup-page .login-form {
+  gap: 16px;
+}
+
+.signup-page .login-error {
+  margin-bottom: 2px;
+}
+
+.signup-page .login-field-group {
+  gap: 6px;
+}
+
+.signup-inline-notify {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f9f2e4;
+  color: #9a6a10;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border: 1px solid #ead5b2;
+}
+
+.signup-page .login-input-wrap {
+  height: 46px;
+}
+
+.signup-page .login-input-wrap input {
+  min-width: 0;
+}
+
+.signup-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.signup-field-group-full {
+  grid-column: 1 / -1;
+}
+
+.signup-page .login-submit-btn.signup-submit-btn {
+  margin-top: 0;
+  height: 46px;
+  grid-column: 1 / -1;
+}
+
+.signup-page .login-submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+  transform: none;
+}
+
+.signup-page .login-submit-btn:disabled:hover {
+  background: #111;
+  transform: none;
+}
+
+@media (max-width: 980px) {
+  .signup-page .login-form-wrapper {
+    max-width: 100%;
+    padding: 0 48px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .signup-page .login-form-wrapper {
+    padding: 0 28px 18px;
+  }
+
+  .signup-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .signup-field-group-full {
+    grid-column: auto;
+  }
+
+  .signup-page .login-heading {
+    font-size: 30px;
+  }
+
+  .signup-page .login-subheading {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .signup-page .login-form-wrapper {
+    padding: 0 18px 16px;
+  }
+
+  .signup-page .login-top-bar {
+    padding: 14px 16px 12px;
+  }
+
+  .signup-page .login-heading {
+    font-size: 26px;
+  }
+
+  .signup-page .login-form {
+    gap: 14px;
+  }
+
+  .signup-page .login-divider {
+    gap: 10px;
+    margin: 14px 0 12px;
+  }
+
+  .signup-page .login-social-row {
+    gap: 8px;
+  }
+
+  .signup-page .login-social-btn {
+    height: 42px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,320 @@
+/* Premium Filters CSS Stylesheet for LOFT */
+
+.loft-filter-sidebar {
+  padding: 1.75rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Header */
+.loft-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 0.75rem;
+}
+
+.loft-filter-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.loft-filter-reset-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loft-filter-reset-btn:hover {
+  color: #c4a163; /* Loft Gold */
+  background: #fdfaf4;
+}
+
+/* Section */
+.loft-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.loft-filter-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0;
+}
+
+.loft-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Brands (Custom Checkbox Button) */
+.brand-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.loft-brand-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.15s ease;
+}
+
+.loft-brand-option:hover {
+  transform: translateX(2px);
+}
+
+.loft-brand-label {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.loft-brand-option.active .loft-brand-label {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Custom Checkbox Design */
+.loft-custom-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.loft-brand-option:hover .loft-custom-checkbox {
+  border-color: #9ca3af;
+}
+
+.loft-custom-checkbox.checked {
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+/* Color Swatches Grid */
+.color-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.loft-color-swatch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: transform 0.15s ease;
+}
+
+.loft-color-swatch-wrapper:hover {
+  transform: translateX(2px);
+}
+
+.loft-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.loft-color-swatch-wrapper.active .loft-color-swatch {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1a1a1a;
+}
+
+.loft-color-label {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.loft-color-swatch-wrapper.active .loft-color-label {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Sizes Grid */
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.loft-size-pill {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loft-size-pill:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.loft-size-pill.active {
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Tags Badge Grid */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.loft-tag-badge {
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  color: #4b5563;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loft-tag-badge:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.loft-tag-badge.active {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+/* Price Range Form Styling */
+.loft-price-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 4px;
+}
+
+.loft-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loft-price-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.loft-price-currency {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.loft-price-input {
+  width: 100%;
+  padding: 8px 8px 8px 22px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  background: #f9fafb;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.loft-price-input:focus {
+  border-color: #1a1a1a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.03);
+}
+
+.loft-price-range-divider {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.loft-price-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loft-price-btn:hover {
+  background-color: #c4a163; /* Loft Gold */
+  box-shadow: 0 4px 12px rgba(196, 161, 99, 0.2);
+}

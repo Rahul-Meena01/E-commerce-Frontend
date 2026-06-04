@@ -1,0 +1,75 @@
+import { X } from "lucide-react";
+import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+
+export default function NavbarSearchOverlay({
+  searchOpen,
+  searchQuery,
+  setSearchQuery,
+  closeSearch,
+  searchInputRef,
+  searchOverlayRef,
+  searchResults,
+  handleResultClick,
+}) {
+  return (
+    <div
+      ref={searchOverlayRef}
+      id="search-overlay"
+      className={`search-overlay ${searchOpen ? "open" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-hidden={!searchOpen}
+      aria-label="Product Search"
+    >
+      <input
+        ref={searchInputRef}
+        type="text"
+        placeholder="Search products..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        aria-label="Search products"
+        onKeyDown={(e) => e.key === "Escape" && closeSearch()}
+      />
+      <button
+        className="search-close"
+        onClick={closeSearch}
+        aria-label="Close search"
+      >
+        <X size={20} strokeWidth={2} />
+      </button>
+
+      {searchOpen && searchQuery.trim() && (
+        <div className="search-results">
+          {searchResults.length > 0 ? (
+            searchResults.map((product) => (
+              <button
+                key={product.productId}
+                className="search-result-item"
+                onClick={() => handleResultClick(product.productId)}
+              >
+                <OptimizedImage
+                  src={product.image}
+                  alt={product.name}
+                  className="search-result-image"
+                />
+                <div className="search-result-info">
+                  <span className="search-result-name">{product.name}</span>
+                  <span className="search-result-meta">
+                    {product.brand} · ${product.price}
+                  </span>
+                </div>
+                <span className="search-result-category">
+                  {product.category}
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className="search-no-results">
+              No products found for "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

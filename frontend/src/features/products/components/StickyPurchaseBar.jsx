@@ -1,0 +1,92 @@
+import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
+import StockIndicator from "./StockIndicator";
+import { CURRENCY } from "@/constants/currency";
+import "./StickyPurchaseBar.css";
+
+const StickyPurchaseBar = ({
+  product,
+  thumbnail,
+  title,
+  selectedVariantSummary,
+  price,
+  disabled,
+  onAddToCart,
+  visible,
+}) => {
+  const [announce, setAnnounce] = useState("");
+  const lastDisabledRef = useRef(disabled);
+
+  useEffect(() => {
+    if (lastDisabledRef.current !== disabled) {
+      setAnnounce(disabled ? "Item unavailable" : "Item available");
+      lastDisabledRef.current = disabled;
+      const t = setTimeout(() => setAnnounce(""), 1500);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [disabled]);
+
+  return (
+    <div
+      className={`spb-root ${visible ? "spb-visible" : "spb-hidden"}`}
+      aria-hidden={!visible}
+    >
+      <div className="spb-inner">
+        <div className="spb-left">
+          {thumbnail && (
+            <img
+              src={thumbnail}
+              alt={`${title} thumbnail`}
+              className="spb-thumb"
+            />
+          )}
+          <div className="spb-meta">
+            <div className="spb-title">{title}</div>
+            <div className="spb-variant">{selectedVariantSummary}</div>
+          </div>
+        </div>
+
+        <div className="spb-right">
+          <div className="spb-price">{CURRENCY.symbol}{price}.00</div>
+          <button
+            className="spb-cta"
+            onClick={onAddToCart}
+            disabled={disabled}
+            aria-disabled={disabled}
+          >
+            {disabled ? "Unavailable" : "Add to Cart"}
+          </button>
+        </div>
+      </div>
+
+      <div className="spb-live" aria-live="polite" aria-atomic="true">
+        {announce}
+      </div>
+    </div>
+  );
+};
+
+StickyPurchaseBar.propTypes = {
+  product: PropTypes.object,
+  thumbnail: PropTypes.string,
+  title: PropTypes.string,
+  selectedVariantSummary: PropTypes.string,
+  price: PropTypes.number,
+  disabled: PropTypes.bool,
+  onAddToCart: PropTypes.func,
+  visible: PropTypes.bool,
+};
+
+StickyPurchaseBar.defaultProps = {
+  product: null,
+  thumbnail: "",
+  title: "",
+  selectedVariantSummary: "",
+  price: 0,
+  disabled: false,
+  onAddToCart: () => {},
+  visible: false,
+};
+
+export default StickyPurchaseBar;

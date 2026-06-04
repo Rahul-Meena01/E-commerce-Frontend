@@ -1,0 +1,49 @@
+.stock-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+}
+.stock-indicator__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  display: inline-block;
+}
+.stock-indicator--in {
+  background-color: rgba(29, 161, 87, 0.08);
+  color: #147a2b;
+}
+.stock-indicator--in .stock-indicator__dot {
+  background: #147a2b;
+}
+.stock-indicator--low {
+  background-color: rgba(255, 200, 0, 0.08);
+  color: #9a6a00;
+}
+.stock-indicator--low .stock-indicator__dot {
+  background: #9a6a00;
+}
+.stock-indicator--out {
+  background-color: rgba(220, 38, 38, 0.06);
+  color: #c92a2a;
+}
+.stock-indicator--out .stock-indicator__dot {
+  background: #c92a2a;
+}
+.stock-indicator--backorder {
+  background-color: rgba(255, 159, 67, 0.06);
+  color: #b45309;
+}
+.stock-indicator--backorder .stock-indicator__dot {
+  background: #b45309;
+}
+
+@media (max-width: 640px) {
+  .stock-indicator {
+    font-size: 0.95rem;
+    padding: 0.35rem 0.6rem;
+  }
+}
