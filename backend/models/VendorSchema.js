@@ -51,6 +51,8 @@ const VendorSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+VendorSchema.index({ slug: 1 });
+VendorSchema.index({ user: 1 });
 VendorSchema.index({ status: 1 });
 
 export default mongoose.model("Vendor", VendorSchema);

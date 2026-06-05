@@ -48,12 +48,6 @@ const cartItemSchema = new mongoose.Schema(
       required: true,
     },
 
-    variant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Variants",
-      default: null,
-    },
-
     name: {
       type: String,
       required: true,
@@ -108,18 +102,8 @@ const cartItemSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-
-    size: {
-      type: String,
-      default: "",
-    },
-
-    color: {
-      type: String,
-      default: "",
-    },
   },
-  { _id: true },
+  { _id: false },
 );
 
 const totalsSchema = new mongoose.Schema(
@@ -195,9 +179,6 @@ const cartSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
-// Performance indexes — added in modernization v1.0
-cartSchema.index({ user: 1, isActive: 1 });
 
 // module.exports = mongoose.model("Cart", cartSchema);
 const Cart = mongoose.model("Cart", cartSchema);

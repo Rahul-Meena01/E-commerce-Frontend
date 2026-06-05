@@ -21,7 +21,7 @@ import express from "express";
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect, requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -75,7 +75,7 @@ const getTotalOrders = (userId) => Order.countDocuments({ user: userId });
 // ─── GET /api/users/stats ─────────────────────────────────────────────────────
 // @desc    Aggregate dashboard counts — total / hot / cold / deactive
 // @access  Private/Admin
-router.get("/stats", protect, admin, async (req, res) => {
+router.get("/stats", protect, requireAuth('admin'), async (req, res) => {
   try {
     const users = await User.find({ role: "user" }).select("_id adminStatusOverride").lean();
 
@@ -106,9 +106,9 @@ router.get("/stats", protect, admin, async (req, res) => {
 //   ?pageNumber=1
 //   ?search=john           — matches name OR email (case-insensitive)
 //   ?status=Hot|Cold|Deactive
-router.get("/", protect, admin, async (req, res) => {
+router.get("/", protect, requireAuth('admin'), async (req, res) => {
   try {
-    const pageSize = Number(process.env.ADMIN_PAGE_SIZE) || 20;
+    const pageSize = 10;
     const page     = Math.max(1, Number(req.query.pageNumber) || 1);
 
     // ── Build DB filter ─────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ router.get("/", protect, admin, async (req, res) => {
 // ─── GET /api/users/:id ───────────────────────────────────────────────────────
 // @desc    Single user profile — enriched with order history & computed status
 // @access  Private/Admin
-router.get("/:id", protect, admin, async (req, res) => {
+router.get("/:id", protect, requireAuth('admin'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid user ID" });
@@ -212,7 +212,7 @@ router.get("/:id", protect, admin, async (req, res) => {
 // @access  Private/Admin
 // Body:    { status: "Hot" | "Cold" | "Deactive" | "" }
 //          Pass "" to clear the override and go back to auto-derived.
-router.put("/:id/status", protect, admin, async (req, res) => {
+router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid user ID" });
@@ -248,7 +248,7 @@ router.put("/:id/status", protect, admin, async (req, res) => {
 // ─── DELETE /api/users/:id ────────────────────────────────────────────────────
 // @desc    Hard-delete a user account (admin cannot be deleted)
 // @access  Private/Admin
-router.delete("/:id", protect, admin, async (req, res) => {
+router.delete("/:id", protect, requireAuth('admin'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid user ID" });

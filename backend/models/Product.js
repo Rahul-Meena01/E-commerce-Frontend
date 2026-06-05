@@ -69,16 +69,6 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-ProductSchema.index({ slug: 1 }, { unique: true });
-ProductSchema.index({ status: 1 });
-ProductSchema.index({ subCategory: 1 });
-ProductSchema.index({ createdAt: -1 });
-
-// Performance indexes — added in modernization v1.0
-ProductSchema.index({ status: 1, subCategory: 1 });
-ProductSchema.index({ status: 1, brand: 1 });
-ProductSchema.index({ name: 'text', brand: 'text' }, { weights: { name: 10, brand: 5 } });
-
 // module.exports = mongoose.model("Products", ProductSchema);
 const Product = mongoose.model("Products", ProductSchema);
 export default Product;

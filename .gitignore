@@ -49,3 +49,8 @@ lerna-debug.log*
 *.sln
 *.sw?
 **/__pycache__/
+
+# Temporary backup and scratch files
+temp_backend/
+scratch/
+**/scratch/

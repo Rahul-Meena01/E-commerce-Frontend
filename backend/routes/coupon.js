@@ -14,7 +14,6 @@ import express from "express";
 import Coupon from "../models/Coupon.js";
 import Products from "../models/Product.js";
 import CouponUsage from "../models/CouponUsages.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -59,7 +58,7 @@ const normalizeCoupon = (coupon) => {
 //
 // SEARCH PRODUCTS (for Product Coupons)
 //
-router.get("/products/search", protect, admin, async (req, res) => {
+router.get("/products/search", async (req, res) => {
   try {
     const search = req.query.search || "";
     const limit = Number(req.query.limit) || 10;
@@ -102,7 +101,7 @@ router.get("/products/search", protect, admin, async (req, res) => {
 // Body: { couponCode, cartTotal, productId? }
 // Auth: requires req.user._id (attach via your auth middleware)
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/apply", protect, async (req, res) => {
+router.post("/apply", async (req, res) => {
   try {
     const { couponCode, cartTotal, productId } = req.body;
     const userId = req.user?.id;
@@ -282,7 +281,7 @@ router.post("/apply", protect, async (req, res) => {
 // Marks usage as cancelled and decrements usedCount
 // Body: { usageId }
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/release", protect, async (req, res) => {
+router.post("/release", async (req, res) => {
   try {
     const { usageId } = req.body;
     const userId = req.user?.id;
@@ -329,7 +328,7 @@ router.post("/release", protect, async (req, res) => {
 // CONFIRM COUPON USAGE (call after order is placed successfully)
 // Body: { usageId, orderId }
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/confirm-usage", protect, async (req, res) => {
+router.post("/confirm-usage", async (req, res) => {
   try {
     const { usageId, orderId } = req.body;
 
@@ -364,9 +363,9 @@ router.post("/confirm-usage", protect, async (req, res) => {
 // GET COUPON USAGE HISTORY (Admin)
 // Query params: couponId?, userId?, status?, page, limit
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/usage-history", protect, admin, async (req, res) => {
+router.get("/usage-history", async (req, res) => {
   try {
-    const { couponId, userId, status, page = 1, limit = 20 } = req.query;
+    const { couponId, userId, status, page = 1, limit = 10 } = req.query;
 
     const query = {};
 
@@ -412,7 +411,7 @@ router.get("/usage-history", protect, admin, async (req, res) => {
 //
 // CREATE COUPON
 //
-router.post("/create", protect, admin, async (req, res) => {
+router.post("/create", async (req, res) => {
   try {
     const {
       couponCode,
@@ -560,7 +559,7 @@ router.post("/create", protect, admin, async (req, res) => {
 //
 // GET ALL COUPONS
 //
-router.get("/", protect, admin, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { status, type, featured, search, page = 1, limit = 10 } = req.query;
 
@@ -612,7 +611,7 @@ router.get("/", protect, admin, async (req, res) => {
 //
 // GET SINGLE COUPON
 //
-router.get("/:id", protect, admin, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const coupon = await Coupon.findById(req.params.id).populate(
       "applicableProducts",
@@ -643,7 +642,7 @@ router.get("/:id", protect, admin, async (req, res) => {
 //
 // UPDATE COUPON
 //
-router.put("/update/:id", protect, admin, async (req, res) => {
+router.put("/update/:id", async (req, res) => {
   try {
     const {
       couponCode,
@@ -772,7 +771,7 @@ router.put("/update/:id", protect, admin, async (req, res) => {
 //
 // DELETE COUPON
 //
-router.delete("/delete/:id", protect, admin, async (req, res) => {
+router.delete("/delete/:id", async (req, res) => {
   try {
     const coupon = await Coupon.findById(req.params.id);
 

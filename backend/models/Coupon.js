@@ -123,6 +123,7 @@ const couponSchema = new mongoose.Schema(
 //
 // INDEXES
 //
+couponSchema.index({ code: 1 });
 couponSchema.index({ status: 1 });
 couponSchema.index({ expiryDate: 1 });
 
@@ -147,3 +148,4 @@ couponSchema.methods.isValidCoupon = function () {
 // module.exports = mongoose.model("Coupon", couponSchema);
 const Coupon = mongoose.model("Coupon", couponSchema);
 export default Coupon;
+

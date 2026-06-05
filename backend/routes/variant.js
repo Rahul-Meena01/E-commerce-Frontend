@@ -13,7 +13,7 @@ import express from "express";
 import Product from "../models/Product.js";
 import Variant from "../models/Variant.js";
 import upload from "../middleware/upload.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -31,9 +31,9 @@ const getImagePath = (files, field) => {
 };
 
 // Create variant product
-router.post("/create", protect, admin, variantUpload, async (req, res) => {
+router.post("/create", protect, variantUpload, async (req, res) => {
   try {
-    const { parentProduct, name, brand, price, discountPercent, status, sku, size, color, colorHex, stock } = req.body;
+    const { parentProduct, name, brand, price, discountPercent, status } = req.body;
     const image = getImagePath(req.files, "image");
     const image1 = getImagePath(req.files, "image1");
     const image2 = getImagePath(req.files, "image2");
@@ -43,15 +43,6 @@ router.post("/create", protect, admin, variantUpload, async (req, res) => {
 
     if (!isProduct) {
       return res.status(404).json({ success: false, message: "Base product not found" });
-    }
-
-    let generatedSku = sku;
-    if (!generatedSku) {
-      const baseName = (isProduct.name || "PRODUCT").slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, "");
-      const baseColor = (color || "COL").slice(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, "");
-      const baseSize = (size || "SZ").toUpperCase().replace(/[^A-Z0-9]/g, "");
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      generatedSku = `LOFT-${baseName}-${baseColor}-${baseSize}-${rand}`;
     }
 
     const variant = new Variant({
@@ -70,11 +61,6 @@ router.post("/create", protect, admin, variantUpload, async (req, res) => {
           ? Number(price) - (Number(price) * Number(discountPercent)) / 100
           : undefined,
       status: status || "Active",
-      sku: generatedSku,
-      size: size || "M",
-      color: color || "Black",
-      colorHex: colorHex || "#000000",
-      stock: stock !== undefined ? Number(stock) : 0,
     });
 
     await variant.save();
@@ -85,7 +71,7 @@ router.post("/create", protect, admin, variantUpload, async (req, res) => {
 });
 
 // Get all variants
-router.get("/all", protect, admin, async (req, res) => {
+router.get("/all", protect, async (req, res) => {
   try {
     const { status, product } = req.query;
     const query = {};
@@ -110,9 +96,9 @@ router.get("/all", protect, admin, async (req, res) => {
 });
 
 // Update variant product
-router.put("/update/:id", protect, admin, variantUpload, async (req, res) => {
+router.put("/update/:id", protect, variantUpload, async (req, res) => {
   try {
-    const { parentProduct, name, brand, price, discountPercent, status, sku, size, color, colorHex, stock } = req.body;
+    const { parentProduct, name, brand, price, discountPercent, status } = req.body;
     const updatedData = {
       parentProduct,
       name,
@@ -124,11 +110,6 @@ router.put("/update/:id", protect, admin, variantUpload, async (req, res) => {
         discountPercent && price
           ? Number(price) - (Number(price) * Number(discountPercent)) / 100
           : undefined,
-      sku,
-      size,
-      color,
-      colorHex,
-      stock: stock !== undefined ? Number(stock) : undefined,
     };
 
     const imageFields = ["image", "image1", "image2", "image3", "image4"];
@@ -160,7 +141,7 @@ router.put("/update/:id", protect, admin, variantUpload, async (req, res) => {
 });
 
 // Delete variant product
-router.delete("/delete/:id", protect, admin, async (req, res) => {
+router.delete("/delete/:id", protect, async (req, res) => {
   try {
     const variant = await Variant.findByIdAndDelete(req.params.id);
     if (!variant) {

@@ -10,12 +10,13 @@
 import express from "express";
 import Category from "../models/Category.js";
 import SubCategory from "../models/SubCategory.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import Product from "../models/Product.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Create category
-router.post("/create", protect, admin, async (req, res) => {
+router.post("/create", protect, async (req, res) => {
   try {
     const { name, slug, status } = req.body;
 
@@ -40,21 +41,46 @@ router.post("/create", protect, admin, async (req, res) => {
   }
 });
 
-// Get all categories
-router.get("/all", protect, admin, async (req, res) => {
+// Get all categories (paginated)
+router.get("/all", protect, async (req, res) => {
   try {
-    const categories = await Category.find();
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Category.countDocuments();
+    const active = await Category.countDocuments({ status: "Active" });
+    const inactive = await Category.countDocuments({ status: "Inactive" });
+    const categories = await Category.find().skip(skip).limit(limit);
 
     res.status(200).json({
       success: true,
       message: "Data loaded successfully",
-      data : categories,
+      data: categories,
+      page,
+      totalPages: Math.ceil(total / limit),
+      total,
+      active,
+      inactive,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Internal server error",
     });
+  }
+});
+
+// Search categories for dropdowns (limit defaults to 5)
+router.get("/search", protect, async (req, res) => {
+  try {
+    const { q = "", limit = 5 } = req.query;
+    const query = q ? { name: { $regex: q, $options: "i" }, status: "Active" } : { status: "Active" };
+    
+    const categories = await Category.find(query).limit(parseInt(limit));
+    res.status(200).json({ success: true, data: categories });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
@@ -67,44 +93,8 @@ router.get("/public/all", async (req, res) => {
   }
 });
 
-// GET public categories root path
-router.get("/", async (req, res) => {
-  try {
-    const categories = await Category.find({ status: "Active" });
-    res.status(200).json({ success: true, data: categories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-// GET subcategories by parent category ID
-router.get("/:categoryId/subcategories", async (req, res) => {
-  try {
-    const subCategories = await SubCategory.find({
-      parentCategory: req.params.categoryId,
-      status: "Active",
-    }).populate("parentCategory");
-    res.status(200).json({ success: true, data: subCategories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-// GET subcategories by parent category ID (alias /sub)
-router.get("/:categoryId/sub", async (req, res) => {
-  try {
-    const subCategories = await SubCategory.find({
-      parentCategory: req.params.categoryId,
-      status: "Active",
-    }).populate("parentCategory");
-    res.status(200).json({ success: true, data: subCategories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
 // update category
-router.put("/update/:id", protect, admin, async (req, res) => {
+router.put("/update/:id", protect, async (req, res) => {
   try {
     const ID = req.params.id;
     const updatedField = req.body;
@@ -112,11 +102,26 @@ router.put("/update/:id", protect, admin, async (req, res) => {
       new: true,
     });
 
-    if (makeUpdate?.status === "Inactive") {
-      await SubCategory.updateMany(
-        { parentCategory: ID },
-        { status: "Inactive" },
-      );
+    if (makeUpdate) {
+      const targetStatus = makeUpdate.status; // "Active" or "Inactive"
+      
+      // Find all subcategories linked to this category
+      const subCategories = await SubCategory.find({ parentCategory: ID });
+      const subCategoryIds = subCategories.map(sub => sub._id);
+
+      // Update their status
+      if (subCategoryIds.length > 0) {
+        await SubCategory.updateMany(
+          { _id: { $in: subCategoryIds } },
+          { status: targetStatus }
+        );
+
+        // Update all products under these subcategories
+        await Product.updateMany(
+          { subCategory: { $in: subCategoryIds } },
+          { status: targetStatus }
+        );
+      }
     }
 
     res.status(200).json({
@@ -133,7 +138,7 @@ router.put("/update/:id", protect, admin, async (req, res) => {
 });
 
 // Delete category
-router.delete("/delete/:id", protect, admin, async (req, res) => {
+router.delete("/delete/:id", protect, async (req, res) => {
     try {
       const ID = req.params.id;
       const deleteCategory = await Category.findByIdAndDelete(ID);

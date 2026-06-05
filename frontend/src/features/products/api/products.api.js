@@ -1,22 +1,96 @@
 import client from "@/services/client";
 
-export const fetchProducts = (params) => {
+const parseParams = (params) => {
+  let category = null;
+  let subCategory = null;
+  let search = null;
+  let limit = null;
+  let page = null;
+
   if (typeof params === "string") {
-    // If it's a full path starting with /api, strip it
-    const path = params.startsWith("/api") ? params.slice(4) : params;
-    return client.get(path);
+    // It's a query string, e.g. "/products?category=men&subCategory=shirts" or "/api/products?..."
+    const queryString = params.includes("?") ? params.split("?")[1] : params;
+    const searchParams = new URLSearchParams(queryString);
+    category = searchParams.get("category");
+    subCategory = searchParams.get("subCategory");
+    search = searchParams.get("search") || searchParams.get("q");
+    limit = searchParams.get("limit");
+    page = searchParams.get("page");
+  } else if (params && typeof params === "object") {
+    category = params.category || params.categoryId;
+    subCategory = params.subCategory || params.subCategoryId;
+    search = params.search;
+    limit = params.limit;
+    page = params.page;
   }
-  return client.get("/products", { params });
+
+  return { category, subCategory, search, limit, page };
 };
 
-export const fetchProductBySlug = (slug) => client.get(`/products/${slug}`);
-export const fetchProduct = (productId) => client.get(`/product/public/${productId}`);
-export const fetchCategories = () => client.get("/categories");
-export const fetchSubCategories = (categoryId) => {
-  if (categoryId && typeof categoryId === "string") {
-    return client.get(`/categories/${categoryId}/subcategories`);
-  }
-  return client.get("/subcategories");
+export const fetchProducts = (params) => {
+  const { category, subCategory, search } = parseParams(params);
+
+  return client.get("/product/public/all").then((res) => {
+    let products = res.data?.data || [];
+
+    // Filter by category slug or ID
+    if (category) {
+      const catLower = String(category).toLowerCase();
+      products = products.filter((p) => {
+        const parentCat = p.subCategory?.parentCategory;
+        if (!parentCat) return false;
+        return (
+          String(parentCat._id).toLowerCase() === catLower ||
+          String(parentCat.slug || "").toLowerCase() === catLower ||
+          String(parentCat.name || "").toLowerCase() === catLower
+        );
+      });
+    }
+
+    // Filter by subcategory slug or ID
+    if (subCategory) {
+      const subCatLower = String(subCategory).toLowerCase();
+      products = products.filter((p) => {
+        const sub = p.subCategory;
+        if (!sub) return false;
+        return (
+          String(sub._id).toLowerCase() === subCatLower ||
+          String(sub.slug || "").toLowerCase() === subCatLower ||
+          String(sub.name || "").toLowerCase() === subCatLower
+        );
+      });
+    }
+
+    // Filter by search query
+    if (search) {
+      const searchLower = String(search).toLowerCase();
+      products = products.filter((p) => {
+        return (
+          String(p.name || "").toLowerCase().includes(searchLower) ||
+          String(p.brand || "").toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return {
+      ...res,
+      data: {
+        success: true,
+        data: products,
+        items: products,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: products.length,
+        },
+      },
+    };
+  });
 };
-export const searchProducts = (query, limit = 6) =>
-  client.get(`/products/search?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`);
+
+export const fetchProductBySlug = (slug) => client.get(`/product/public/${slug}`);
+export const fetchProduct = (productId) => client.get(`/product/public/${productId}`);
+export const fetchCategories = () => client.get("/category/public/all");
+export const fetchSubCategories = () => client.get("/subCategory/public/all");
+export const searchProducts = (query, limit = 6) => fetchProducts({ search: query, limit });
+

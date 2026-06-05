@@ -11,12 +11,13 @@
 import express from "express";
 import SubCategory from "../models/SubCategory.js";
 import Category from "../models/Category.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import Product from "../models/Product.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Create SubCategory
-router.post("/create", protect, admin, async(req,res) => {
+router.post("/create", protect, async(req,res) => {
     try{
         const { parentCategory, name, slug, status } = req.body;
         
@@ -56,15 +57,27 @@ router.post("/create", protect, admin, async(req,res) => {
     }
 })
 
-// Display SubCategory
-router.get("/all", protect, admin, async(req,res) => {
+// Display SubCategory (paginated)
+router.get("/all", protect, async(req,res) => {
     try {
-        const subCategories = await SubCategory.find().populate('parentCategory');
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const total = await SubCategory.countDocuments();
+        const active = await SubCategory.countDocuments({ status: "Active" });
+        const inactive = await SubCategory.countDocuments({ status: "Inactive" });
+        const subCategories = await SubCategory.find().populate('parentCategory').skip(skip).limit(limit);
     
         res.status(200).json({
           success: true,
           message: "SubCategories loaded successfully",
           data : subCategories,
+          page,
+          totalPages: Math.ceil(total / limit),
+          total,
+          active,
+          inactive,
         });
       } catch (error) {
         res.status(500).json({
@@ -73,6 +86,19 @@ router.get("/all", protect, admin, async(req,res) => {
         });
       } 
 })
+
+// Search subcategories for dropdowns
+router.get("/search", protect, async (req, res) => {
+  try {
+    const { q = "", limit = 5 } = req.query;
+    const query = q ? { name: { $regex: q, $options: "i" }, status: "Active" } : { status: "Active" };
+    
+    const subCategories = await SubCategory.find(query).populate('parentCategory').limit(parseInt(limit));
+    res.status(200).json({ success: true, data: subCategories });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 router.get("/public/all", async (req, res) => {
   try {
@@ -85,20 +111,8 @@ router.get("/public/all", async (req, res) => {
   }
 });
 
-// GET public subcategories root path
-router.get("/", async (req, res) => {
-  try {
-    const subCategories = await SubCategory.find({ status: "Active" }).populate(
-      "parentCategory",
-    );
-    res.status(200).json({ success: true, data: subCategories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
 // Update SubCategory
-router.put("/update/:id", protect, admin, async(req,res) => {
+router.put("/update/:id", protect, async(req,res) => {
     try{
             const ID = req.params.id
             const updatedField = req.body;
@@ -129,7 +143,15 @@ router.put("/update/:id", protect, admin, async(req,res) => {
                 updatedField.status = "Inactive";
             }
 
-            const makeUpdate = await SubCategory.findByIdAndUpdate(ID, updatedField, {new : true}).populate("parentCategory")
+            const makeUpdate = await SubCategory.findByIdAndUpdate(ID, updatedField, {new : true}).populate("parentCategory");
+            
+            if (makeUpdate) {
+                await Product.updateMany(
+                    { subCategory: ID },
+                    { status: makeUpdate.status }
+                );
+            }
+
             res.status(200).json({
               success: true,
               message: "SubCategory updated successfully",
@@ -145,7 +167,7 @@ router.put("/update/:id", protect, admin, async(req,res) => {
 })
 
 // Delete SubCategory
-router.delete("/delete/:id", protect, admin, async(req,res) => {
+router.delete("/delete/:id", protect, async(req,res) => {
 try {
       const ID = req.params.id;
       const deletesubCategory = await SubCategory.findByIdAndDelete(ID);

@@ -18,15 +18,8 @@ const orderItemSchema = new mongoose.Schema(
     product: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: "Products", // use "Products" since parent model uses "Products"
+      ref: "Product",
     },
-    variant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Variants",
-      default: null,
-    },
-    size: { type: String, default: "" },
-    color: { type: String, default: "" },
   },
   { _id: false }, // sub-docs don't need their own _id
 );
@@ -63,28 +56,6 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    paymentProvider: {
-      type: String,
-      enum: ["Stripe", "Razorpay", "PayPal", "COD"],
-      default: null,
-    },
-    paymentSessionId: {
-      type: String,
-      default: null,
-      index: true,
-      sparse: true,
-    },
-    paymentIntentId: {
-      type: String,
-      default: null,
-      index: true,
-      sparse: true,
-    },
-    shippingMethod: {
-      type: String,
-      enum: ["standard", "express"],
-      default: "standard",
-    },
     paymentResult: {
       // Filled in by PUT /api/orders/:id/pay after gateway callback
       id: { type: String },
@@ -95,8 +66,6 @@ const orderSchema = new mongoose.Schema(
 
     // 5. Price breakdown
     itemsPrice: { type: Number, required: true, default: 0.0 },
-    discountPrice: { type: Number, required: true, default: 0.0 },
-    couponCode: { type: String, default: null },
     taxPrice: { type: Number, required: true, default: 0.0 },
     shippingPrice: { type: Number, required: true, default: 0.0 },
     totalPrice: { type: Number, required: true, default: 0.0 },
@@ -136,10 +105,115 @@ orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ createdAt: -1 });
 
-// Performance indexes — added in modernization v1.0
-orderSchema.index({ orderStatus: 1, createdAt: -1 });
-
 const Order = mongoose.model("Order", orderSchema);
 
 export default Order;
 
+// /*
+//  * Handover note: Order schema.
+//  * Checkout creates order documents from cart/product data; admin order routes read and update
+//  * payment/order status while user routes expose a customer's own order history.
+//  */
+// import mongoose from "mongoose";
+
+// const orderSchema = mongoose.Schema(
+//   {
+//     // 1. The user who placed the order
+//     user: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       required: true,
+//       ref: "User", // References your User model
+//     },
+
+//     // 2. The items purchased
+//     orderItems: [
+//       {
+//         name: { type: String, required: true },
+//         qty: { type: Number, required: true },
+//         // image: { type: String, required: true },
+//         price: { type: Number, required: true },
+//         product: {
+//           type: mongoose.Schema.Types.ObjectId,
+//           required: true,
+//           ref: "Product", // References your Product model
+//         },
+//       },
+//     ],
+
+//     // 3. Delivery information
+//     shippingAddress: {
+//       address: { type: String, required: true },
+//       city: { type: String, required: true },
+//       postalCode: { type: String, required: true },
+//       country: { type: String, required: true },
+//     },
+
+//     // 4. Payment details
+//     paymentMethod: {
+//       type: String,
+//       required: true,
+//       // e.g., 'Stripe', 'PayPal', 'Razorpay', 'COD'
+//     },
+//     paymentResult: {
+//       // This holds the response payload from your payment gateway
+//       id: { type: String },
+//       status: { type: String },
+//       update_time: { type: String },
+//       email_address: { type: String },
+//     },
+
+//     // 5. Price breakdown
+//     itemsPrice: {
+//       type: Number,
+//       required: true,
+//       default: 0.0,
+//     },
+//     taxPrice: {
+//       type: Number,
+//       required: true,
+//       default: 0.0,
+//     },
+//     shippingPrice: {
+//       type: Number,
+//       required: true,
+//       default: 0.0,
+//     },
+//     totalPrice: {
+//       type: Number,
+//       required: true,
+//       default: 0.0,
+//     },
+
+//     // 6. Order Tracking & Status
+//     orderStatus: {
+//       type: String,
+//       required: true,
+//       enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
+//       default: "Pending",
+//     },
+//     isPaid: {
+//       type: Boolean,
+//       required: true,
+//       default: false,
+//     },
+//     paidAt: {
+//       type: Date,
+//     },
+//     isDelivered: {
+//       type: Boolean,
+//       required: true,
+//       default: false,
+//     },
+//     deliveredAt: {
+//       type: Date,
+//     },
+//   },
+//   {
+//     // Automatically adds 'createdAt' and 'updatedAt' fields
+//     timestamps: true,
+//   },
+// );
+
+// const Order = mongoose.model("Order", orderSchema);
+
+// export default Order;

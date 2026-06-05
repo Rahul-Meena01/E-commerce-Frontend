@@ -62,37 +62,6 @@ const VariantSchema = new mongoose.Schema(
       type: Number,
     },
 
-    sku: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-
-    size: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    color: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    colorHex: {
-      type: String,
-      default: "#000000",
-      trim: true,
-    },
-
-    stock: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 0,
-    },
-
     status: {
       type: String,
       enum: ["Active", "Inactive"],
@@ -104,11 +73,6 @@ const VariantSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
-VariantSchema.index({ parentProduct: 1, status: 1 });
-
-// Performance indexes — added in modernization v1.0
-VariantSchema.index({ parentProduct: 1, color: 1, size: 1 });
 
 // module.exports = mongoose.model("Variants", VariantSchema);
 const Variant = mongoose.model("Variants", VariantSchema);
