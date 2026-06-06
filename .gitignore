@@ -7,6 +7,8 @@ dist/
 **/dist/
 build/
 **/build/
+dist-ssr/
+**/dist-ssr/
 
 # Testing coverage
 coverage/
@@ -24,6 +26,9 @@ coverage/
 uploads/
 **/uploads/*
 !**/uploads/.gitkeep
+media/
+**/media/*
+!**/media/.gitkeep
 
 # Logs
 logs/
@@ -39,6 +44,8 @@ lerna-debug.log*
 .DS_Store
 **/Thumbs.db
 **/Desktop.ini
+__MACOSX/
+**/__MACOSX/
 
 # IDEs and editors
 .idea/
@@ -54,3 +61,16 @@ lerna-debug.log*
 temp_backend/
 scratch/
 **/scratch/
+tmp/
+temp/
+**/tmp/
+**/temp/
+*.tmp
+*.bak
+*.backup
+*~
+extract.py
+**/verify_routes*.js
+
+# Nested repository metadata accidentally copied into the workspace
+**/.git/

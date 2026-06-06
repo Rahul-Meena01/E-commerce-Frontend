@@ -1,161 +1,156 @@
-# LOFT E-Commerce Platform
+# LOFT E-Commerce Monorepo
 
-A premium full-stack e-commerce application consisting of a customer-facing storefront, a comprehensive administrative and vendor dashboard, and a robust RESTful API backend.
+LOFT is a full-stack e-commerce platform with a customer storefront, an admin and vendor dashboard, and a Node.js API backend. The project is organized as a monorepo so the storefront, operations portal, and backend services can be developed and deployed together while keeping their dependencies and build commands separate.
 
-## Project Structure
+## Features
 
-This repository is organized as a monorepo containing three core packages:
-
-```text
-E-commerce/
-├── admin/             # React/Vite Admin & Vendor Dashboard Portal
-├── backend/           # Node.js/Express.js Backend API
-└── frontend/          # React/Vite Customer-facing E-Commerce Store
-```
-
----
+- Customer storefront for browsing categories, product details, cart, checkout, wishlist, profile, and order success flows.
+- Admin dashboard for products, categories, subcategories, variants, coupons, gift cards, orders, users, and vendor management.
+- Vendor portal for vendor profile, products, categories, subcategories, coupons, orders, and dashboard workflows.
+- REST API for authentication, products, carts, orders, coupons, payments, vendors, profiles, wishlist, and upload handling.
+- Payment integration points for Razorpay and Stripe.
+- Email service integration through SMTP-compatible providers.
 
 ## Tech Stack
 
-### Frontend & Admin
-- **Framework**: React 19 (Vite)
-- **Styling**: Tailwind CSS, PostCSS
-- **State/Data Fetching**: Axios, React Query (TanStack Query)
-- **Routing**: React Router DOM (v7)
-- **Icons**: Lucide React, React Icons
-- **PDF Generation**: jsPDF, jsPDF AutoTable
+| Area | Technologies |
+| --- | --- |
+| Frontend | React, Vite, React Router, TanStack Query, Axios, Framer Motion |
+| Admin | React, Vite, React Router, Axios, jsPDF, jsPDF AutoTable |
+| Backend | Node.js, Express, MongoDB, Mongoose, JWT, Multer |
+| Security | Helmet, express-rate-limit, express-mongo-sanitize, bcryptjs, HTTP-only cookies |
+| Payments and Email | Razorpay, Stripe, Nodemailer |
 
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (via Mongoose)
-- **Authentication**: JWT (JSON Web Tokens) with Secure Cookie Session management
-- **Security**: Helmet, Express Mongo Sanitize, Express Rate Limit, BcryptJS
-- **FileUpload**: Multer
-- **Integrations**: Stripe, Razorpay, Nodemailer (SMTP)
+## Folder Structure
 
----
+```text
+E-commerce/
+├── admin/       # React/Vite admin and vendor dashboard
+├── backend/     # Node.js/Express API and MongoDB models
+├── frontend/    # React/Vite customer storefront
+├── .gitignore   # Root ignore rules for generated and sensitive files
+└── README.md    # Project documentation
+```
 
-## Installation & Setup
+## Prerequisites
 
-Before setting up each component, ensure you have [Node.js](https://nodejs.org/) (v18 or higher) and [npm](https://www.npmjs.com/) installed.
-
-### 1. Backend Setup
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install the backend dependencies:
-   ```bash
-   npm install
-   ```
-3. Create your local environment configuration:
-   ```bash
-   cp .env.example .env
-   ```
-4. Update the `.env` file with your credentials (see [Environment Variables](#environment-variables) below).
-5. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-### 2. Frontend Storefront Setup
-1. Navigate to the frontend directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Install the storefront dependencies:
-   ```bash
-   npm install
-   ```
-3. Create your local environment configuration:
-   ```bash
-   cp .env.example .env
-   ```
-4. Update `.env` with the URL of your local running backend.
-5. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-### 3. Admin Portal Setup
-1. Navigate to the admin directory:
-   ```bash
-   cd ../admin
-   ```
-2. Install the admin portal dependencies:
-   ```bash
-   npm install
-   ```
-3. Create your local environment configuration:
-   ```bash
-   cp .env.example .env
-   ```
-4. Update `.env` with the URL of your local running backend.
-5. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
----
+- Node.js 18 or newer
+- npm
+- MongoDB database, either local or hosted
+- Razorpay, Stripe, and SMTP credentials only if those integrations are enabled
 
 ## Environment Variables
 
-### Backend (`backend/.env`)
-The backend requires several key configurations for authentication and integrations:
-- `MONGO_URI`: Your MongoDB Atlas or local MongoDB connection string.
-- `JWT_SECRET` & `ADMIN_SECRET`: Strong secret keys used for signing session tokens.
-- `PORT`: Server port (defaults to `3000`).
-- `CLIENT_URL`: Allowed cross-origin URLs (comma-separated list of frontends).
-- `RAZORPAY_KEY_ID` & `RAZORPAY_KEY_SECRET` (Optional): Credentials for processing payments via Razorpay.
-- `STRIPE_SECRET_KEY` & `STRIPE_WEBHOOK_SECRET` (Optional): Credentials for processing payments via Stripe.
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (Optional): Configurations for sending transactional emails.
+Each app has its own example environment file. Copy the relevant template before running local development:
 
-### Frontend (`frontend/.env`)
-- `VITE_API_URL`: Backend server base API endpoint (e.g., `http://localhost:3000`).
-- `VITE_ADMIN_PORTAL_URL`: The URL where the admin portal is hosted locally (e.g., `http://localhost:5174`).
-
-### Admin (`admin/.env`)
-- `VITE_API_URL`: Backend server API endpoint (e.g., `http://localhost:3000`).
-- `VITE_API_BASE_URL`: Base backend URL for serving files or static assets.
-
----
-
-## Development Workflow & Scripts
-
-Each project folder manages its own build and run pipelines.
-
-### Backend Scripts
-- `npm run dev`: Starts the backend server with `nodemon` for auto-reloads.
-- `npm start`: Starts the production backend server.
-- `npm test`: Runs the backend test suite using Jest.
-
-### Frontend Scripts
-- `npm run dev`: Boots the local Vite dev server.
-- `npm run build`: Bundles the React application for production into the `dist/` directory.
-- `npm run preview`: Previews the production bundle locally.
-
-### Admin Dashboard Scripts
-- `npm run dev`: Boots the local Vite dev server.
-- `npm run build`: Bundles the React application for production into the `dist/` directory.
-
----
-
-## Build and Deployment Notes
-
-### Building for Production
-To prepare the storefront and admin portals for production hosting, execute the build scripts in their respective folders:
 ```bash
-# In frontend/
-npm run build
-
-# In admin/
-npm run build
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+cp admin/.env.example admin/.env
 ```
-This generates optimized static HTML/CSS/JS assets inside their respective `dist/` folders, which can be deployed to static hosting providers (such as Vercel, Netlify, or AWS S3).
 
-### Backend Deployment
-Deploy the backend Node/Express application to services like Render, Heroku, or AWS EC2. Ensure that:
-1. Production environment variables are correctly mapped on the hosting provider.
-2. `NODE_ENV` is set to `production`.
-3. The port matches the host configuration.
+Never commit real `.env` files. They are intentionally ignored by git.
+
+### Backend
+
+Required variables:
+
+- `MONGO_URI`
+- `JWT_SECRET`
+- `ADMIN_SECRET`
+
+Common optional variables:
+
+- `PORT`
+- `NODE_ENV`
+- `CLIENT_URL`
+- `PAYMENT_CURRENCY`
+- `CURRENCY_SYMBOL`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+
+### Frontend
+
+- `VITE_API_URL`
+- `VITE_ADMIN_PORTAL_URL`
+
+### Admin
+
+- `VITE_API_URL`
+- `VITE_API_BASE_URL`
+
+## Local Setup
+
+Install dependencies separately in each app folder.
+
+### Backend Setup
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+The backend defaults to `http://localhost:3000` when `PORT=3000`.
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+The storefront runs on the Vite dev server, commonly `http://localhost:5173`.
+
+### Admin Setup
+
+```bash
+cd admin
+npm install
+cp .env.example .env
+npm run dev
+```
+
+The admin portal runs on the Vite dev server, commonly `http://localhost:5174`.
+
+## Build Commands
+
+```bash
+# Frontend production build
+cd frontend
+npm run build
+
+# Admin production build
+cd admin
+npm run build
+
+# Backend production start
+cd backend
+npm start
+```
+
+Frontend and admin builds output to their local `dist/` folders. Those folders are generated artifacts and should not be committed.
+
+## Deployment Notes
+
+- Deploy `frontend/` and `admin/` as separate Vite static applications on hosts such as Vercel, Netlify, or any static asset platform.
+- Deploy `backend/` as a Node.js service on a platform such as Render, Railway, Heroku, or a VPS.
+- Configure production environment variables in the hosting provider dashboard, not in source control.
+- Set `CLIENT_URL` to the deployed storefront and admin origins so CORS and cookie behavior work correctly.
+- Ensure production payment webhook secrets are configured before enabling live payments.
+- Keep uploaded media outside the git repository, preferably in object storage or a managed media service.
+
+## GitHub Readiness
+
+The repository is intended to be pushed as a monorepo containing `frontend/`, `admin/`, and `backend/`. Generated folders such as `node_modules/`, `dist/`, `build/`, local `.env` files, logs, uploads, and temporary scratch files are ignored by the root `.gitignore`.

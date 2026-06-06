@@ -13,11 +13,24 @@ node_modules
 # Build outputs
 dist
 dist-ssr
+build
+coverage
 
 # Environment variables
 .env
 .env.*
 !.env.example
+
+# Local uploads/media and temporary files
+uploads
+media
+tmp
+temp
+*.tmp
+*.bak
+*.backup
+*~
+verify_routes*.js
 
 # Editor directories and files
 .vscode/*
