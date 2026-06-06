@@ -25,7 +25,8 @@ const saveLocalWishlist = (items) => {
 // Maps backend DB item structure to frontend presentation structure
 const mapWishlistItem = (item) => {
   if (!item) return null;
-  const product = item.product || {};
+  const isPopulatedProduct = item._id && item.name;
+  const product = isPopulatedProduct ? item : (item.product || {});
   const variant = item.variant || {};
 
   const name = variant.name || product.name || "Product";
@@ -71,7 +72,7 @@ export const useWishlistQuery = () => {
       const res = await wishlistApi.getWishlist();
       if (res.ok) {
         const json = await res.json();
-        const items = json.data || [];
+        const items = json.data?.products || [];
         return items.map(mapWishlistItem).filter(Boolean);
       }
       throw new Error("Failed to fetch wishlist");
@@ -124,8 +125,19 @@ export const useWishlistMutations = () => {
         return;
       }
 
-      const res = await wishlistApi.toggleWishlist({ productId, variantId, size, color });
-      if (!res.ok) throw new Error("Failed to toggle wishlist");
+      const currentWishlist = queryClient.getQueryData(["wishlist", true]) || [];
+      const isIn = currentWishlist.some(
+        (item) => String(item.productId || item.id) === String(productId)
+      );
+
+      let res;
+      if (isIn) {
+        res = await wishlistApi.removeFromWishlist(productId);
+      } else {
+        res = await wishlistApi.addToWishlist(productId);
+      }
+
+      if (!res.ok) throw new Error("Failed to update wishlist");
       const json = await res.json();
       return json.data || [];
     },

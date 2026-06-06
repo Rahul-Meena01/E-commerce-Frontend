@@ -1,5 +1,5 @@
 import { Truck, ChevronRight } from "lucide-react";
-import { CURRENCY } from "../../../constants/currency";
+import { formatPrice } from "../../../utils/pricing";
 
 const CheckoutShippingForm = ({
   formData,
@@ -14,8 +14,8 @@ const CheckoutShippingForm = ({
         <h2 className="checkout-section-title">Shipping Information</h2>
 
         <div className="checkout-form-grid">
-          <div className="checkout-form-group">
-            <label htmlFor="fullName" className="checkout-label">
+          <div className="ds-field checkout-form-group">
+            <label htmlFor="fullName" className="ds-label">
               Full Name
             </label>
             <input
@@ -25,13 +25,13 @@ const CheckoutShippingForm = ({
               value={formData.fullName}
               onChange={handleInputChange}
               placeholder="Enter your full name"
-              className="checkout-input"
+              className="ds-input"
               required
             />
           </div>
 
-          <div className="checkout-form-group">
-            <label htmlFor="email" className="checkout-label">
+          <div className="ds-field checkout-form-group">
+            <label htmlFor="email" className="ds-label">
               Email Address
             </label>
             <input
@@ -41,13 +41,13 @@ const CheckoutShippingForm = ({
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Enter your email address"
-              className="checkout-input"
+              className="ds-input"
               required
             />
           </div>
 
-          <div className="checkout-form-group">
-            <label htmlFor="phone" className="checkout-label">
+          <div className="ds-field checkout-form-group">
+            <label htmlFor="phone" className="ds-label">
               Phone Number
             </label>
             <input
@@ -57,33 +57,35 @@ const CheckoutShippingForm = ({
               value={formData.phone}
               onChange={handleInputChange}
               placeholder="Enter your phone number"
-              className="checkout-input"
+              className="ds-input"
             />
           </div>
 
-          <div className="checkout-form-group">
-            <label htmlFor="country" className="checkout-label">
+          <div className="ds-field checkout-form-group">
+            <label htmlFor="country" className="ds-label">
               Country / Region
             </label>
-            <select
-              id="country"
-              name="country"
-              value={formData.country}
-              onChange={handleInputChange}
-              className="checkout-select"
-              required
-            >
-              <option value="">Select your country</option>
-              <option value="United States">United States</option>
-              <option value="Canada">Canada</option>
-              <option value="United Kingdom">United Kingdom</option>
-              <option value="Australia">Australia</option>
-              <option value="India">India</option>
-            </select>
+            <div className="ds-select-wrap">
+              <select
+                id="country"
+                name="country"
+                value={formData.country}
+                onChange={handleInputChange}
+                className="ds-select"
+                required
+              >
+                <option value="">Select your country</option>
+                <option value="United States">United States</option>
+                <option value="Canada">Canada</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Australia">Australia</option>
+                <option value="India">India</option>
+              </select>
+            </div>
           </div>
 
-          <div className="checkout-form-group-full">
-            <label htmlFor="street" className="checkout-label">
+          <div className="ds-field checkout-form-group-full">
+            <label htmlFor="street" className="ds-label">
               Street Address
             </label>
             <input
@@ -93,13 +95,13 @@ const CheckoutShippingForm = ({
               value={formData.street}
               onChange={handleInputChange}
               placeholder="Enter your street address"
-              className="checkout-input"
+              className="ds-input"
               required
             />
           </div>
 
-          <div className="checkout-form-group-full">
-            <label className="checkout-label">
+          <div className="ds-field checkout-form-group-full">
+            <label className="ds-label">
               Apartment, suite, unit, etc. (optional)
             </label>
             <input
@@ -108,25 +110,25 @@ const CheckoutShippingForm = ({
               value={formData.apartment}
               onChange={handleInputChange}
               placeholder="Apartment, suite, unit, etc. (optional)"
-              className="checkout-input"
+              className="ds-input"
             />
           </div>
 
-          <div className="checkout-form-group">
-            <label className="checkout-label">City</label>
+          <div className="ds-field checkout-form-group">
+            <label className="ds-label">City</label>
             <input
               type="text"
               name="city"
               value={formData.city}
               onChange={handleInputChange}
               placeholder="Enter your city"
-              className="checkout-input"
+              className="ds-input"
               required
             />
           </div>
 
-          <div className="checkout-form-group">
-            <label className="checkout-label" htmlFor="state">State / Province</label>
+          <div className="ds-field checkout-form-group">
+            <label className="ds-label" htmlFor="state">State / Province</label>
             <input
               id="state"
               type="text"
@@ -134,20 +136,20 @@ const CheckoutShippingForm = ({
               value={formData.state}
               onChange={handleInputChange}
               placeholder="State / Province / Region"
-              className="checkout-input"
+              className="ds-input"
               required
             />
           </div>
 
-          <div className="checkout-form-group">
-            <label className="checkout-label">Postal Code</label>
+          <div className="ds-field checkout-form-group">
+            <label className="ds-label">Postal Code</label>
             <input
               type="text"
               name="postalCode"
               value={formData.postalCode}
               onChange={handleInputChange}
               placeholder="Enter postal code"
-              className="checkout-input"
+              className="ds-input"
               required
             />
           </div>
@@ -180,7 +182,7 @@ const CheckoutShippingForm = ({
                 </div>
               </div>
             </div>
-            <span className="checkout-shipping-price">{CURRENCY.symbol}99 (Free over {CURRENCY.symbol}1000)</span>
+            <span className="checkout-shipping-price">{formatPrice(99)} (Free over {formatPrice(1000)})</span>
           </label>
         </div>
       </div>

@@ -18,6 +18,9 @@ const ProductInfo = ({
   oldPrice,
   discountPercent,
 }) => {
+  const showColorSelector = product?.variants?.length > 0 && colorOptions.length > 0;
+  const showSizeSelector = product?.variants?.some(v => v.size) && sizeOptions.length > 0;
+
   return (
     <div className="pi-root">
       <span className="pd-category">{displayCategory.replace(/-/g, " ").toUpperCase()}</span>
@@ -34,25 +37,29 @@ const ProductInfo = ({
       </div>
 
       <div className="pi-variants">
-        <VariantSelector
-          name="color"
-          label="Color"
-          type="color"
-          options={colorOptions}
-          selectedValue={selectedColor}
-          onChange={onColorChange}
-        />
+        {showColorSelector && (
+          <VariantSelector
+            name="color"
+            label="Color"
+            type="color"
+            options={colorOptions}
+            selectedValue={selectedColor}
+            onChange={onColorChange}
+          />
+        )}
 
-        <VariantSelector
-          name="size"
-          label="Size"
-          type="size"
-          options={sizeOptions}
-          selectedValue={selectedSize}
-          required
-          error={sizeError}
-          onChange={onSizeChange}
-        />
+        {showSizeSelector && (
+          <VariantSelector
+            name="size"
+            label="Size"
+            type="size"
+            options={sizeOptions}
+            selectedValue={selectedSize}
+            required
+            error={sizeError}
+            onChange={onSizeChange}
+          />
+        )}
       </div>
     </div>
   );

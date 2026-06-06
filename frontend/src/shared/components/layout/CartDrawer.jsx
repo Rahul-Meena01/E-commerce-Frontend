@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { useCart } from "@/features/cart/hooks/useCart";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 import "../../../styles/CartDrawer.css";
 
 const CartDrawer = ({ isOpen, onClose }) => {
@@ -77,79 +77,85 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </button>
             </div>
           ) : (
-            cartItems.map((item) => (
-              <div className="cart-drawer-item" key={item._id}>
-                <div className="item-image">
-                  <OptimizedImage src={item.image} alt={item.name} />
-                </div>
-                <div className="item-details">
-                  <div className="item-info-header">
-                    <h4>{item.name}</h4>
-                    <button
-                      className="item-remove"
-                      onClick={() =>
-                        removeFromCart({
-                          productId: item.product,
-                          size: item.size,
-                          color: item.color,
-                          itemId: item._id,
-                        })
-                      }
-                      aria-label={`Remove ${item.name} from cart`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                  {(item.size || item.color) && (
-                    <div className="item-specs">
-                      {item.color && <span className="spec-tag">Color: {item.color}</span>}
-                      {item.size && <span className="spec-tag">Size: {item.size}</span>}
+            cartItems.map((item) => {
+              const productId = typeof item.product === 'object' && item.product
+                ? (item.product._id || item.product.id)
+                : item.product;
+              return (
+                <div className="cart-drawer-item" key={item._id}>
+                  <Link to={`/product/${productId}`} onClick={onClose} className="item-image-link">
+                    <div className="item-image">
+                      <OptimizedImage src={item.image} alt={item.name} />
                     </div>
-                  )}
-                  <div className="item-price-row">
-                    <div className="quantity-selector">
+                  </Link>
+                  <div className="item-details">
+                    <div className="item-info-header">
+                      <Link to={`/product/${productId}`} onClick={onClose} className="item-name-link">
+                        <h4>{item.name}</h4>
+                      </Link>
                       <button
+                        className="item-remove"
                         onClick={() =>
-                          item.quantity > 1 &&
-                          updateQuantity({
-                            productId: item.product,
+                          removeFromCart({
+                            productId,
                             size: item.size,
                             color: item.color,
-                            quantity: item.quantity - 1,
                             itemId: item._id,
                           })
                         }
-                        disabled={item.quantity <= 1}
-                        aria-label="Decrease quantity"
+                        aria-label={`Remove ${item.name} from cart`}
                       >
-                        <Minus size={12} />
-                      </button>
-                      <span>{item.quantity}</span>
-                      <button
-                        onClick={() =>
-                          updateQuantity({
-                            productId: item.product,
-                            size: item.size,
-                            color: item.color,
-                            quantity: item.quantity + 1,
-                            itemId: item._id,
-                          })
-                        }
-                        aria-label="Increase quantity"
-                      >
-                        <Plus size={12} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
-                    <span className="item-price">
-                      {new Intl.NumberFormat("en-IN", {
-                        style: "currency",
-                        currency: CURRENCY.code,
-                      }).format(item.price * item.quantity)}
-                    </span>
+                    {(item.size || item.color) && (
+                      <div className="item-specs">
+                        {item.color && <span className="spec-tag">Color: {item.color}</span>}
+                        {item.size && <span className="spec-tag">Size: {item.size}</span>}
+                      </div>
+                    )}
+                    <div className="item-price-row">
+                      <div className="quantity-selector">
+                        <button
+                          onClick={() =>
+                            item.quantity > 1 &&
+                            updateQuantity({
+                              productId,
+                              size: item.size,
+                              color: item.color,
+                              quantity: item.quantity - 1,
+                              itemId: item._id,
+                            })
+                          }
+                          disabled={item.quantity <= 1}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button
+                          onClick={() =>
+                            updateQuantity({
+                              productId,
+                              size: item.size,
+                              color: item.color,
+                              quantity: item.quantity + 1,
+                              itemId: item._id,
+                            })
+                          }
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                      <span className="item-price">
+                        {formatPrice(item.price * item.quantity)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -158,10 +164,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
             <div className="subtotal-row">
               <span>Subtotal</span>
               <span className="subtotal-price">
-                {new Intl.NumberFormat("en-IN", {
-                  style: "currency",
-                  currency: CURRENCY.code,
-                }).format(cartSubtotal)}
+                {formatPrice(cartSubtotal)}
               </span>
             </div>
             <p className="footer-notice">Shipping, taxes, and discounts calculated at checkout.</p>

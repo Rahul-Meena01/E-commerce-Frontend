@@ -4,23 +4,18 @@ import { useProducts } from "@/features/products/hooks/useProducts";
 import { useRecentlyViewedProducts } from "../hooks/useRecentlyViewedProducts";
 import SearchDiscoveryCategoryCard from "./SearchDiscoveryCategoryCard";
 import SearchDiscoveryProductCard from "./SearchDiscoveryProductCard";
+import { IMAGE_FALLBACK } from "@/constants/images";
 
 const CATEGORY_VISUALS = {
-  men: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?q=80&w=1200&auto=format&fit=crop",
-  women:
-    "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop",
-  kids: "https://images.unsplash.com/photo-1503919005314-30d93d07d823?q=80&w=1200&auto=format&fit=crop",
-  accessories:
-    "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop",
-  footwear:
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop",
+  men: IMAGE_FALLBACK,
+  women: IMAGE_FALLBACK,
+  kids: IMAGE_FALLBACK,
+  accessories: IMAGE_FALLBACK,
+  footwear: IMAGE_FALLBACK,
 };
 
 const DEFAULT_CATEGORY_VISUALS = [
-  "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=1200&auto=format&fit=crop",
+  IMAGE_FALLBACK,
 ];
 
 function getCategoryKey(category) {

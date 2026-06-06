@@ -27,12 +27,7 @@ function writeStoredProducts(items) {
 }
 
 function getProductId(product) {
-  return (
-    product?.slug ||
-    product?.productId ||
-    (product?.id ? `${product.category}_${product.id}` : product?._id) ||
-    null
-  );
+  return product?._id || product?.id || product?.productId || null;
 }
 
 function normalizeRecentlyViewedProduct(product) {

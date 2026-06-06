@@ -58,7 +58,7 @@ const NavbarMobileMenu = ({
 
           <button onClick={() => handleMobileNav("footer")}>About</button>
           <button onClick={() => handleMobileNav("footer")}>Contact</button>
-          <button onClick={() => handleMobileNav("/blog")}>Blog</button>
+
         </div>
 
         <div className="mobile-menu-bottom">

@@ -3,9 +3,9 @@ import "@/styles/Category.css";
 import { Link } from "react-router-dom";
 import { useSubCategories } from "../hooks/useSubCategories";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { IMAGE_FALLBACK } from "@/constants/images";
 
-const DEFAULT_SUBCATEGORY_IMAGE =
-  "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=800&auto=format&fit=crop";
+const DEFAULT_SUBCATEGORY_IMAGE = IMAGE_FALLBACK;
 
 const getRandomSubCategories = (sourceArray, count, excludeArray = []) => {
   if (!sourceArray || sourceArray.length === 0) return [];

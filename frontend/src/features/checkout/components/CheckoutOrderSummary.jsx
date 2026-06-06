@@ -10,7 +10,7 @@ import {
   Calendar,
 } from "lucide-react";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
-import { CURRENCY } from "../../../constants/currency";
+import { formatPrice } from "../../../utils/pricing";
 
 export default function CheckoutOrderSummary({
   cartItems,
@@ -109,10 +109,9 @@ export default function CheckoutOrderSummary({
                 </div>
               </div>
               <div className="checkout-item-price">
-                {CURRENCY.symbol}
-                {(
+                {formatPrice(
                   (Number(item.price) || 0) * (Number(item.quantity) || 0)
-                ).toFixed(2)}
+                )}
               </div>
             </div>
           ))}
@@ -133,13 +132,13 @@ export default function CheckoutOrderSummary({
         <div className="checkout-totals">
           <div className="checkout-total-row">
             <span>Subtotal</span>
-            <span>{CURRENCY.symbol}{(Number(cartSubtotal) || 0).toFixed(2)}</span>
+            <span>{formatPrice(cartSubtotal)}</span>
           </div>
           {discount > 0 && (
             <div className="checkout-total-row">
               <span>Coupon Discount</span>
               <span style={{ color: "var(--ds-color-success, #047857)" }}>
-                -{CURRENCY.symbol}{discount.toFixed(2)}
+                -{formatPrice(discount)}
               </span>
             </div>
           )}
@@ -148,19 +147,19 @@ export default function CheckoutOrderSummary({
             <span>
               {shippingCost === 0
                 ? "Free"
-                : `${CURRENCY.symbol}${shippingCost.toFixed(2)}`}
+                : formatPrice(shippingCost)}
             </span>
           </div>
           <div className="checkout-total-row">
             <span>Tax (18% GST)</span>
-            <span>{CURRENCY.symbol}{tax.toFixed(2)}</span>
+            <span>{formatPrice(tax)}</span>
           </div>
 
           <div className="checkout-divider"></div>
 
           <div className="checkout-total-row checkout-total-amount">
             <span>Total</span>
-            <span>{CURRENCY.symbol}{total.toFixed(2)}</span>
+            <span>{formatPrice(total)}</span>
           </div>
         </div>
 
@@ -208,7 +207,7 @@ export default function CheckoutOrderSummary({
             <Truck size={15} />
             <div>
               <p className="checkout-promise-title">Free Standard Delivery</p>
-              <p className="checkout-promise-desc">Complimentary for all purchases above {CURRENCY.symbol}1000</p>
+              <p className="checkout-promise-desc">Complimentary for all purchases above {formatPrice(1000)}</p>
             </div>
           </div>
 

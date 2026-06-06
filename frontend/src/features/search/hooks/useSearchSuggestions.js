@@ -51,8 +51,7 @@ const buildSuggestions = (products, query) => {
           label: name,
           group: "Product",
           meta: [brand, category].filter(Boolean).join(" · "),
-          query: name,
-          productId: product.productId || product.slug || product._id || name,
+          productId: product._id || product.id,
         }),
       );
     }

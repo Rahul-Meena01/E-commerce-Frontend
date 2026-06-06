@@ -5,9 +5,16 @@ import "../../styles/Category.css";
 import { useCategories } from "@/features/products/hooks/useCategories";
 import { useSubCategories } from "@/features/products/hooks/useSubCategories";
 import { useProducts } from "@/features/products/hooks/useProducts";
+import { IMAGE_FALLBACK } from "../../constants/images";
+import { API_BASE_URL } from "@/shared/utils/api";
 
-const DEFAULT_SUBCAT_IMAGE =
-  "https://via.placeholder.com/400x300?text=Subcategory";
+const resolveImage = (path) => {
+  if (!path) return IMAGE_FALLBACK;
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+  return `${API_BASE_URL}${path}`;
+};
 
 const CategoryPage = () => {
   const { category: categorySlug } = useParams();
@@ -54,9 +61,6 @@ const CategoryPage = () => {
       <header className="cat-hero">
         <div className="cat-hero-inner">
           <h1 className="cat-title">{selectedCategory.name} Collection</h1>
-          <p className="cat-sub">
-            An edited edit of premium essentials and seasonal highlights.
-          </p>
         </div>
       </header>
 
@@ -65,7 +69,7 @@ const CategoryPage = () => {
           <CategoryCard
             key={sub._id}
             title={sub.name}
-            image={DEFAULT_SUBCAT_IMAGE}
+            image={resolveImage(sub.image)}
             count={loading ? 0 : counts[sub._id] || 0}
             to={`/shop/${selectedCategory.slug}/${sub.slug}`}
           />

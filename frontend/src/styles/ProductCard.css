@@ -72,17 +72,30 @@
   justify-content: center;
   border-radius: 50%;
   margin: -8px -8px -8px 0;
-  color: var(--color-gray);
+  color: var(--ds-color-text-subtle, #98a2b3);
   transition: all var(--ds-duration-fast, 140ms) var(--ds-ease-standard, ease);
+  outline: none;
 }
 
-.pc-wishlist:hover {
-  background-color: var(--color-background);
-  color: #c0392b;
+.pc-wishlist:hover,
+.pc-wishlist:focus-visible {
+  background-color: var(--ds-color-surface-muted, #f8fafc);
+  color: var(--ds-color-danger, #b42318);
+}
+
+.pc-wishlist:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #a47551);
+  outline-offset: 2px;
 }
 
 .pc-wishlist.active {
-  color: #c0392b;
+  color: var(--ds-color-danger, #b42318);
+}
+
+.pc-link:focus-visible {
+  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline-offset: 2px;
+  border-radius: var(--ds-radius-md, 8px);
 }
 
 .pc-title {
@@ -111,6 +124,13 @@
   font-size: 15px;
   color: var(--ds-color-text, #111827);
   letter-spacing: -0.2px;
+}
+
+.pc-old-price {
+  text-decoration: line-through;
+  color: var(--ds-color-text-subtle, #98a2b3);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .pc-discount {
@@ -142,6 +162,11 @@
   color: #fff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(164, 117, 81, 0.25);
+}
+
+.pc-add:focus-visible {
+  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline-offset: 2px;
 }
 
 .pc-card:hover .pc-media img {

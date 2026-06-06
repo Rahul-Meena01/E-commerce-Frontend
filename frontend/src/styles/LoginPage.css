@@ -567,3 +567,28 @@
   text-align: left;
 }
 
+/* Accessibility Focus States */
+.login-submit-btn:focus-visible {
+  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline-offset: 2px;
+}
+
+.login-social-btn:focus-visible {
+  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline-offset: 2px;
+}
+
+.login-eye-btn:focus-visible {
+  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.login-top-link-btn:focus-visible,
+.login-forgot:focus-visible,
+.login-top-link:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #a47551);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+

@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { formatPrice } from "@/utils/pricing";
 
 export default function NavbarSearchOverlay({
   searchOpen,
@@ -55,7 +56,7 @@ export default function NavbarSearchOverlay({
                 <div className="search-result-info">
                   <span className="search-result-name">{product.name}</span>
                   <span className="search-result-meta">
-                    {product.brand} · ${product.price}
+                    {product.brand} · {formatPrice(product.price)}
                   </span>
                 </div>
                 <span className="search-result-category">

@@ -16,68 +16,12 @@ import {
   useAuthActions,
 } from "@/features/auth/context/AuthContext";
 import { useCategories } from "../../../features/products/hooks/useCategories";
-import OptimizedImage from "../ui/OptimizedImage";
-import { CURRENCY } from "@/constants/currency";
-import { SHOP_MENU_ITEMS } from "../../../features/products/constants/shopMenuItems";
+import { useSubCategories } from "../../../features/products/hooks/useSubCategories";
+import { formatPrice } from "@/utils/pricing";
 import SearchOverlay from "../../../features/search/components/SearchOverlay";
 import NavbarMobileMenu from "./NavbarMobileMenu";
 import NavbarDesktopMenu from "./NavbarDesktopMenu";
 import CartDrawer from "./CartDrawer";
-
-const normalizeMenuKey = (value = "") =>
-  value
-    .toString()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-const formatSubCategory = (subCategory, parentKey) => {
-  if (!subCategory) return null;
-
-  if (typeof subCategory === "string") {
-    const slug = normalizeMenuKey(subCategory);
-    return {
-      label: subCategory,
-      slug,
-      route: `/shop/${parentKey}/${slug}`,
-    };
-  }
-
-  const label = subCategory.name || subCategory.label || "";
-  const slug = subCategory.slug || normalizeMenuKey(label);
-
-  return {
-    label,
-    slug,
-    route: subCategory.route || `/shop/${parentKey}/${slug}`,
-  };
-};
-
-const buildShopMenuItem = (item, categories) => {
-  const matchedCategory = categories.find(
-    (category) =>
-      normalizeMenuKey(category.slug) === item.key ||
-      normalizeMenuKey(category.name) === normalizeMenuKey(item.label),
-  );
-
-  const apiSubCategories = Array.isArray(matchedCategory?.subCategories)
-    ? matchedCategory.subCategories.map((subCategory) =>
-        formatSubCategory(subCategory, item.key),
-      )
-    : [];
-
-  const fallbackSubCategories = item.subCategories.map((subCategory) =>
-    formatSubCategory(subCategory, item.key),
-  );
-
-  return {
-    ...item,
-    subCategories: apiSubCategories.filter(Boolean).length
-      ? apiSubCategories.filter(Boolean)
-      : fallbackSubCategories,
-  };
-};
 
 const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -105,16 +49,34 @@ const Navbar = () => {
   const { isAuthenticated, user } = useAuthState();
   const { logout } = useAuthActions();
   const { categories } = useCategories();
-  const shopMenuItems = SHOP_MENU_ITEMS.map((item) =>
-    buildShopMenuItem(item, categories),
-  );
+  const { subcategories: allSubCategories = [] } = useSubCategories();
+  const shopMenuItems = categories.map((cat) => {
+    const catKey = cat.slug || normalizeMenuKey(cat.name);
+    const catSubCats = allSubCategories.filter(
+      (sub) =>
+        sub.parentCategory?._id === cat._id ||
+        sub.parentCategory === cat._id
+    );
+    return {
+      key: catKey,
+      label: cat.name,
+      route: `/shop/${cat.slug}`,
+      note: "",
+      description: cat.description || `Explore our dynamic ${cat.name} collection.`,
+      subCategories: catSubCats.map((sub) => ({
+        label: sub.name,
+        slug: sub.slug,
+        route: `/shop/${cat.slug}/${sub.slug}`,
+      })),
+    };
+  });
   const activeShopItem =
     shopMenuItems.find((item) => item.key === activeShopKey) ||
     shopMenuItems[0];
   const activeShopSubCategories = activeShopItem?.subCategories || [];
 
   const openShopMenu = (
-    itemKey = activeShopItem?.key || SHOP_MENU_ITEMS[0].key,
+    itemKey = activeShopItem?.key || shopMenuItems[0]?.key,
   ) => {
     if (shopMenuCloseTimerRef.current) {
       clearTimeout(shopMenuCloseTimerRef.current);
@@ -222,7 +184,7 @@ const Navbar = () => {
   return (
     <>
       <div className="announcement-bar">
-        <p>Free standard shipping on orders over {CURRENCY.symbol}1000 • 30-day premium return policy</p>
+        <p>Free standard shipping on orders over {formatPrice(1000)} • 30-day premium return policy</p>
       </div>
       <nav className={`navbar ${isScrolled ? "scrolled" : ""}`} aria-label="Main navigation">
         <Link to="/" className="navbar-logo">
@@ -279,9 +241,7 @@ const Navbar = () => {
         >
           Contact
         </li>
-        <li>
-          <Link to="/blog">Blog</Link>
-        </li>
+
       </ul>
 
       <div className="navbar-icons">

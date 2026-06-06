@@ -11,7 +11,7 @@ import {
 import { orderApi } from "@/features/checkout/services/checkout.service";
 import "../../styles/OrderSuccessPage.css";
 import { useCartActions } from "@/features/cart/hooks/useCart";
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 import { motion } from "framer-motion";
 import logger from "@/shared/utils/logger";
 
@@ -216,7 +216,7 @@ const OrderSuccessPage = () => {
             <div className="loft-osp-col text-right">
               <span className="loft-osp-lbl">TOTAL AMOUNT</span>
               <span className="loft-osp-val">
-                {CURRENCY.symbol}{totalAmount.toFixed(2)}
+                {formatPrice(totalAmount)}
               </span>
             </div>
           </div>

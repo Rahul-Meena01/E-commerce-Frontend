@@ -1,5 +1,5 @@
 import { ShieldCheck, Lock, ArrowRight, X } from "lucide-react";
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 import { motion, AnimatePresence } from "framer-motion";
 import "@/styles/PaymentModal.css";
 
@@ -46,7 +46,7 @@ const PaymentModal = ({ isOpen, onClose, onPaymentSuccess, amount }) => {
               <div className="loft-pm-amount-badge">
                 <span className="loft-pm-amount-lbl">AUTHORIZED GRAND TOTAL</span>
                 <span className="loft-pm-amount-val">
-                  {CURRENCY.symbol}{amount.toFixed(2)}
+                  {formatPrice(amount)}
                 </span>
               </div>
 

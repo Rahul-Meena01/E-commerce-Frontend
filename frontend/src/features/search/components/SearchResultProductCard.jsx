@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { formatPrice } from "@/utils/pricing";
 
 export default function SearchResultProductCard({ product, onSelect }) {
-  const productId = product?.productId || product?.slug || product?._id || "";
+  const productId = product?._id || product?.id || product?.productId;
 
   const price = Number(product?.price) || 0;
   const categoryLabel =
@@ -28,7 +29,6 @@ export default function SearchResultProductCard({ product, onSelect }) {
         <p className="search-result-card__meta">{categoryLabel}</p>
 
         <div className="search-result-card__meta-row">
-          <div className="search-result-card__rating">★ ★ ★ ★ ☆</div>
           <div
             className={`search-result-card__stock ${inStock ? "in" : "out"}`}
           >
@@ -37,7 +37,7 @@ export default function SearchResultProductCard({ product, onSelect }) {
         </div>
 
         <div className="search-result-card__footer">
-          <span className="search-result-card__price">${price}.00</span>
+          <span className="search-result-card__price">{formatPrice(price)}</span>
         </div>
       </div>
     </Link>

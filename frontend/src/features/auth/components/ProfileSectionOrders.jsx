@@ -1,6 +1,6 @@
 import { ShoppingBag, CheckCircle } from "lucide-react";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
-import { CURRENCY } from "../../../constants/currency";
+import { formatPrice } from "../../../utils/pricing";
 
 const ProfileSectionOrders = ({ orders, ordersLoading, navigate }) => {
   return (
@@ -64,7 +64,7 @@ const ProfileSectionOrders = ({ orders, ordersLoading, navigate }) => {
                   <div className="profile-order-meta">
                     <span className="profile-order-date">{orderDate}</span>
                     <span className="profile-order-price">
-                      {CURRENCY.symbol}{order.totalPrice?.toFixed(2)}
+                      {formatPrice(order.totalPrice)}
                     </span>
                   </div>
                 </div>

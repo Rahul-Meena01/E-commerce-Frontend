@@ -17,6 +17,8 @@ import "./ProductGallery.css";
 const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, openLightbox }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef(null);
+  const heroImgRef = useRef(null);
+  const thumbRefs = useRef([]);
 
   // Deduplicate images to get unique list
   const { uniqueImages, uniqueIndices } = useMemo(() => {
@@ -30,7 +32,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
         idxs.push(i);
       }
     });
-    return { uniqueImages: imgs, uniqueIndices: idxs };
+    return { uniqueImages: imgs.slice(0, 5), uniqueIndices: idxs.slice(0, 5) };
   }, [images]);
 
   const imageCount = uniqueImages.length;
@@ -39,6 +41,48 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
   useEffect(() => {
     setActiveIndex(0);
   }, [imageCount]);
+
+  const handleMouseMove = (e) => {
+    if (isMobile) return;
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    if (heroImgRef.current) {
+      heroImgRef.current.style.transformOrigin = `${x}% ${y}%`;
+      heroImgRef.current.style.transform = "scale(1.5)";
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isMobile) return;
+    if (heroImgRef.current) {
+      heroImgRef.current.style.transformOrigin = "center center";
+      heroImgRef.current.style.transform = "scale(1)";
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (imageCount <= 1) return;
+    let nextIndex = index;
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      nextIndex = (index - 1 + imageCount) % imageCount;
+    } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      nextIndex = (index + 1) % imageCount;
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === "End") {
+      e.preventDefault();
+      nextIndex = imageCount - 1;
+    }
+
+    if (nextIndex !== index) {
+      selectImage(nextIndex);
+      thumbRefs.current[nextIndex]?.focus();
+    }
+  };
 
   // Mobile: Scroll listener to track visible image in CSS snap container
   const handleMobileScroll = (e) => {
@@ -84,13 +128,12 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
   return (
     <div
       className={`pg-editorial ${isMobile ? "pg-editorial--mobile" : "pg-editorial--desktop"}`}
-      tabIndex={0}
       aria-label="Product image gallery"
       role="region"
     >
       {/* ════════════ DESKTOP LAYOUT (Hover Sidebar + Hero Preview) ════════════ */}
       {!isMobile && (
-        <div className="pg-desktop-layout">
+        <div className={`pg-desktop-layout ${imageCount <= 1 ? "pg-single-image" : ""}`}>
           {/* Sticky Side Thumbnails Sidebar */}
           {imageCount > 1 && (
             <div className="pg-desktop-anchors" role="tablist" aria-label="Product image thumbnails">
@@ -100,8 +143,10 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
                   className={`pg-desktop-anchor-btn ${i === activeIndex ? "active" : ""}`}
                   onMouseEnter={() => selectImage(i)}
                   onClick={() => selectImage(i)}
+                  onKeyDown={(e) => handleKeyDown(e, i)}
                   aria-label={`Show image ${i + 1}`}
                   aria-selected={i === activeIndex}
+                  ref={(el) => (thumbRefs.current[i] = el)}
                   role="tab"
                   type="button"
                 >
@@ -121,13 +166,25 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
             <div
               className="pg-desktop-hero-item"
               onClick={() => openLightbox && openLightbox(uniqueIndices[activeIndex])}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  openLightbox && openLightbox(uniqueIndices[activeIndex]);
+                }
+              }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
               style={{ cursor: "zoom-in" }}
+              tabIndex={0}
+              role="button"
+              aria-label="View large image"
             >
               <img
                 key={activeIndex} // Force re-mount to trigger fade-in transition
                 src={uniqueImages[activeIndex].src}
                 alt={uniqueImages[activeIndex].alt || `${alt} - view ${activeIndex + 1}`}
                 onError={handleImageError}
+                ref={heroImgRef}
                 loading="eager"
               />
               <div className="pg-hover-zoom-badge">
@@ -165,9 +222,11 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
           </div>
 
           {/* Counter pill overlay */}
-          <div className="pg-mobile-counter" aria-hidden="true">
-            {activeIndex + 1} / {imageCount}
-          </div>
+          {imageCount > 1 && (
+            <div className="pg-mobile-counter" aria-hidden="true">
+              {activeIndex + 1} / {imageCount}
+            </div>
+          )}
 
           {/* Navigation Thumbnail Strip below */}
           {imageCount > 1 && (

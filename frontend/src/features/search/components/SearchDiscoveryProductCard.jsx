@@ -1,16 +1,13 @@
 import { Link } from "react-router-dom";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { formatPrice } from "@/utils/pricing";
 
 export default function SearchDiscoveryProductCard({
   product,
   onSelect,
   badge,
 }) {
-  const productId =
-    product?.productId ||
-    product?.slug ||
-    (product?.id ? `${product.category}_${product.id}` : product?._id) ||
-    "";
+  const productId = product?._id || product?.id || product?.productId;
 
   if (!productId) return null;
 
@@ -41,7 +38,7 @@ export default function SearchDiscoveryProductCard({
         <p className="search-discovery-product-card__meta">{categoryLabel}</p>
         <div className="search-discovery-product-card__footer">
           <span className="search-discovery-product-card__price">
-            ${price}.00
+            {formatPrice(price)}
           </span>
           {product?.discount ? (
             <span className="search-discovery-product-card__discount">

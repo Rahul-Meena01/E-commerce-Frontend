@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { IMAGE_FALLBACK } from "@/constants/images";
+import { API_BASE_URL } from "@/shared/utils/api";
 
 export default function OptimizedImage({
   src,
@@ -23,6 +24,18 @@ export default function OptimizedImage({
     }
   }, [src]);
 
+  const resolvedSrc = (() => {
+    if (!src) return IMAGE_FALLBACK;
+    if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
+      return src;
+    }
+    if (src.startsWith("/uploads") || src.startsWith("uploads")) {
+      const normalizedPath = src.startsWith("/") ? src : `/${src}`;
+      return `${API_BASE_URL}${normalizedPath}`;
+    }
+    return src;
+  })();
+
   return (
     <div
       className={`opt-image-container ${loaded ? "loaded" : "loading"} ${className}`}
@@ -31,7 +44,7 @@ export default function OptimizedImage({
       {!loaded && <div className="opt-image-shimmer" />}
       <img
         ref={imgRef}
-        src={error ? IMAGE_FALLBACK : src}
+        src={error ? IMAGE_FALLBACK : resolvedSrc}
         alt={alt}
         onLoad={() => setLoaded(true)}
         onError={() => {

@@ -87,9 +87,6 @@ const SubCategoryPage = () => {
       <header className="subcat-editorial-header">
         <span className="subcat-eyebrow">Curated Collection</span>
         <h1 className="subcat-title-editorial">{displayTitle}</h1>
-        <p className="subcat-description">
-          Discover our edit of refined {subCategory} essentials, designed with timeless silhouettes, premium natural fabrics, and a modern aesthetic.
-        </p>
       </header>
 
       <div className="subcat-main">

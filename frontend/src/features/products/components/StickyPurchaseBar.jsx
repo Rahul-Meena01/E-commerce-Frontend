@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import StockIndicator from "./StockIndicator";
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 import "./StickyPurchaseBar.css";
 
 const StickyPurchaseBar = ({
@@ -48,7 +48,7 @@ const StickyPurchaseBar = ({
         </div>
 
         <div className="spb-right">
-          <div className="spb-price">{CURRENCY.symbol}{price}.00</div>
+          <div className="spb-price">{formatPrice(price)}</div>
           <button
             className="spb-cta"
             onClick={onAddToCart}

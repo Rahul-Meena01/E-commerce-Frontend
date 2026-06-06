@@ -1,5 +1,7 @@
 import { Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { formatPrice } from "../../../utils/pricing";
 
 const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishlist, addToCart, navigate }) => {
   return (
@@ -14,7 +16,9 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
           {wishlistItems.map((item) => (
             <div key={item.id} className="profile-wishlist-card">
               <div className="profile-wishlist-image">
-                <OptimizedImage src={item.image} alt={item.name} />
+                <Link to={`/product/${item.id}`} className="profile-wishlist-image-link">
+                  <OptimizedImage src={item.image} alt={item.name} />
+                </Link>
                 <button
                   className="profile-wishlist-remove"
                   aria-label="Remove from wishlist"
@@ -24,12 +28,26 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
                 </button>
               </div>
               <div className="profile-wishlist-content">
-                <h3 className="profile-wishlist-name">{item.name}</h3>
-                <p className="profile-wishlist-price">${item.price}</p>
+                <Link to={`/product/${item.id}`} className="profile-wishlist-name-link">
+                  <h3 className="profile-wishlist-name">{item.name}</h3>
+                </Link>
+                <p className="profile-wishlist-price">{formatPrice(item.price)}</p>
                 <button
                   className="profile-wishlist-add-btn"
                   onClick={() =>
-                    addToCart({ ...item, productId: item.id }, "", "", 1)
+                    addToCart({
+                      product: {
+                        productId: item.id,
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        image: item.image,
+                        brand: item.brand,
+                      },
+                      size: "",
+                      color: "",
+                      quantity: 1,
+                    })
                   }
                 >
                   Add to Cart

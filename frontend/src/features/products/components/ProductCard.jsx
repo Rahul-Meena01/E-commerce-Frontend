@@ -4,12 +4,12 @@ import "@/styles/ProductCard.css";
 import { useWishlist } from '@/features/wishlist/hooks/useWishlist';
 import { useCart } from '@/features/cart/hooks/useCart';
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 
 const ProductCard = ({ product }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
-  const productId = product.slug || product.productId || (product.id ? `${product.category}_${product.id}` : product._id);
+  const productId = product._id || product.id;
   const wishlisted = isInWishlist(productId);
 
   const handleWishlistToggle = (e) => {
@@ -28,7 +28,19 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({ ...product, productId }, "", "", 1);
+    addToCart({
+      product: {
+        productId,
+        id: productId,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        brand: product.brand,
+      },
+      size: "",
+      color: "",
+      quantity: 1,
+    });
   };
 
   return (
@@ -60,14 +72,15 @@ const ProductCard = ({ product }) => {
         <h4 className="pc-title">{product.name}</h4>
         <div className="pc-price-row">
           <span className="pc-price">
-            {new Intl.NumberFormat("en-IN", {
-              style: "currency",
-              currency: CURRENCY.code,
-              maximumFractionDigits: 0,
-            }).format(product.price)}
+            {formatPrice(product.discountPrice && product.discountPrice < product.price ? product.discountPrice : product.price)}
           </span>
-          {product.discount && (
-            <span className="pc-discount">-{product.discount}%</span>
+          {product.discountPrice && product.discountPrice < product.price && (
+            <span className="pc-old-price">
+              {formatPrice(product.price)}
+            </span>
+          )}
+          {(product.discountPercent || product.discount) && (
+            <span className="pc-discount">-{product.discountPercent || product.discount}%</span>
           )}
         </div>
         <button

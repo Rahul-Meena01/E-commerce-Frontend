@@ -114,9 +114,7 @@ const Footer = () => {
             <li>
               <a href="#about">About</a>
             </li>
-            <li>
-              <Link to="/blog">Journal</Link>
-            </li>
+
             <li>
               <a href="#careers">Careers</a>
             </li>

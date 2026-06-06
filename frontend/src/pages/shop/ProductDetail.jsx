@@ -1,48 +1,54 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
 import {
-  Star,
   Truck,
   RotateCcw,
   Shield,
   ChevronLeft,
   ChevronRight,
-  Heart,
-  Wind,
-  Feather,
-  Activity,
-  Layers,
   ShoppingBag,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Sliders,
+  Shirt,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useProductQuery } from "../../features/products/hooks/useProductQuery";
-import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
 import { useCart } from "@/features/cart/hooks/useCart";
 import { useToast } from "../../context/ToastContext";
 import ProductCard from "@/features/products/components/ProductCard";
 import { IMAGE_FALLBACK } from "../../constants/images";
-import { CURRENCY } from "@/constants/currency";
 import "../../styles/ProductDetail.css";
 import ProductGallery from "@/features/products/components/ProductGallery";
-import ProductInfo from "@/features/products/components/ProductInfo";
-import StickyPurchaseBar from "@/features/products/components/StickyPurchaseBar";
 import LightboxModal from "@/features/products/components/LightboxModal";
-import ResponsiveImage from "@/shared/components/ui/ResponsiveImage";
-import logger from "@/shared/utils/logger";
 import { API_BASE_URL, buildApiUrl } from "@/shared/utils/api";
 import { recordRecentlyViewedProduct } from "../../features/search/hooks/useRecentlyViewedProducts";
+import { siteContent } from "@/config/siteContent";
+import { formatPrice } from "../../utils/pricing";
+import VariantSelector from "@/features/products/components/VariantSelector";
 
-const COLOR_OPTIONS = [
-  { name: "Black", hex: "#1a1a1a" },
-  { name: "Navy", hex: "#1b2a4a" },
-  { name: "Beige", hex: "#c8b896" },
-  { name: "Charcoal", hex: "#444444" },
-];
+const colorMap = {
+  black: "#1a1a1a",
+  navy: "#0d1b2a",
+  blue: "#2b6cb0",
+  red: "#c53030",
+  green: "#2f855a",
+  white: "#ffffff",
+  grey: "#718096",
+  gray: "#718096",
+  yellow: "#ecc94b",
+  pink: "#ed64a6",
+  beige: "#f5f5dc",
+  brown: "#975a16",
+  gold: "#d4af37",
+  silver: "#c0c0c0",
+};
 
 /**
- * Luxury Product details Accordion (Details & Specifications, Shipping & Returns)
+ * Clean luxury specifications and shipping policies accordion
  */
-const ProductAccordion = ({ product, displayProduct, currentVariant, derivedStock }) => {
+const ProductAccordion = ({ product }) => {
   const [openIndex, setOpenIndex] = useState(0);
 
   const toggle = (index) => {
@@ -52,12 +58,28 @@ const ProductAccordion = ({ product, displayProduct, currentVariant, derivedStoc
   const parentCat = product?.subCategory?.parentCategory?.name || "";
   const subCat = product?.subCategory?.name || "";
   const brand = product?.brand || "";
-  const sku = displayProduct?.sku || currentVariant?.sku || "N/A";
-  const stock = typeof derivedStock === 'number' ? derivedStock : (displayProduct?.stock ?? product?.stock ?? 0);
+  const { policies } = siteContent;
 
-  const items = [
-    {
-      title: "Details & Specifications",
+  const items = useMemo(() => {
+    const sections = [];
+
+    // 1. Product Details (only if description or custom details exist)
+    if (product?.description) {
+      sections.push({
+        title: "Product Details",
+        icon: <FileText size={16} strokeWidth={2} />,
+        content: (
+          <div className="pd-accordion-text">
+            <p>{product.description}</p>
+          </div>
+        ),
+      });
+    }
+
+    // 2. Specifications (always exists from base fields)
+    sections.push({
+      title: "Specifications",
+      icon: <Sliders size={16} strokeWidth={2} />,
       content: (
         <div className="pd-accordion-text">
           <div className="pd-spec-grid">
@@ -78,29 +100,46 @@ const ProductAccordion = ({ product, displayProduct, currentVariant, derivedStoc
               </div>
             )}
             <div className="pd-spec-item">
-              <span className="pd-spec-label">SKU</span>
-              <span className="pd-spec-value">{sku}</span>
-            </div>
-            <div className="pd-spec-item">
               <span className="pd-spec-label">Availability</span>
               <span className="pd-spec-value">
-                {stock > 0 ? `In Stock (${stock} units)` : "Out of Stock"}
+                {product?.stock > 0 ? `In Stock (${product.stock} units)` : "Out of Stock"}
               </span>
             </div>
           </div>
         </div>
       ),
-    },
-    {
-      title: "Shipping & Returns",
-      content: (
-        <div className="pd-accordion-text">
-          <p>Complimentary standard shipping is included with all orders. Delivery typically takes 3–5 business days.</p>
-          <p>We offer free returns and exchanges within 30 days of delivery. Items must be unworn, unwashed, and returned in their original packaging with tags intact.</p>
-        </div>
-      ),
-    },
-  ];
+    });
+
+    // 3. Materials & Care (only if data exists)
+    if (product?.materials || product?.care) {
+      sections.push({
+        title: "Materials & Care",
+        icon: <Shirt size={16} strokeWidth={2} />,
+        content: (
+          <div className="pd-accordion-text">
+            {product.materials && <p><strong>Materials:</strong> {product.materials}</p>}
+            {product.care && <p><strong>Care Instructions:</strong> {product.care}</p>}
+          </div>
+        ),
+      });
+    }
+
+    // 4. Shipping & Returns (always exists from siteContent policies)
+    if (policies) {
+      sections.push({
+        title: policies.shippingTitle || "Shipping & Returns",
+        icon: <Truck size={16} strokeWidth={2} />,
+        content: (
+          <div className="pd-accordion-text">
+            <p>{policies.shippingDetails}</p>
+            <p>{policies.returnsDetails}</p>
+          </div>
+        ),
+      });
+    }
+
+    return sections;
+  }, [product, brand, parentCat, subCat, policies]);
 
   return (
     <div className="pd-accordion">
@@ -112,8 +151,17 @@ const ProductAccordion = ({ product, displayProduct, currentVariant, derivedStoc
             aria-expanded={openIndex === i}
             type="button"
           >
-            <span>{item.title}</span>
-            <span className="pd-accordion-icon">{openIndex === i ? "—" : "+"}</span>
+            <span className="pd-accordion-title-wrap">
+              <span className="pd-accordion-icon-left">{item.icon}</span>
+              <span className="pd-accordion-title-text">{item.title}</span>
+            </span>
+            <span className="pd-accordion-chevron">
+              {openIndex === i ? (
+                <ChevronUp size={16} strokeWidth={2} />
+              ) : (
+                <ChevronDown size={16} strokeWidth={2} />
+              )}
+            </span>
           </button>
           <div className="pd-accordion-content-wrap">
             <div className="pd-accordion-content">{item.content}</div>
@@ -128,40 +176,74 @@ const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColor, setSelectedColor] = useState("Black");
-  const [sizeError, setSizeError] = useState("");
-  
-  const { data: product, isLoading: loading } = useProductQuery(productId);
+  const cleanProductId = useMemo(() => {
+    const parts = (productId || "").split("_");
+    return parts[1] || parts[0];
+  }, [productId]);
+
+  // Resolve slug or categoryPrefix_id to a clean MongoDB ObjectId
+  const { data: resolvedProductId, isLoading: resolving } = useQuery({
+    queryKey: ["resolve-slug", cleanProductId],
+    queryFn: async () => {
+      if (!cleanProductId) return null;
+      
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(cleanProductId);
+      if (isValidObjectId) {
+        return cleanProductId;
+      }
+      
+      try {
+        const res = await fetch(buildApiUrl("/api/product/public/all"));
+        if (!res.ok) return "invalid";
+        const json = await res.json();
+        const list = json.data || [];
+        const found = list.find(
+          (p) =>
+            p.slug === cleanProductId ||
+            p._id === cleanProductId ||
+            p.id === cleanProductId
+        );
+        return found ? found._id : "invalid";
+      } catch (err) {
+        console.error("Slug resolution error:", err);
+        return "invalid";
+      }
+    },
+    enabled: !!cleanProductId,
+  });
+
+  const isInvalid = resolvedProductId === "invalid";
+  const queryId = resolvedProductId && !isInvalid ? resolvedProductId : null;
+
+  const { data: product, isLoading: productLoading } = useProductQuery(queryId);
+  const loading = resolving || productLoading;
   
   const { data: similarProducts = [] } = useQuery({
     queryKey: ["products", "similar", product?._id],
     queryFn: async () => {
       if (!product) return [];
-      const categoryId = product.category?._id || product.category;
       const subCategoryId = product.subCategory?._id || product.subCategory;
-      const tagQuery = product.tags?.length ? `&tags=${product.tags[0]}` : "";
       const res = await fetch(
-        buildApiUrl(`/api/product/public/all?category=${categoryId}&subCategory=${subCategoryId}${tagQuery}`)
+        buildApiUrl(`/api/product/public/all?subCategory=${subCategoryId}`)
       );
       if (!res.ok) return [];
       const json = await res.json();
       const filtered = (json.data || []).filter((p) => p._id !== product._id);
-      return filtered.sort(() => 0.5 - Math.random()).slice(0, 8);
+      return filtered.slice(0, 4);
     },
     enabled: !!product,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
   const toast = useToast();
   const [quantity, setQuantity] = useState(1);
-  const actionsRef = useRef(null);
-  const [actionsInView, setActionsInView] = useState(true);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   const [isMobileView, setIsMobileView] = useState(
-    typeof window !== "undefined" ? window.innerWidth <= 840 : false,
+    typeof window !== "undefined" ? window.innerWidth <= 1200 : false,
   );
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -239,7 +321,7 @@ const ProductDetail = () => {
   }, [productId]);
 
   const displayCategory = useMemo(() => {
-    return product?.category || urlSplit.category;
+    return product?.subCategory?.parentCategory?.slug || urlSplit.category || "all";
   }, [product, urlSplit]);
 
   useEffect(() => {
@@ -248,252 +330,121 @@ const ProductDetail = () => {
     }
   }, [product]);
 
+  const activeProduct = selectedVariant || product;
 
+  const productVariants = useMemo(() => {
+    return product?.variants || [];
+  }, [product]);
 
-  const colorOptions = useMemo(() => {
-    if (Array.isArray(product?.variants) && product.variants.length > 0) {
-      const uniqueColors = {};
-      product.variants.forEach((v) => {
-        if (v.status === "Active" && v.color) {
-          const key = v.color.toLowerCase();
-          if (!uniqueColors[key]) {
-            uniqueColors[key] = {
-              value: key,
-              label: v.color,
-              swatch: v.colorHex || "#b5b5b5",
-            };
-          }
-        }
+  const availableSizes = useMemo(() => {
+    const sizes = activeProduct?.sizes || product?.sizes || [];
+    return Array.isArray(sizes) ? sizes.filter(Boolean) : [];
+  }, [activeProduct, product]);
+
+  const availableColors = useMemo(() => {
+    const colors = activeProduct?.colors || product?.colors || [];
+    return Array.isArray(colors) ? colors.filter(Boolean) : [];
+  }, [activeProduct, product]);
+
+  const styleOptions = useMemo(() => {
+    const opts = [{ value: "default", label: "Default" }];
+    productVariants.forEach((v) => {
+      opts.push({
+        value: v._id || v.id,
+        label: v.name,
       });
-      const list = Object.values(uniqueColors);
-      if (list.length > 0) return list;
-    }
-
-    const fromProduct = Array.isArray(product?.colors)
-      ? product.colors.map((color, index) => {
-          const colorValue = typeof color === "string" ? color : color.value;
-          const label =
-            typeof color === "string" ? color : color.label || color.value;
-          return {
-            value: String(colorValue || `color-${index}`).toLowerCase(),
-            label,
-            swatch:
-              typeof color === "string"
-                ? COLOR_OPTIONS.find(
-                    (defaultColor) =>
-                      defaultColor.name.toLowerCase() === color.toLowerCase(),
-                  )?.hex || "#b5b5b5"
-                : color.hex || "#b5b5b5",
-          };
-        })
-      : [];
-
-    if (fromProduct.length > 0) return fromProduct;
-
-    return COLOR_OPTIONS.map((color) => ({
-      value: color.name.toLowerCase(),
-      label: color.name,
-      swatch: color.hex,
-    }));
-  }, [product?.colors, product?.variants]);
-
-  const currentVariant = useMemo(() => {
-    if (Array.isArray(product?.variants) && product.variants.length > 0) {
-      return product.variants.find(
-        (v) =>
-          v.status === "Active" &&
-          v.color.toLowerCase() === selectedColor.toLowerCase() &&
-          v.size === selectedSize
-      );
-    }
-    return null;
-  }, [product?.variants, selectedColor, selectedSize]);
-
-  const displayProduct = useMemo(() => {
-    if (!product) return null;
-    const copy = { ...product };
-    if (currentVariant) {
-      copy.price = currentVariant.price;
-      copy.discountPrice = currentVariant.discountPrice;
-      copy.discountPercent = currentVariant.discountPercent;
-      copy.sku = currentVariant.sku;
-      copy.stock = currentVariant.stock;
-      if (currentVariant.image) {
-        copy.image = currentVariant.image;
-      }
-    }
-    return copy;
-  }, [product, currentVariant]);
-
-  const sizeStockMap = useMemo(() => {
-    if (product?.stockBySize && typeof product.stockBySize === "object") {
-      return product.stockBySize;
-    }
-
-    if (Array.isArray(product?.variants)) {
-      return product.variants.reduce((acc, variant) => {
-        if (variant?.size && variant.color.toLowerCase() === selectedColor.toLowerCase()) {
-          acc[variant.size] = Number.isFinite(variant.stock) ? variant.stock : 0;
-        }
-        return acc;
-      }, {});
-    }
-
-    return {};
-  }, [product, selectedColor]);
+    });
+    return opts;
+  }, [productVariants]);
 
   const sizeOptions = useMemo(() => {
-    if (Array.isArray(product?.variants) && product.variants.length > 0) {
-      const sizesFromVariants = Array.from(
-        new Set(product.variants.filter((v) => v.status === "Active").map((v) => v.size))
-      );
-      const order = { "XS": 1, "S": 2, "M": 3, "L": 4, "XL": 5, "XXL": 6 };
-      sizesFromVariants.sort((a, b) => (order[a] || 99) - (order[b] || 99));
+    return availableSizes.map((sz) => ({
+      value: sz,
+      label: sz,
+    }));
+  }, [availableSizes]);
 
-      const finalSizes = sizesFromVariants.length > 0 ? sizesFromVariants : ["S", "M", "L", "XL"];
-
-      return finalSizes.map((size) => {
-        const knownStock = sizeStockMap[size];
-        const outOfStock = Number.isFinite(knownStock) ? knownStock <= 0 : true;
-        return {
-          value: size,
-          label: size,
-          outOfStock,
-          disabled: outOfStock,
-        };
-      });
-    }
-
-    const rawSizes =
-      Array.isArray(product?.sizes) && product.sizes.length > 0
-        ? product.sizes
-        : ["S", "M", "L", "XL"];
-
-    return rawSizes.map((size) => {
-      const knownStock = sizeStockMap[size];
-      const outOfStock = Number.isFinite(knownStock) ? knownStock <= 0 : false;
+  const colorOptions = useMemo(() => {
+    return availableColors.map((col) => {
+      const lower = col.toLowerCase();
+      const swatch = colorMap[lower] || lower;
       return {
-        value: size,
-        label: size,
-        outOfStock,
-        disabled: outOfStock,
+        value: col,
+        label: col,
+        swatch,
       };
     });
-  }, [product?.sizes, product?.variants, sizeStockMap]);
+  }, [availableColors]);
 
-  const selectedSizeOption = useMemo(
-    () => sizeOptions.find((option) => option.value === selectedSize),
-    [selectedSize, sizeOptions],
-  );
-
-  const selectedColorLabel = useMemo(() => {
-    return (
-      colorOptions.find((option) => option.value === selectedColor)?.label ||
-      selectedColor
-    );
-  }, [colorOptions, selectedColor]);
-
-  const isSelectedSizeOutOfStock = Boolean(selectedSizeOption?.outOfStock);
-
-  const isProductInStock = useMemo(() => {
-    if (!product) return false;
-    if (currentVariant) {
-      return currentVariant.stock > 0;
-    }
-    if (typeof product.stock === "number") {
-      return product.stock > 0;
-    }
-    return product.inStock !== false;
-  }, [product, currentVariant]);
-
-  const derivedStock = useMemo(() => {
-    return selectedSize && sizeStockMap && sizeStockMap[selectedSize] !== undefined
-      ? sizeStockMap[selectedSize]
-      : (displayProduct ? displayProduct.stock : 0);
-  }, [selectedSize, sizeStockMap, displayProduct]);
-
-  const stockStatusMessage = useMemo(() => {
-    if (!isProductInStock) return "Out of stock";
-    if (!selectedSize) return "Select a size to confirm stock";
-    if (isSelectedSizeOutOfStock)
-      return `${selectedSize} is currently out of stock`;
-    if (derivedStock <= 5 && derivedStock > 0) {
-      return `Only ${derivedStock} left in stock`;
-    }
-    return "In stock and ready to ship";
-  }, [isSelectedSizeOutOfStock, isProductInStock, selectedSize, derivedStock]);
-
-  const isDiscounted = useMemo(() => {
-    if (!displayProduct) return false;
-    return displayProduct.discountPercent > 0 || (displayProduct.discountPrice && displayProduct.discountPrice < displayProduct.price);
-  }, [displayProduct]);
-
-  const payPrice = useMemo(() => {
-    if (!displayProduct) return 0;
-    return isDiscounted ? displayProduct.discountPrice : displayProduct.price;
-  }, [displayProduct, isDiscounted]);
-
-  const oldPrice = useMemo(() => {
-    if (!displayProduct) return null;
-    return isDiscounted ? displayProduct.price : null;
-  }, [displayProduct, isDiscounted]);
-
-  const discountPercent = useMemo(() => {
-    if (!isDiscounted || !displayProduct) return 0;
-    return displayProduct.discountPercent || Math.round(((displayProduct.price - displayProduct.discountPrice) / displayProduct.price) * 100);
-  }, [displayProduct, isDiscounted]);
-
-
-  const categoryFeatures = useMemo(() => {
-    if (!product) return [];
-    const name = (product.name || "").toLowerCase();
-    const catName = (product.category?.name || displayCategory || "").toLowerCase();
-    
-    if (name.includes("shoe") || catName.includes("shoe") || catName.includes("sport")) {
-      return [
-        { icon: Wind, title: "Breathable Knit Upper", desc: "For all-day comfort" },
-        { icon: Feather, title: "Lightweight Design", desc: "Reduces fatigue" },
-        { icon: Activity, title: "Flexible Outsole", desc: "Natural movement" },
-        { icon: Layers, title: "Cushioned Midsole", desc: "Soft & responsive" }
-      ];
-    } else if (name.includes("shirt") || name.includes("pant") || name.includes("jacket") || catName.includes("clothing")) {
-      return [
-        { icon: Wind, title: "Premium Natural Fibers", desc: "Exceptional softness" },
-        { icon: Feather, title: "Thermoregulating", desc: "All-day breathability" },
-        { icon: Layers, title: "Reinforced Seams", desc: "Built to last" },
-        { icon: Shield, title: "Easy Care", desc: "Machine washable" }
-      ];
+  const handleStyleChange = (val) => {
+    if (val === "default") {
+      setSelectedVariant(null);
     } else {
-      return [
-        { icon: Shield, title: "Premium Materials", desc: "Timeless quality" },
-        { icon: Layers, title: "Minimal Design", desc: "Effortless styling" },
-        { icon: Feather, title: "Comfortable Fit", desc: "Designed for movement" },
-        { icon: RotateCcw, title: "Sustainable Sourcing", desc: "OCS certified organic" }
-      ];
+      const found = productVariants.find((v) => (v._id || v.id) === val);
+      if (found) setSelectedVariant(found);
     }
-  }, [product, displayCategory]);
-
-  const showDetailsSection = categoryFeatures.length > 0;
-
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Star
-          key={i}
-          size={16}
-          fill={i <= Math.round(rating) ? "#1a1a1a" : "none"}
-          stroke="#1a1a1a"
-          strokeWidth={2}
-        />,
-      );
-    }
-    return stars;
+    setSelectedSize("");
+    setSelectedColor("");
   };
 
+  const handleSizeChange = (val) => {
+    setSelectedSize(val);
+  };
+
+  const handleColorChange = (val) => {
+    setSelectedColor(val);
+  };
+
+  const isProductInStock = useMemo(() => {
+    if (!activeProduct) return false;
+    return typeof activeProduct.stock === "number" ? activeProduct.stock > 0 : activeProduct.inStock !== false;
+  }, [activeProduct]);
+
+  const stockStatus = useMemo(() => {
+    const stock = activeProduct?.stock ?? 0;
+    if (stock <= 0) {
+      return { label: "Out of Stock", class: "out" };
+    }
+    if (stock <= 5) {
+      return { label: "Low Stock", class: "low" };
+    }
+    return { label: "In Stock", class: "in" };
+  }, [activeProduct]);
+
+  const isDiscounted = useMemo(() => {
+    if (!activeProduct) return false;
+    return !!(activeProduct.discountPrice && activeProduct.discountPrice < activeProduct.price);
+  }, [activeProduct]);
+
+  const payPrice = useMemo(() => {
+    if (!activeProduct) return 0;
+    return isDiscounted ? activeProduct.discountPrice : activeProduct.price;
+  }, [activeProduct, isDiscounted]);
+
+  const oldPrice = useMemo(() => {
+    if (!activeProduct) return null;
+    return isDiscounted ? activeProduct.price : null;
+  }, [activeProduct, isDiscounted]);
+
+  const discountPercent = useMemo(() => {
+    if (!isDiscounted || !activeProduct || !activeProduct.price || !activeProduct.discountPrice) return 0;
+    return Math.round(
+      ((activeProduct.price - activeProduct.discountPrice) / activeProduct.price) * 100
+    );
+  }, [activeProduct, isDiscounted]);
+
+  const expectedDeliveryDate = useMemo(() => {
+    const today = new Date();
+    const minDelivery = new Date(today);
+    minDelivery.setDate(today.getDate() + 3);
+    const maxDelivery = new Date(today);
+    maxDelivery.setDate(today.getDate() + 5);
+    const options = { weekday: "long", month: "short", day: "numeric" };
+    return `${minDelivery.toLocaleDateString("en-IN", options)} – ${maxDelivery.toLocaleDateString("en-IN", options)}`;
+  }, []);
+
   const galleryImages = useMemo(() => {
-    if (!product)
-      return [IMAGE_FALLBACK];
+    if (!activeProduct) return [];
 
     const resolveImage = (path) => {
       if (!path) return null;
@@ -503,24 +454,19 @@ const ProductDetail = () => {
       return `${API_BASE_URL}${path}`;
     };
 
-    const targetObj = currentVariant && currentVariant.image ? currentVariant : product;
-
     const images = [];
-    if (targetObj.image) images.push(resolveImage(targetObj.image));
-    if (targetObj.image1) images.push(resolveImage(targetObj.image1));
-    if (targetObj.image2) images.push(resolveImage(targetObj.image2));
-    if (targetObj.image3) images.push(resolveImage(targetObj.image3));
-    if (targetObj.image4) images.push(resolveImage(targetObj.image4));
+    if (activeProduct.image) images.push(resolveImage(activeProduct.image));
+    if (activeProduct.image1) images.push(resolveImage(activeProduct.image1));
+    if (activeProduct.image2) images.push(resolveImage(activeProduct.image2));
+    if (activeProduct.image3) images.push(resolveImage(activeProduct.image3));
+    if (activeProduct.image4) images.push(resolveImage(activeProduct.image4));
 
-    if (images.length === 0) {
-      images.push(IMAGE_FALLBACK);
-    }
-
-    return images;
-  }, [product, currentVariant]);
+    // Exclude duplicates and empty values
+    return Array.from(new Set(images.filter(Boolean)));
+  }, [activeProduct]);
 
   const galleryItems = useMemo(() => {
-    const productName = product?.name || "Product";
+    const productName = activeProduct?.name || "Product";
 
     return galleryImages.map((src, i) => ({
       src,
@@ -528,106 +474,34 @@ const ProductDetail = () => {
       alt: `${productName} view ${i + 1}`,
       sources: [],
     }));
-  }, [galleryImages, product?.name]);
+  }, [galleryImages, activeProduct?.name]);
 
-  const { uniqueImages, uniqueIndices } = useMemo(() => {
-    const seen = new Set();
-    const imgs = [];
-    const idxs = [];
-    galleryItems.forEach((img, i) => {
-      if (img.src && !seen.has(img.src)) {
-        seen.add(img.src);
-        imgs.push(img);
-        idxs.push(i);
-      }
-    });
-    return { uniqueImages: imgs, uniqueIndices: idxs };
+  const uniqueImages = useMemo(() => {
+    return galleryItems.slice(0, 5);
   }, [galleryItems]);
 
   useEffect(() => {
-    if (!sizeError) return;
-    if (selectedSize && !isSelectedSizeOutOfStock) {
-      setSizeError("");
-    }
-  }, [isSelectedSizeOutOfStock, selectedSize, sizeError]);
-
-  useEffect(() => {
-    if (!colorOptions.length) return;
-    const selectedExists = colorOptions.some(
-      (option) => option.value === selectedColor,
-    );
-    if (!selectedExists) {
-      setSelectedColor(colorOptions[0].value);
-    }
-  }, [colorOptions, selectedColor]);
-
-  // Sync selected size if it becomes unavailable or out-of-stock in newly selected color
-  useEffect(() => {
-    if (selectedSize && sizeStockMap) {
-      const stock = sizeStockMap[selectedSize];
-      if (stock === undefined || stock <= 0) {
-        setSelectedSize("");
-      }
-    }
-  }, [selectedColor, sizeStockMap, selectedSize]);
-
-
-  useEffect(() => {
-    const onResize = () => setIsMobileView(window.innerWidth <= 840);
+    const onResize = () => setIsMobileView(window.innerWidth <= 1200);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    const el = actionsRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return undefined;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        // True if the purchase block has scrolled past the top of the screen (out of view above)
-        const isPast = entry.boundingClientRect.top < 0 && !entry.isIntersecting;
-        setActionsInView(!isPast);
-      },
-      { threshold: 0 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [actionsRef]);
-
-  const stickyVisible = isMobileView && !actionsInView;
-
   const handleAddToCart = () => {
-    if (!selectedSize || isSelectedSizeOutOfStock) {
-      setSizeError(
-        selectedSize
-          ? "Selected size is unavailable. Please choose another."
-          : "Please select a size",
-      );
-      toast.warning("Please select a size");
-      // Focus size selector for keyboard accessibility
-      const sizeSelectorEl = document.querySelector(".vs-root--size .vs-option:not(.vs-option--disabled)");
-      if (sizeSelectorEl) {
-        sizeSelectorEl.focus();
-      } else {
-        const firstSizeEl = document.querySelector(".vs-root--size .vs-option");
-        if (firstSizeEl) firstSizeEl.focus();
-      }
-      return;
-    }
     const qtyToSubmit = Math.max(1, parseInt(quantity, 10) || 1);
     addToCart({
       product: {
         productId: product._id,
         id: product._id,
-        name: displayProduct.name,
-        price: displayProduct.price,
-        image: displayProduct.image,
-        brand: displayProduct.brand,
+        name: activeProduct.name,
+        price: payPrice,
+        image: activeProduct.image,
+        brand: activeProduct.brand,
       },
       size: selectedSize,
-      color: selectedColorLabel,
+      color: selectedColor,
       quantity: qtyToSubmit,
     });
-    toast.success(`${product.name} added to cart!`);
+    toast.success(`${activeProduct.name} added to cart!`);
     setAddedToCart(true);
     setQuantity(1);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -635,24 +509,69 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="pd-page" style={{ padding: "40px var(--spacing-section-lg)", maxWidth: "1400px", margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "60px" }}>
-          <div>
-            <div className="ds-skeleton" style={{ aspectRatio: "3/4", width: "100%", borderRadius: "8px" }}></div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <div className="ds-skeleton" style={{ height: "24px", width: "30%" }}></div>
-            <div className="ds-skeleton" style={{ height: "48px", width: "90%" }}></div>
-            <div className="ds-skeleton" style={{ height: "32px", width: "40%" }}></div>
-            <div className="ds-skeleton" style={{ height: "100px", width: "100%" }}></div>
-            <div className="ds-skeleton" style={{ height: "54px", width: "100%" }}></div>
+      <div className="pd-page pd-page-loading" aria-busy="true" aria-label="Loading product details">
+        {/* Breadcrumb Skeleton */}
+        <div className="pd-breadcrumb">
+          <div className="pd-breadcrumb-inner" style={{ paddingBottom: "12px", border: "none" }}>
+            <div className="ds-skeleton" style={{ height: "28px", width: "80px", borderRadius: "4px" }}></div>
+            <div className="ds-skeleton" style={{ height: "16px", width: "220px", borderRadius: "4px" }}></div>
           </div>
         </div>
+
+        <section className="pd-main">
+          {/* Gallery Section Skeleton */}
+          <div className="pd-gallery-section">
+            <div className="pg-editorial pg-editorial--desktop">
+              <div className="pg-desktop-layout">
+                {/* Thumbnails Sidebar Skeleton */}
+                <div className="pg-desktop-anchors">
+                  {[...Array(4)].map((_, idx) => (
+                    <div key={idx} className="ds-skeleton" style={{ width: "90px", height: "120px", borderRadius: "8px" }}></div>
+                  ))}
+                </div>
+                {/* Hero Preview Skeleton */}
+                <div className="pg-desktop-hero-container">
+                  <div className="ds-skeleton" style={{ width: "100%", aspectRatio: "4/5", borderRadius: "12px" }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Info Section Skeleton */}
+          <div className="pd-info-section">
+            <div>
+              <div className="ds-skeleton" style={{ height: "12px", width: "80px", marginBottom: "8px", borderRadius: "2px" }}></div>
+              <div className="ds-skeleton" style={{ height: "36px", width: "90%", marginBottom: "12px", borderRadius: "4px" }}></div>
+              <div className="ds-skeleton" style={{ height: "40px", width: "40%", marginBottom: "16px", borderRadius: "4px" }}></div>
+            </div>
+
+            {/* Delivery Info Skeleton */}
+            <div className="ds-skeleton" style={{ height: "48px", width: "100%", borderRadius: "4px", marginBottom: "8px" }}></div>
+
+            {/* Quantity and Stock Skeleton */}
+            <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+              <div className="ds-skeleton" style={{ height: "44px", width: "132px", borderRadius: "6px" }}></div>
+              <div className="ds-skeleton" style={{ height: "24px", width: "80px", borderRadius: "999px" }}></div>
+            </div>
+
+            {/* Selector Skeletons */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
+              <div className="ds-skeleton" style={{ height: "70px", width: "100%", borderRadius: "6px" }}></div>
+              <div className="ds-skeleton" style={{ height: "70px", width: "100%", borderRadius: "6px" }}></div>
+            </div>
+
+            {/* Actions Buttons Skeleton */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+              <div className="ds-skeleton" style={{ height: "50px", width: "100%", borderRadius: "4px" }}></div>
+              <div className="ds-skeleton" style={{ height: "50px", width: "100%", borderRadius: "4px" }}></div>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
 
-  if (!product) {
+  if (!product && !loading) {
     return (
       <div className="pd-not-found">
         <h1>Product Not Found</h1>
@@ -683,7 +602,7 @@ const ProductDetail = () => {
                 displayCategory.slice(1)}
             </Link>
             <span className="pd-crumb-sep">/</span>
-            <span className="pd-crumb-current">{product.name}</span>
+            <span className="pd-crumb-current">{activeProduct.name}</span>
           </div>
         </div>
       </div>
@@ -691,8 +610,8 @@ const ProductDetail = () => {
       <section className="pd-main">
         <div className="pd-gallery-section">
           <ProductGallery
-            images={galleryItems}
-            alt={product.name}
+            images={uniqueImages}
+            alt={activeProduct.name}
             isMobile={isMobileView}
             openLightbox={(idx) => {
               setLightboxStartIndex(idx);
@@ -702,24 +621,29 @@ const ProductDetail = () => {
         </div>
 
         <div className="pd-info-section">
-          <ProductInfo
-            displayCategory={displayCategory}
-            product={displayProduct}
-            colorOptions={colorOptions}
-            sizeOptions={sizeOptions}
-            selectedColor={selectedColor}
-            onColorChange={(v) => setSelectedColor(v)}
-            selectedSize={selectedSize}
-            onSizeChange={(v) => {
-              setSelectedSize(v);
-              setSizeError("");
-            }}
-            sizeError={sizeError}
-            payPrice={payPrice}
-            oldPrice={oldPrice}
-            discountPercent={discountPercent}
-          />
+          <div>
+            <span className="pd-category">{activeProduct.brand}</span>
+            <h1 className="pd-title">{activeProduct.name}</h1>
 
+            <div className="pd-price-block">
+              <span className="pd-price">{formatPrice(payPrice)}</span>
+              {isDiscounted && oldPrice && (
+                <>
+                  <span className="pd-old-price">{formatPrice(oldPrice)}</span>
+                  <span className="pd-discount">-{discountPercent}%</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Expected Delivery Section */}
+          <div className="pd-delivery-info" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Truck size={18} className="pd-delivery-icon" style={{ color: "var(--ds-color-accent)", flexShrink: 0 }} />
+            <div>
+              <span className="pd-delivery-label">Delivery:</span> Expected by <strong className="pd-delivery-date">{expectedDeliveryDate}</strong> (3-5 business days)
+            </div>
+          </div>
+ 
           {/* Quantity Selector and Stock Indicator Row */}
           <div className="pd-quantity-stock-row">
             <div className="pd-quantity-selector">
@@ -751,16 +675,52 @@ const ProductDetail = () => {
                 +
               </button>
             </div>
-            <div className="pd-stock-indicator">
-              {stockStatusMessage}
+            <div className={`ds-badge ds-badge--${stockStatus.class === "in" ? "success" : stockStatus.class === "low" ? "warning" : "danger"}`}>
+              <span>{stockStatus.label}</span>
             </div>
           </div>
+ 
+          {/* Style Selector (only if backend provides variants) */}
+          {productVariants.length > 0 && (
+            <VariantSelector
+              name="style"
+              label="Select Style"
+              type="text"
+              options={styleOptions}
+              selectedValue={selectedVariant ? (selectedVariant._id || selectedVariant.id) : "default"}
+              onChange={handleStyleChange}
+            />
+          )}
+ 
+          {/* Size Selector (only if backend provides sizes) */}
+          {availableSizes.length > 0 && (
+            <VariantSelector
+              name="size"
+              label="Select Size"
+              type="size"
+              options={sizeOptions}
+              selectedValue={selectedSize}
+              onChange={handleSizeChange}
+            />
+          )}
+ 
+          {/* Color Selector (only if backend provides colors) */}
+          {availableColors.length > 0 && (
+            <VariantSelector
+              name="color"
+              label="Select Color"
+              type="color"
+              options={colorOptions}
+              selectedValue={selectedColor}
+              onChange={handleColorChange}
+            />
+          )}
 
-          <div className="pd-actions" ref={actionsRef}>
+          <div className="pd-actions">
             <button
               className="pd-add-to-cart"
               onClick={handleAddToCart}
-              disabled={!isProductInStock || isSelectedSizeOutOfStock}
+              disabled={!isProductInStock}
             >
               <ShoppingBag size={18} style={{ marginRight: "8px", verticalAlign: "middle" }} />
               {addedToCart ? "Added ✓" : "Add to Cart"}
@@ -768,89 +728,56 @@ const ProductDetail = () => {
             <button
               className="pd-buy-now"
               onClick={() => {
-                if (!selectedSize || isSelectedSizeOutOfStock) {
-                  setSizeError(
-                    selectedSize
-                      ? "Selected size is unavailable. Please choose another."
-                      : "Please select a size",
-                  );
-                  toast.warning("Please select a size");
-                  // Focus size selector for keyboard accessibility
-                  const sizeSelectorEl = document.querySelector(".vs-root--size .vs-option:not(.vs-option--disabled)");
-                  if (sizeSelectorEl) {
-                    sizeSelectorEl.focus();
-                  } else {
-                    const firstSizeEl = document.querySelector(".vs-root--size .vs-option");
-                    if (firstSizeEl) firstSizeEl.focus();
-                  }
-                  return;
-                }
                 const qtyToSubmit = Math.max(1, parseInt(quantity, 10) || 1);
                 addToCart({
                   product: {
                     productId: product._id,
                     id: product._id,
-                    name: displayProduct.name,
+                    name: activeProduct.name,
                     price: payPrice,
-                    image: displayProduct.image,
-                    brand: displayProduct.brand,
+                    image: activeProduct.image,
+                    brand: activeProduct.brand,
                   },
                   size: selectedSize,
-                  color: selectedColorLabel,
+                  color: selectedColor,
                   quantity: qtyToSubmit,
                 });
-                toast.success(`${product.name} added to cart!`);
+                toast.success(`${activeProduct.name} added to cart!`);
                 navigate("/checkout");
               }}
-              disabled={!isProductInStock || isSelectedSizeOutOfStock}
+              disabled={!isProductInStock}
             >
               Buy Now
             </button>
           </div>
 
-          {/* Trust badges */}
+          {/* Store-level Trust Badges (No product generated content) */}
           <div className="pd-trust-row">
-            <div className="pd-trust-item">
-              <Shield size={16} className="pd-trust-icon" />
-              <div className="pd-trust-text">
-                <span className="pd-trust-title">Secure Payment</span>
-                <span className="pd-trust-desc">100% protected</span>
-              </div>
-            </div>
-            <div className="pd-trust-item">
-              <RotateCcw size={16} className="pd-trust-icon" />
-              <div className="pd-trust-text">
-                <span className="pd-trust-title">Easy Returns</span>
-                <span className="pd-trust-desc">30-day return policy</span>
-              </div>
-            </div>
-            <div className="pd-trust-item">
-              <Truck size={16} className="pd-trust-icon" />
-              <div className="pd-trust-text">
-                <span className="pd-trust-title">Free Shipping</span>
-                <span className="pd-trust-desc">Orders above ₹1000</span>
-              </div>
-            </div>
+            {siteContent.trustBadges.map((badge, idx) => {
+              const Icon = idx === 0 ? Shield : idx === 1 ? RotateCcw : Truck;
+              return (
+                <div key={idx} className="pd-trust-item">
+                  <Icon size={16} className="pd-trust-icon" />
+                  <div className="pd-trust-text">
+                    <span className="pd-trust-title">{badge.title}</span>
+                    <span className="pd-trust-desc">{badge.desc}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Product details (Accordion) */}
-          <ProductAccordion
-            product={product}
-            displayProduct={displayProduct}
-            currentVariant={currentVariant}
-            derivedStock={derivedStock}
-          />
+          {/* Product Specifications (Real Backend Data only) */}
+          <ProductAccordion product={product} />
         </div>
-
-
       </section>
 
       <section className="pd-similar">
         <div className="pd-similar-header">
-          <h2 className="pd-similar-title">Explore Similar Items</h2>
+          <h2 className="pd-similar-title">You May Also Like</h2>
           <div className="pd-similar-controls">
             <Link to={`/shop/${displayCategory}`} className="pd-view-all">
-              View All
+              View all
             </Link>
             <button
               className="pd-arrow-btn"
@@ -881,22 +808,7 @@ const ProductDetail = () => {
         </div>
       </section>
 
-      <StickyPurchaseBar
-        product={displayProduct}
-        thumbnail={
-          galleryItems && galleryItems[0]
-            ? galleryItems[0].thumb
-            : displayProduct.image
-        }
-        title={displayProduct.name}
-        selectedVariantSummary={`${selectedColorLabel} / ${selectedSize || "Size"}`}
-        price={displayProduct.price}
-        disabled={!isProductInStock || isSelectedSizeOutOfStock}
-        onAddToCart={handleAddToCart}
-        visible={stickyVisible}
-      />
-
-      {/* ════════════ LIGHTBOX ════════════ */}
+      {/* Lightbox Modal */}
       {lightboxOpen && (
         <LightboxModal
           images={uniqueImages}

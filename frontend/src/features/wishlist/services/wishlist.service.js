@@ -3,10 +3,20 @@ import authFetch from "@/shared/utils/http";
 export const wishlistApi = {
   getWishlist: () => authFetch("/api/wishlist"),
 
-  toggleWishlist: (item) =>
-    authFetch("/api/wishlist/toggle", {
+  addToWishlist: (productId) =>
+    authFetch("/api/wishlist/add", {
       method: "POST",
-      body: item,
+      body: { productId },
+    }),
+
+  removeFromWishlist: (productId) =>
+    authFetch(`/api/wishlist/remove/${productId}`, {
+      method: "DELETE",
+    }),
+
+  clearWishlist: () =>
+    authFetch("/api/wishlist/clear", {
+      method: "DELETE",
     }),
 
   mergeWishlist: (items) =>
@@ -15,3 +25,4 @@ export const wishlistApi = {
       body: { items },
     }),
 };
+

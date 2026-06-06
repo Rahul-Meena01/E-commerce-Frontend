@@ -31,7 +31,7 @@ import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import authFetch from '@/shared/utils/http';
 import { saveAuthSession, getAuthToken } from '@/shared/utils/authStorage';
 import logger from '@/shared/utils/logger';
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 import { useProfileOrdersQuery } from "../../features/auth/hooks/useProfileOrdersQuery";
 import ProfileTabs from "../../features/auth/components/ProfileTabs";
 import ProfileSectionOrders from "../../features/auth/components/ProfileSectionOrders";
@@ -57,7 +57,6 @@ const buildProfileData = (storedUser) => ({
     storedUser?.profileImage || storedUser?.image || defaultProfileData.image,
 });
 
-const mockAddresses = [];
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -93,6 +92,22 @@ const ProfilePage = () => {
     darkMode: false,
     privacyPublic: false,
   });
+
+  const [couponsCount, setCouponsCount] = useState(0);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      authFetch("/api/coupon")
+        .then((res) => {
+          if (res.ok) return res.json();
+        })
+        .then((data) => {
+          const list = Array.isArray(data) ? data : data?.data || data?.coupons || [];
+          setCouponsCount(list.filter((c) => c.isActive !== false).length);
+        })
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   const tabs = [
     { label: "Profile", icon: User },
@@ -152,7 +167,7 @@ const ProfilePage = () => {
         const json = await res.json();
         setSavedAddresses(json.addresses || []);
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
   };
@@ -405,7 +420,7 @@ const ProfilePage = () => {
                   </div>
                   <div>
                     <h4>Free Shipping</h4>
-                    <p>On all orders over {CURRENCY.symbol}1000</p>
+                    <p>On all orders over {formatPrice(1000)}</p>
                   </div>
                 </div>
                 <div className="profile-benefit-item">
@@ -453,7 +468,7 @@ const ProfilePage = () => {
 
       case "Addresses":
         return (
-          <ProfileSectionAddresses mockAddresses={mockAddresses} />
+          <ProfileSectionAddresses />
         );
 
       case "Settings":
@@ -533,7 +548,11 @@ const ProfilePage = () => {
               </div>
               <div className="profile-detail-row">
                 <CalendarDays />
-                <span>Joined March 2026</span>
+                <span>
+                  Joined {user?.createdAt 
+                    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) 
+                    : "March 2026"}
+                </span>
               </div>
             </div>
           </div>
@@ -582,7 +601,7 @@ const ProfilePage = () => {
                 <Ticket />
               </div>
               <div className="profile-stat-content">
-                <span className="profile-stat-number">0</span>
+                <span className="profile-stat-number">{couponsCount}</span>
                 <div className="profile-stat-label-row">
                   <span className="profile-stat-label">Coupons</span>
                   <span className="profile-stat-link">
@@ -601,7 +620,14 @@ const ProfilePage = () => {
           onChange={setActiveTab}
         />
 
-        <div className="profile-bottom">{renderTabContent()}</div>
+        <div
+          className="profile-bottom"
+          role="tabpanel"
+          id={`profile-panel-${activeTab.toLowerCase()}`}
+          aria-labelledby={`profile-tab-${activeTab.toLowerCase()}`}
+        >
+          {renderTabContent()}
+        </div>
       </div>
 
       <ProfileEditModal

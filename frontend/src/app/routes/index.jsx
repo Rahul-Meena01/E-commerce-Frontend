@@ -8,7 +8,7 @@ const Home = lazy(() => import("../../pages/shop/Home"));
 const ProductDetail = lazy(() => import("../../pages/shop/ProductDetail"));
 const CategoryPage = lazy(() => import("../../pages/shop/CategoryPage"));
 const SubCategoryPage = lazy(() => import("../../pages/shop/SubCategoryPage"));
-const Blog = lazy(() => import("../../pages/Blog"));
+
 const CheckoutPage = lazy(() => import("../../pages/user/CheckoutPage"));
 const OrderSuccessPage = lazy(
   () => import("../../pages/user/OrderSuccessPage"),
@@ -51,14 +51,7 @@ export const routes = [
       </WithLayout>
     ),
   },
-  {
-    path: "/blog",
-    element: (
-      <WithLayout>
-        <Blog />
-      </WithLayout>
-    ),
-  },
+
   {
     path: "/checkout",
     element: (
