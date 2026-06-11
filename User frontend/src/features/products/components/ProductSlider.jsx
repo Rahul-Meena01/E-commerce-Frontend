@@ -6,26 +6,45 @@ import ProductCard from "./ProductCard";
 import { productsApi } from '@/features/products/services/products.service';
 import "@/styles/ProductSlider.css";
 
-const ProductSliderSkeleton = ({ title }) => (
-  <section className="product-slider-section">
-    <div className="slider-header">
-      <h2 className="slider-title">{title}</h2>
-    </div>
-    <div className="slider-grid" style={{ overflow: "hidden" }}>
-      {[1, 2, 3, 4].map((i) => (
-        <div className="pc-card" key={i} style={{ minWidth: "280px", opacity: 0.7 }}>
-          <div className="pc-media ds-skeleton" style={{ height: "320px", width: "100%" }}></div>
-          <div className="pc-body" style={{ gap: "12px" }}>
-            <div className="ds-skeleton" style={{ height: "14px", width: "40%" }}></div>
-            <div className="ds-skeleton" style={{ height: "20px", width: "80%" }}></div>
-            <div className="ds-skeleton" style={{ height: "16px", width: "30%" }}></div>
-            <div className="ds-skeleton" style={{ height: "36px", width: "100%", marginTop: "8px" }}></div>
+const ProductSliderSkeleton = ({ title }) => {
+  const containerRef = useRef(null);
+  const [count, setCount] = useState(4);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+        // card size is 280px + gap (~300px per card)
+        const visibleCount = Math.max(1, Math.floor(width / 300));
+        setCount(visibleCount);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section className="product-slider-section">
+      <div className="slider-header">
+        <h2 className="slider-title">{title}</h2>
+      </div>
+      <div ref={containerRef} className="slider-grid" style={{ overflow: "hidden" }}>
+        {[...Array(count)].map((_, i) => (
+          <div className="pc-card" key={i} style={{ minWidth: "280px", opacity: 0.7 }}>
+            <div className="pc-media ds-skeleton" style={{ height: "320px", width: "100%" }}></div>
+            <div className="pc-body" style={{ gap: "12px" }}>
+              <div className="ds-skeleton" style={{ height: "14px", width: "40%" }}></div>
+              <div className="ds-skeleton" style={{ height: "20px", width: "80%" }}></div>
+              <div className="ds-skeleton" style={{ height: "16px", width: "30%" }}></div>
+              <div className="ds-skeleton" style={{ height: "36px", width: "100%", marginTop: "8px" }}></div>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </section>
-);
+        ))}
+      </div>
+    </section>
+  );
+};
 
 const ProductSlider = ({ title, fetchUrl, viewAllLink }) => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);

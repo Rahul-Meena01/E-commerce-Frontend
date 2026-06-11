@@ -9,7 +9,7 @@ const HeroSection = () => {
   return (
     <section className="hero">
       <div className="hero-left">
-        <OptimizedImage src="/heroSection.png" alt="Premium Fashion Collection" />
+        <OptimizedImage src={hero.heroImageUrl || "/heroSection.png"} alt="Premium Fashion Collection" />
 
         <div className="hero-overlay">
           <p>{hero.subtitle}</p>

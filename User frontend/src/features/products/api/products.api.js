@@ -28,8 +28,17 @@ const parseParams = (params) => {
 };
 
 export const fetchProducts = (params) => {
-  const { category, subCategory, search } = parseParams(params);
-  
+  const { category, subCategory, search, limit } = parseParams(params);
+
+  let sortParam = null;
+
+  if (typeof params === "string") {
+    const queryString = params.includes("?") ? params.split("?")[1] : params;
+
+    const searchParams = new URLSearchParams(queryString);
+
+    sortParam = searchParams.get("sort");
+  }
   // Use the provided string URL if available to preserve sort/limit params,
   // but strip the leading /api if present because client.js baseURL already has it
   let requestUrl = "/product/public/all";
@@ -73,10 +82,36 @@ export const fetchProducts = (params) => {
       const searchLower = String(search).toLowerCase();
       products = products.filter((p) => {
         return (
-          String(p.name || "").toLowerCase().includes(searchLower) ||
-          String(p.brand || "").toLowerCase().includes(searchLower)
+          String(p.name || "")
+            .toLowerCase()
+            .includes(searchLower) ||
+          String(p.brand || "")
+            .toLowerCase()
+            .includes(searchLower)
         );
       });
+    }
+
+    if (sortParam === "newest") {
+      products = [...products].sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+    } else if (sortParam === "rating") {
+      products = [...products].sort(
+        (a, b) =>
+          Number(b.averageRating ?? b.rating ?? 0) -
+          Number(a.averageRating ?? a.rating ?? 0),
+      );
+    } else if (sortParam === "popularity") {
+      products = [...products].sort(
+        (a, b) =>
+          Number(b.soldCount ?? b.sales ?? b.views ?? 0) -
+          Number(a.soldCount ?? a.sales ?? a.views ?? 0),
+      );
+    }
+
+    if (limit) {
+      products = products.slice(0, Number(limit));
     }
 
     return {
@@ -95,9 +130,11 @@ export const fetchProducts = (params) => {
   });
 };
 
-export const fetchProductBySlug = (slug) => client.get(`/product/public/${slug}`);
-export const fetchProduct = (productId) => client.get(`/product/public/${productId}`);
+export const fetchProductBySlug = (slug) =>
+  client.get(`/product/public/${slug}`);
+export const fetchProduct = (productId) =>
+  client.get(`/product/public/${productId}`);
 export const fetchCategories = () => client.get("/category/public/all");
 export const fetchSubCategories = () => client.get("/subCategory/public/all");
-export const searchProducts = (query, limit = 6) => fetchProducts({ search: query, limit });
-
+export const searchProducts = (query, limit = 6) =>
+  fetchProducts({ search: query, limit });

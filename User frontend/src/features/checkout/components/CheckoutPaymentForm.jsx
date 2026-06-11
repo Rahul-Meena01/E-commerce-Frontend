@@ -1,6 +1,6 @@
 import { ShieldCheck, Lock, Truck } from "lucide-react";
 
-const CheckoutPaymentForm = ({ handlePaymentSubmit, paymentMethod, setPaymentMethod }) => {
+const CheckoutPaymentForm = ({ handlePaymentSubmit, paymentMethod, setPaymentMethod, appliedGiftCard }) => {
   return (
     <form onSubmit={handlePaymentSubmit} className="checkout-step-form">
       <div className="checkout-section">
@@ -9,17 +9,39 @@ const CheckoutPaymentForm = ({ handlePaymentSubmit, paymentMethod, setPaymentMet
           All transactions are secured, encrypted, and processed through our verified gateway.
         </p>
 
+        {appliedGiftCard && (
+          <div className="payment-method-giftcard-warning" style={{
+            marginBottom: "16px",
+            padding: "12px 16px",
+            backgroundColor: "rgba(180, 83, 9, 0.08)",
+            border: "1px solid rgba(180, 83, 9, 0.2)",
+            borderRadius: "8px",
+            fontSize: "13px",
+            color: "var(--ds-color-accent, #a47551)",
+            lineHeight: 1.5
+          }}>
+            <strong>Gift Card Applied:</strong> Online payment (Razorpay) is restricted to ensure payment integrity. Please select **Cash On Delivery (COD)** for the remaining balance. If the balance is ₹0, no payment is required.
+          </div>
+        )}
+
         <div className="checkout-payment-methods-list">
           {/* Active Razorpay Card Option */}
           <div
-            className={`checkout-payment-method-card ${paymentMethod === "Razorpay" ? "active" : ""}`}
-            onClick={() => setPaymentMethod("Razorpay")}
-            style={{ cursor: "pointer" }}
+            className={`checkout-payment-method-card ${paymentMethod === "Razorpay" ? "active" : ""} ${appliedGiftCard ? "disabled" : ""}`}
+            onClick={() => {
+              if (!appliedGiftCard) {
+                setPaymentMethod("Razorpay");
+              }
+            }}
+            style={{ 
+              cursor: appliedGiftCard ? "not-allowed" : "pointer",
+              opacity: appliedGiftCard ? 0.5 : 1
+            }}
           >
             <div className="payment-method-card-header">
               <div className="payment-method-radio-group">
-                <div className={`payment-method-custom-radio ${paymentMethod === "Razorpay" ? "checked" : ""}`}>
-                  {paymentMethod === "Razorpay" && <div className="radio-inner-dot"></div>}
+                <div className={`payment-method-custom-radio ${paymentMethod === "Razorpay" && !appliedGiftCard ? "checked" : ""}`}>
+                  {paymentMethod === "Razorpay" && !appliedGiftCard && <div className="radio-inner-dot"></div>}
                 </div>
                 <div className="payment-method-title-wrap">
                   <span className="payment-method-name">Razorpay Secure Gateway</span>
@@ -29,7 +51,7 @@ const CheckoutPaymentForm = ({ handlePaymentSubmit, paymentMethod, setPaymentMet
               <ShieldCheck size={18} className="payment-method-shield-icon" />
             </div>
 
-            {paymentMethod === "Razorpay" && (
+            {paymentMethod === "Razorpay" && !appliedGiftCard && (
               <div className="payment-method-card-body">
                 <p className="payment-method-explanation">
                   Upon clicking "Place Order & Pay" in the next step, you will transact through Razorpay's secure modal. Credit/debit card numbers, UPI PINs, and banking credentials are never processed or stored by LOFT.

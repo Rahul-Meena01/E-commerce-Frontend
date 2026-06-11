@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import "@/styles/ProductCard.css";
-import { useWishlist } from '@/features/wishlist/hooks/useWishlist';
-import { useCart } from '@/features/cart/hooks/useCart';
+import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
+import { useCart } from "@/features/cart/hooks/useCart";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "@/utils/pricing";
 
 const ProductCard = ({ product }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
+
   const productId = product._id || product.id;
   const wishlisted = isInWishlist(productId);
+
   const primaryImage =
     product.image ||
     product.image1 ||
@@ -20,13 +22,20 @@ const ProductCard = ({ product }) => {
     product.images?.[0] ||
     "";
 
+  const effectivePrice =
+    product.discountPrice != null &&
+    Number(product.discountPrice) < Number(product.price)
+      ? Number(product.discountPrice)
+      : Number(product.price);
+
   const handleWishlistToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     toggleWishlist({
       id: productId,
       name: product.name,
-      price: product.price,
+      price: effectivePrice,
       image: primaryImage,
       brand: product.brand,
       category: product.category,
@@ -36,12 +45,13 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     addToCart({
       product: {
         productId,
         id: productId,
         name: product.name,
-        price: product.price,
+        price: effectivePrice,
         image: primaryImage,
         brand: product.brand,
       },
@@ -54,17 +64,17 @@ const ProductCard = ({ product }) => {
   return (
     <div className="pc-card">
       <Link to={`/product/${productId}`} className="pc-link">
+        {" "}
         <div className="pc-media">
-          <OptimizedImage
-            src={primaryImage}
-            alt={product.name}
-          />
-        </div>
+          {" "}
+          <OptimizedImage src={primaryImage} alt={product.name} />{" "}
+        </div>{" "}
       </Link>
 
       <div className="pc-body">
         <div className="pc-meta">
           <span className="pc-brand">{product.brand}</span>
+
           <button
             className={`pc-wishlist ${wishlisted ? "active" : ""}`}
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -77,20 +87,24 @@ const ProductCard = ({ product }) => {
             />
           </button>
         </div>
+
         <h4 className="pc-title">{product.name}</h4>
+
         <div className="pc-price-row">
-          <span className="pc-price">
-            {formatPrice(product.discountPrice && product.discountPrice < product.price ? product.discountPrice : product.price)}
-          </span>
-          {product.discountPrice && product.discountPrice < product.price && (
-            <span className="pc-old-price">
-              {formatPrice(product.price)}
+          <span className="pc-price">{formatPrice(effectivePrice)}</span>
+
+          {product.discountPrice &&
+            Number(product.discountPrice) < Number(product.price) && (
+              <span className="pc-old-price">{formatPrice(product.price)}</span>
+            )}
+
+          {(product.discountPercent || product.discount) && (
+            <span className="pc-discount">
+              -{product.discountPercent || product.discount}%
             </span>
           )}
-          {(product.discountPercent || product.discount) && (
-            <span className="pc-discount">-{product.discountPercent || product.discount}%</span>
-          )}
         </div>
+
         <button
           className="pc-add"
           type="button"

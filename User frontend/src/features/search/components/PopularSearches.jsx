@@ -1,14 +1,7 @@
-const DEFAULT_POPULAR_SEARCHES = [
-  "New Arrivals",
-  "Best Sellers",
-  "Blazers",
-  "Sneakers",
-  "Leather Bags",
-  "Summer Dresses",
-];
+import { siteContent } from "@/config/siteContent";
 
 export default function PopularSearches({
-  items = DEFAULT_POPULAR_SEARCHES,
+  items = siteContent.popularSearches || [],
   onSelect,
 }) {
   return (

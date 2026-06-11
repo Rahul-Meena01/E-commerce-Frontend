@@ -4,17 +4,57 @@ import { SlidersHorizontal, X } from "lucide-react";
 import Breadcrumb from "@/features/products/components/Breadcrumb";
 import Filters from "@/features/products/components/Filters";
 import ProductCard from "@/features/products/components/ProductCard";
-import "../../styles/SubCategory.css"; // Reuse SubCategory styles for consistency
-import { productsApi } from '@/features/products/services/products.service';
+import ProductCardSkeleton from "@/features/products/components/ProductCardSkeleton";
+import "../../styles/SubCategory.css";
+import { productsApi } from "@/features/products/services/products.service";
 
 const ShopPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParam = searchParams.get("search") || searchParams.get("q") || "";
-  
-  const [filters, setFilters] = useState({});
+
+  const readFiltersFromURL = () => ({
+    brands: searchParams.getAll("brand"),
+    colors: searchParams.getAll("color"),
+    sizes: searchParams.getAll("size"),
+    tags: searchParams.getAll("tag"),
+    priceMin: searchParams.get("priceMin") || "",
+    priceMax: searchParams.get("priceMax") || "",
+  });
+
+  const [filters, setFilters] = useState(readFiltersFromURL);
   const [allProducts, setAllProducts] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setFilters(readFiltersFromURL());
+  }, [searchParams]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+
+    const params = new URLSearchParams(searchParams);
+
+    ["brand", "color", "size", "tag"].forEach((key) => params.delete(key));
+
+    params.delete("priceMin");
+    params.delete("priceMax");
+
+    newFilters.brands?.forEach((b) => params.append("brand", b));
+    newFilters.colors?.forEach((c) => params.append("color", c));
+    newFilters.sizes?.forEach((s) => params.append("size", s));
+    newFilters.tags?.forEach((t) => params.append("tag", t));
+
+    if (newFilters.priceMin) {
+      params.set("priceMin", newFilters.priceMin);
+    }
+
+    if (newFilters.priceMax) {
+      params.set("priceMax", newFilters.priceMax);
+    }
+
+    setSearchParams(params, { replace: true });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -22,18 +62,32 @@ const ShopPage = () => {
     const loadProducts = async () => {
       try {
         setLoading(true);
+
         const url = searchParam
           ? `/product/public/all?search=${encodeURIComponent(searchParam)}`
           : `/product/public/all`;
+
         const res = await productsApi.getProducts(url);
-        if (!res.ok) throw new Error("Failed to fetch products");
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch products");
+        }
+
         const data = await res.json();
-        if (!cancelled) setAllProducts(data?.data || []);
+
+        if (!cancelled) {
+          setAllProducts(data?.data || []);
+        }
       } catch (err) {
         console.error("Shop page products fetch error:", err);
-        if (!cancelled) setAllProducts([]);
+
+        if (!cancelled) {
+          setAllProducts([]);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -67,32 +121,55 @@ const ShopPage = () => {
 
   const visible = useMemo(() => {
     return allProducts.filter((p) => {
-      if (filters.brands && filters.brands.length && !filters.brands.includes(p.brand)) return false;
-      if (filters.colors && filters.colors.length && !filters.colors.includes(p.color)) return false;
-      if (filters.sizes && filters.sizes.length && !p.sizes?.some(s => filters.sizes.includes(s))) return false;
-      if (filters.tags && filters.tags.length && !p.tags?.some(t => filters.tags.includes(t))) return false;
-      
-      const finalPrice = p.discountPrice && p.discountPrice < p.price 
-        ? p.discountPrice 
-        : (p.salePrice && p.salePrice < p.price ? p.salePrice : p.price);
+      if (filters.brands?.length && !filters.brands.includes(p.brand)) {
+        return false;
+      }
 
-      if (filters.priceMin && finalPrice < Number(filters.priceMin)) return false;
-      if (filters.priceMax && finalPrice > Number(filters.priceMax)) return false;
+      if (filters.colors?.length && !filters.colors.includes(p.color)) {
+        return false;
+      }
+
+      if (
+        filters.sizes?.length &&
+        !p.sizes?.some((s) => filters.sizes.includes(s))
+      ) {
+        return false;
+      }
+
+      if (
+        filters.tags?.length &&
+        !p.tags?.some((t) => filters.tags.includes(t))
+      ) {
+        return false;
+      }
+
+      const finalPrice =
+        p.discountPrice && p.discountPrice < p.price
+          ? p.discountPrice
+          : p.salePrice && p.salePrice < p.price
+            ? p.salePrice
+            : p.price;
+
+      if (filters.priceMin && finalPrice < Number(filters.priceMin)) {
+        return false;
+      }
+
+      if (filters.priceMax && finalPrice > Number(filters.priceMax)) {
+        return false;
+      }
+
       return true;
     });
   }, [allProducts, filters]);
 
-  const displayTitle = searchParam ? `Search Results for "${searchParam}"` : "All Products";
+  const displayTitle = searchParam
+    ? `Search Results for "${searchParam}"`
+    : "All Products";
 
   return (
     <div className="subcat-page">
       <div className="subcat-breadcrumb">
-        <Breadcrumb
-          items={[
-            { label: "Home", to: "/" },
-            { label: "Shop" },
-          ]}
-        />
+        <Breadcrumb items={[{ label: "Home", to: "/" }, { label: "Shop" }]} />
       </div>
 
       <header className="subcat-editorial-header">
@@ -101,40 +178,75 @@ const ShopPage = () => {
       </header>
 
       <div className="subcat-main">
-        {/* Mobile Filters Trigger */}
-        <button className="mobile-filters-btn" onClick={() => setFiltersOpen(true)}>
+        <button
+          className="mobile-filters-btn"
+          onClick={() => setFiltersOpen(true)}
+        >
           <SlidersHorizontal size={14} /> Filter & Sort
         </button>
 
         <aside className={`subcat-left ${filtersOpen ? "open" : ""}`}>
           <div className="mobile-filters-header">
             <h3>Filter & Sort</h3>
-            <button className="mobile-filters-close" onClick={() => setFiltersOpen(false)} aria-label="Close filters">
+
+            <button
+              className="mobile-filters-close"
+              onClick={() => setFiltersOpen(false)}
+              aria-label="Close filters"
+            >
               <X size={20} />
             </button>
           </div>
-          <div className="subcat-filters-scroll-wrap" onClick={(e) => e.stopPropagation()}>
-            <Filters filters={availableFilters} onChange={(newFilters) => {
-              setFilters(newFilters);
-            }} />
+
+          <div
+            className="subcat-filters-scroll-wrap"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Filters
+              filters={availableFilters}
+              initialBrands={filters.brands}
+              initialColors={filters.colors}
+              initialSizes={filters.sizes}
+              initialTags={filters.tags}
+              initialPriceMin={filters.priceMin}
+              initialPriceMax={filters.priceMax}
+              onChange={handleFilterChange}
+            />
           </div>
         </aside>
 
-        {filtersOpen && <div className="filters-backdrop" onClick={() => setFiltersOpen(false)} />}
+        {filtersOpen && (
+          <div
+            className="filters-backdrop"
+            onClick={() => setFiltersOpen(false)}
+          />
+        )}
 
         <section className="subcat-grid">
           <header className="subcat-header">
             <span className="subcat-count">
-              {loading ? "Loading products..." : `${visible.length} items found`}
+              {loading ? "Loading..." : `${visible.length} items found`}
             </span>
           </header>
 
           <div className="subcat-products">
-            {!loading && visible.map((prod) => (
-              <ProductCard key={prod._id || prod.id} product={prod} />
-            ))}
+            {loading &&
+              [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)}
+
+            {!loading &&
+              visible.map((prod) => (
+                <ProductCard key={prod._id || prod.id} product={prod} />
+              ))}
+
             {!loading && visible.length === 0 && (
-              <div className="empty-search-state" style={{ padding: "40px 0", gridColumn: "1 / -1", textAlign: "center" }}>
+              <div
+                className="empty-search-state"
+                style={{
+                  padding: "40px 0",
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                }}
+              >
                 <p>No products matched your search or filters.</p>
               </div>
             )}

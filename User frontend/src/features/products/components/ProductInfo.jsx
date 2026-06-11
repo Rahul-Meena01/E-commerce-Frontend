@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import VariantSelector from "./VariantSelector";
-import { CURRENCY } from "@/constants/currency";
+import { formatPrice } from "@/utils/pricing";
 import "./ProductInfo.css";
 
 const ProductInfo = ({
@@ -27,10 +27,10 @@ const ProductInfo = ({
       <h1 className="pd-title">{product.name}</h1>
 
       <div className="pd-price-block">
-        <span className="pd-price">{CURRENCY.symbol}{payPrice}.00</span>
+        <span className="pd-price">{formatPrice(payPrice)}</span>
         {discountPercent > 0 && oldPrice && (
           <>
-            <span className="pd-old-price">{CURRENCY.symbol}{oldPrice}.00</span>
+            <span className="pd-old-price">{formatPrice(oldPrice)}</span>
             <span className="pd-discount">-{discountPercent}%</span>
           </>
         )}

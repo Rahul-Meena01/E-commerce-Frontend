@@ -28,6 +28,7 @@ const VariantSelector = ({
   helperText,
   disabled = false,
   announcementPrefix,
+  onSizeGuideClick,
 }) => {
   const buttonRefs = useRef([]);
   const [liveMessage, setLiveMessage] = useState("");
@@ -144,7 +145,7 @@ const VariantSelector = ({
           {label}: <span className="vs-current-val">{selectedIndex >= 0 ? options[selectedIndex]?.label : "Select size"}</span>
         </span>
         {name === "size" && (
-          <button type="button" className="vs-size-guide-btn">
+          <button type="button" className="vs-size-guide-btn" onClick={onSizeGuideClick}>
             <Ruler size={14} className="vs-size-guide-icon" /> Size Guide
           </button>
         )}

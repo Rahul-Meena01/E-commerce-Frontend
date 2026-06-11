@@ -342,3 +342,130 @@
     width: 72px;
   }
 }
+
+/* Coupon & Gift Card styling in Cart Drawer */
+.cart-drawer-promos {
+  margin-top: var(--ds-space-6, 24px);
+  border-top: 1px solid var(--ds-color-border, #e4e7ec);
+  padding-top: var(--ds-space-6, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4, 16px);
+}
+
+.cart-drawer-promo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--ds-color-border, #e4e7ec);
+  padding-bottom: 14px;
+  margin-bottom: 6px;
+}
+
+.cart-drawer-promo-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text, #111827);
+  margin: 0;
+}
+
+.cart-drawer-promo-form {
+  display: flex;
+  gap: 8px;
+}
+
+.cart-drawer-promo-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--ds-color-border, #e4e7ec);
+  border-radius: var(--ds-radius-sm, 6px);
+  background-color: var(--ds-color-surface, #ffffff);
+  color: var(--ds-color-text, #111827);
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.cart-drawer-promo-input:focus {
+  border-color: var(--ds-color-brand, #1f2a44);
+  box-shadow: 0 0 0 2px rgba(31, 42, 68, 0.1);
+}
+
+.cart-drawer-promo-btn {
+  background-color: var(--ds-color-brand, #1f2a44);
+  color: #ffffff;
+  border: none;
+  padding: 0 12px;
+  font-weight: 600;
+  font-size: 12px;
+  border-radius: var(--ds-radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cart-drawer-promo-btn:hover:not(:disabled) {
+  background-color: var(--ds-color-brand-hover, #111827);
+}
+
+.cart-drawer-promo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-drawer-promo-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--ds-color-canvas, #f6f7f9);
+  padding: 8px 12px;
+  border-radius: var(--ds-radius-sm, 6px);
+}
+
+.cart-drawer-promo-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ds-color-brand, #1f2a44);
+}
+
+.cart-drawer-promo-remove {
+  background: transparent;
+  border: none;
+  color: var(--ds-color-danger, #b42318);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cart-drawer-promo-remove:hover {
+  text-decoration: underline;
+}
+
+.cart-drawer-promo-msg {
+  font-size: 11px;
+  margin: 0;
+  margin-top: 2px;
+}
+
+.cart-drawer-promo-msg.error {
+  color: var(--ds-color-danger, #b42318);
+}
+
+.cart-drawer-promo-msg.success {
+  color: var(--ds-color-success, #047857);
+}
+
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ds-color-text-subtle, #475467);
+}
+
+.totals-row.discount {
+  color: var(--ds-color-success, #047857);
+  font-weight: 600;
+}
+

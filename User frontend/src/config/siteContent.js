@@ -6,7 +6,8 @@ export const siteContent = {
     titleRight: "Timeless Elegance\nMeets Modern Fashion",
     description: "Discover our curated collection of premium clothing pieces designed to bring sophistication and style to your wardrobe. Crafted with finest materials and contemporary design principles.",
     ctaLink: "/shop",
-    ctaLabel: "Shop Now"
+    ctaLabel: "Shop Now",
+    heroImageUrl: "/heroSection.png"
   },
   newsletter: {
     label: "THE LOFT JOURNAL",
@@ -35,7 +36,28 @@ export const siteContent = {
       title: "Free Shipping",
       desc: "Orders above ₹1000"
     }
-  ]
+  ],
+  popularSearches: [
+    "New Arrivals",
+    "Best Sellers",
+    "Blazers",
+    "Sneakers",
+    "Leather Bags",
+    "Summer Dresses"
+  ],
+  sizeGuide: {
+    title: "Size Guide",
+    subtitle: "Find your perfect fit with our standard body measurement chart below.",
+    headers: ["Size", "Chest (in)", "Waist (in)", "Hips (in)"],
+    rows: [
+      { size: "XS", chest: "32 - 34", waist: "26 - 28", hips: "34 - 36" },
+      { size: "S", chest: "35 - 37", waist: "29 - 31", hips: "37 - 39" },
+      { size: "M", chest: "38 - 40", waist: "32 - 34", hips: "40 - 42" },
+      { size: "L", chest: "41 - 43", waist: "35 - 37", hips: "43 - 45" },
+      { size: "XL", chest: "44 - 46", waist: "38 - 40", hips: "46 - 48" },
+      { size: "XXL", chest: "47 - 49", waist: "41 - 43", hips: "49 - 51" }
+    ]
+  }
 };
 
 export default siteContent;

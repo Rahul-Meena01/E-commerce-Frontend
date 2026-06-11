@@ -20,20 +20,9 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
   const heroImgRef = useRef(null);
   const thumbRefs = useRef([]);
 
-  // Deduplicate images to get unique list
-  const { uniqueImages, uniqueIndices } = useMemo(() => {
-    const seen = new Set();
-    const imgs = [];
-    const idxs = [];
-    images.forEach((img, i) => {
-      if (img.src && !seen.has(img.src)) {
-        seen.add(img.src);
-        imgs.push(img);
-        idxs.push(i);
-      }
-    });
-    return { uniqueImages: imgs.slice(0, 5), uniqueIndices: idxs.slice(0, 5) };
-  }, [images]);
+  // Trust parent input to be unique and pre-sliced to max 5
+  const uniqueImages = useMemo(() => images, [images]);
+  const uniqueIndices = useMemo(() => images.map((_, i) => i), [images]);
 
   const imageCount = uniqueImages.length;
 
@@ -49,7 +38,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
     const y = ((e.clientY - top) / height) * 100;
     if (heroImgRef.current) {
       heroImgRef.current.style.transformOrigin = `${x}% ${y}%`;
-      heroImgRef.current.style.transform = "scale(1.5)";
+      heroImgRef.current.style.transform = "scale(1.35)";
     }
   };
 
@@ -155,6 +144,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
                     alt={`${alt} thumbnail ${i + 1}`}
                     onError={handleImageError}
                     className="pg-anchor-thumb-img"
+                    loading={i === 0 ? "eager" : "lazy"}
                   />
                 </button>
               ))}

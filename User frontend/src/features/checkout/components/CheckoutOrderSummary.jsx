@@ -26,11 +26,48 @@ export default function CheckoutOrderSummary({
   couponCode,
   applyCoupon,
   removeCoupon,
+  appliedGiftCard,
+  giftCardDiscount = 0,
+  applyGiftCard,
+  removeGiftCard,
 }) {
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
   const [applying, setApplying] = useState(false);
+
+  const [giftCardInput, setGiftCardInput] = useState("");
+  const [giftCardError, setGiftCardError] = useState("");
+  const [giftCardSuccess, setGiftCardSuccess] = useState("");
+  const [applyingGiftCard, setApplyingGiftCard] = useState(false);
+
+  const handleApplyGiftCard = async (e) => {
+    e.preventDefault();
+    if (!giftCardInput.trim()) return;
+    setGiftCardError("");
+    setGiftCardSuccess("");
+    setApplyingGiftCard(true);
+    try {
+      const card = await applyGiftCard(giftCardInput.trim());
+      setGiftCardSuccess(`Gift card applied! Value: ${formatPrice(card.giftCardValue)}`);
+      setGiftCardInput("");
+    } catch (err) {
+      setGiftCardError(err.message || "Failed to apply gift card.");
+    } finally {
+      setApplyingGiftCard(false);
+    }
+  };
+
+  const handleRemoveGiftCard = async () => {
+    setGiftCardError("");
+    setGiftCardSuccess("");
+    try {
+      await removeGiftCard();
+      setGiftCardSuccess("Gift card removed.");
+    } catch (err) {
+      setGiftCardError("Failed to remove gift card.");
+    }
+  };
 
   const handleApply = async (e) => {
     e.preventDefault();
@@ -69,7 +106,7 @@ export default function CheckoutOrderSummary({
     maxDelivery.setDate(today.getDate() + 7);
 
     const options = { month: "short", day: "numeric" };
-    return `${minDelivery.toLocaleDateString("en-US", options)} – ${maxDelivery.toLocaleDateString("en-US", options)}`;
+    return `${minDelivery.toLocaleDateString("en-IN", options)} – ${maxDelivery.toLocaleDateString("en-IN", options)}`;
   };
 
   return (
@@ -195,6 +232,38 @@ export default function CheckoutOrderSummary({
           {couponSuccess && <p className="coupon-message success">{couponSuccess}</p>}
         </div>
 
+        {/* Gift Card Input Form */}
+        <div className="checkout-coupon-container" style={{ marginTop: "1rem" }}>
+          <p className="checkout-coupon-title">Gift Card</p>
+          {appliedGiftCard ? (
+            <div className="checkout-coupon-applied">
+              <span className="coupon-code-badge">
+                {appliedGiftCard.code} ({formatPrice(appliedGiftCard.giftCardValue)})
+              </span>
+              <button type="button" className="coupon-remove-btn-link" onClick={handleRemoveGiftCard}>
+                Remove
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleApplyGiftCard} className="checkout-coupon-form">
+              <input
+                type="text"
+                placeholder="Enter gift card code"
+                value={giftCardInput}
+                onChange={(e) => setGiftCardInput(e.target.value.toUpperCase())}
+                className="checkout-coupon-input"
+                disabled={applyingGiftCard}
+              />
+              <button type="submit" className="checkout-coupon-btn" disabled={applyingGiftCard || !giftCardInput.trim()}>
+                {applyingGiftCard ? "..." : "Apply"}
+              </button>
+            </form>
+          )}
+          {giftCardError && <p className="coupon-message error">{giftCardError}</p>}
+          {giftCardSuccess && <p className="coupon-message success">{giftCardSuccess}</p>}
+        </div>
+
+
         <div className="checkout-divider"></div>
 
         <div className="checkout-totals">
@@ -210,6 +279,15 @@ export default function CheckoutOrderSummary({
               </span>
             </div>
           )}
+          {giftCardDiscount > 0 && (
+            <div className="checkout-total-row">
+              <span>Gift Card Discount</span>
+              <span style={{ color: "var(--ds-color-success, #047857)" }}>
+                -{formatPrice(giftCardDiscount)}
+              </span>
+            </div>
+          )}
+
           <div className="checkout-total-row">
             <span>Shipping</span>
             <span>

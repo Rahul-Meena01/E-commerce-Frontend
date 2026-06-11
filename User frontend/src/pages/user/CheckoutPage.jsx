@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Truck, ArrowLeft } from "lucide-react";
 import { useCartActions, useCartState } from "@/features/cart/hooks/useCart";
@@ -10,12 +10,13 @@ import CheckoutOrderSummary from "../../features/checkout/components/CheckoutOrd
 import CheckoutShippingForm from "../../features/checkout/components/CheckoutShippingForm";
 import CheckoutPaymentForm from "../../features/checkout/components/CheckoutPaymentForm";
 import CheckoutReview from "../../features/checkout/components/CheckoutReview";
-import { useCheckoutMutation } from "../../features/checkout/hooks/useCheckoutMutation";
+import { useCheckoutMutation } from "../../features/checkout/services/hooks/useCheckoutMutation";
 import {
   createRazorpayOrder,
   verifyRazorpayPayment,
 } from "../../features/checkout/services/checkout.service";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "@/services/client";
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -37,8 +38,24 @@ const CheckoutPage = () => {
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
 
-  const { cartItems, cartCount, cartSubtotal, cartTotals, couponCode } = useCartState();
-  const { updateQuantity, removeFromCart, clearCart, applyCoupon, removeCoupon } = useCartActions();
+  const {
+    cartItems,
+    cartCount,
+    cartSubtotal,
+    cartTotals,
+    couponCode,
+    appliedGiftCard,
+    giftCardDiscount,
+    applyGiftCard,
+    removeGiftCard,
+  } = useCartState();
+  const {
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    applyCoupon,
+    removeCoupon,
+  } = useCartActions();
   const { user } = useAuthState();
   const checkoutMutation = useCheckoutMutation();
 
@@ -99,6 +116,24 @@ const CheckoutPage = () => {
   const tax = Number(cartTotals?.tax) || 0;
   const total = Number(cartTotals?.grandTotal) || 0;
 
+  // Auto-switch to COD if a gift card is applied or total is 0
+  useEffect(() => {
+    if (appliedGiftCard || total === 0) {
+      setPaymentMethod("COD");
+    }
+  }, [appliedGiftCard, total]);
+
+  const redeemGiftCard = async () => {
+    if (appliedGiftCard) {
+      try {
+        await api.put(`/giftCard/update/${appliedGiftCard._id}`, { status: "inactive" });
+      } catch (err) {
+        console.error("Failed to redeem gift card:", err);
+      }
+      removeGiftCard();
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!user) {
       navigate("/login", { state: { from: "/checkout" } });
@@ -122,6 +157,7 @@ const CheckoutPage = () => {
       }));
 
       // Create DB order first
+      // Force paymentMethod to "COD" if total is 0 (fully paid by gift card)
       const orderPayload = {
         orderItems: orderItemsPayload,
         shippingAddress: {
@@ -132,7 +168,7 @@ const CheckoutPage = () => {
           postalCode: formData.postalCode,
           country: formData.country,
         },
-        paymentMethod: paymentMethod,
+        paymentMethod: total === 0 ? "COD" : paymentMethod,
       };
 
       const dbOrder = await checkoutMutation.mutateAsync(orderPayload);
@@ -142,7 +178,9 @@ const CheckoutPage = () => {
         throw new Error("Failed to create order in database");
       }
 
-      if (paymentMethod === "COD") {
+      // If fully paid by gift card or COD
+      if (total === 0 || paymentMethod === "COD") {
+        await redeemGiftCard();
         clearCart();
         navigate(`/order-success/${orderId}`);
         setIsPaying(false);
@@ -152,14 +190,18 @@ const CheckoutPage = () => {
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        throw new Error("Razorpay SDK failed to load. Please check your connection.");
+        throw new Error(
+          "Razorpay SDK failed to load. Please check your connection.",
+        );
       }
 
       // Create order with Razorpay backend
       const rzpOrderData = await createRazorpayOrder({ orderId });
 
       if (!rzpOrderData?.razorpayOrderId) {
-        throw new Error(rzpOrderData?.message || "Failed to create payment gateway order");
+        throw new Error(
+          rzpOrderData?.message || "Failed to create payment gateway order",
+        );
       }
 
       // Regression validation: Assert checkoutTotal === handoffModalTotal === razorpayAmount
@@ -168,15 +210,15 @@ const CheckoutPage = () => {
         console.error("Payment Integrity Mismatch:", {
           checkoutTotal: total,
           handoffModalTotal: total,
-          razorpayAmount: rzpOrderData.amount / 100
+          razorpayAmount: rzpOrderData.amount / 100,
         });
         throw new Error(
-          `Payment Integrity Error: Checkout total (₹${total.toFixed(2)}) does not match payment gateway amount (₹${(rzpOrderData.amount / 100).toFixed(2)}). Please reload and try again.`
+          `Payment Integrity Error: Checkout total (₹${total.toFixed(2)}) does not match payment gateway amount (₹${(rzpOrderData.amount / 100).toFixed(2)}). Please reload and try again.`,
         );
       }
 
       const options = {
-        key: "rzp_test_RB5wDaGRoOgFw1",
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: rzpOrderData.amount,
         currency: rzpOrderData.currency || "INR",
         name: "LOFT",
@@ -199,13 +241,17 @@ const CheckoutPage = () => {
               razorpaySignature: response.razorpay_signature,
             };
 
-            const verificationResult = await verifyRazorpayPayment(verifyPayload);
+            const verificationResult =
+              await verifyRazorpayPayment(verifyPayload);
 
             if (verificationResult?.success && verificationResult?.orderId) {
+              await redeemGiftCard();
               clearCart();
               navigate(`/order-success/${verificationResult.orderId}`);
             } else {
-              throw new Error(verificationResult?.message || "Verification failed");
+              throw new Error(
+                verificationResult?.message || "Verification failed",
+              );
             }
           } catch (verifyErr) {
             setOrderError(verifyErr?.message || "Payment verification failed");
@@ -231,14 +277,13 @@ const CheckoutPage = () => {
         const rzp = new window.Razorpay(options);
         rzp.open();
       }, remainingTime);
-
     } catch (err) {
       setOrderError(err?.message || "Something went wrong. Please try again.");
       setIsPaying(false);
       setIsPreparingPayment(false);
     }
-  };
 
+  };
 
   const steps = [
     { number: 1, label: "Shipping" },
@@ -279,7 +324,7 @@ const CheckoutPage = () => {
                   Browse our collections to find something you love.
                 </p>
                 <button
-                  onClick={() => navigate("/shop/men")}
+                  onClick={() => navigate("/shop")}
                   className="checkout-continue-btn"
                 >
                   START SHOPPING
@@ -329,6 +374,7 @@ const CheckoutPage = () => {
                 handlePaymentSubmit={handlePaymentSubmit}
                 paymentMethod={paymentMethod}
                 setPaymentMethod={setPaymentMethod}
+                appliedGiftCard={appliedGiftCard}
               />
             )}
 
@@ -339,7 +385,7 @@ const CheckoutPage = () => {
                 orderError={orderError}
                 isPending={checkoutMutation.isPending}
                 handlePlaceOrder={() => {
-                  if (paymentMethod === "COD") {
+                  if (total === 0 || paymentMethod === "COD") {
                     handlePlaceOrder();
                   } else {
                     setIsPaymentModalOpen(true);
@@ -357,11 +403,15 @@ const CheckoutPage = () => {
             tax={tax}
             total={total}
             discount={discount}
+            appliedGiftCard={appliedGiftCard}
+            giftCardDiscount={giftCardDiscount}
             updateQuantity={updateQuantity}
             removeFromCart={removeFromCart}
             couponCode={couponCode}
             applyCoupon={applyCoupon}
             removeCoupon={removeCoupon}
+            applyGiftCard={applyGiftCard}
+            removeGiftCard={removeGiftCard}
           />
         </div>
       </div>

@@ -13,7 +13,13 @@ export default function SearchResultProductCard({ product, onSelect }) {
     product?.images?.[0] ||
     "";
 
-  const price = Number(product?.price) || 0;
+  const fullPrice = Number(product?.price) || 0;
+  const discountPrice =
+    product?.discountPrice != null && Number(product.discountPrice) < fullPrice
+      ? Number(product.discountPrice)
+      : null;
+
+  const displayPrice = discountPrice ?? fullPrice;
   const categoryLabel =
     product?.categoryName || product?.category || "Featured";
   const inStock =
@@ -45,7 +51,22 @@ export default function SearchResultProductCard({ product, onSelect }) {
         </div>
 
         <div className="search-result-card__footer">
-          <span className="search-result-card__price">{formatPrice(price)}</span>
+          <span className="search-result-card__price">
+            {formatPrice(displayPrice)}
+          </span>
+
+          {discountPrice && (
+            <span
+              className="search-result-card__old-price"
+              style={{
+                textDecoration: "line-through",
+                opacity: 0.6,
+                marginLeft: "6px",
+              }}
+            >
+              {formatPrice(fullPrice)}
+            </span>
+          )}
         </div>
       </div>
     </Link>

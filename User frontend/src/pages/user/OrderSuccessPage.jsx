@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { orderApi } from "@/features/checkout/services/checkout.service";
 import "../../styles/OrderSuccessPage.css";
-import { useCartActions } from "@/features/cart/hooks/useCart";
 import { formatPrice } from "@/utils/pricing";
 import { motion } from "framer-motion";
 import logger from "@/shared/utils/logger";
@@ -20,13 +19,6 @@ const OrderSuccessPage = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { clearCart } = useCartActions();
-
-  useEffect(() => {
-    if (order?.isPaid || order?.paymentMethod === "COD") {
-      clearCart();
-    }
-  }, [order?.isPaid, order?.paymentMethod, clearCart]);
 
   useEffect(() => {
     const fetchOrder = async () => {

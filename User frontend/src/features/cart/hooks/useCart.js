@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartApi } from "../services/cart.service";
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import logger from '@/shared/utils/logger';
+import { useGiftCard } from "@/context/GiftCardContext";
 
 const STORAGE_KEY = "loft_cart";
 
@@ -203,6 +204,7 @@ export const useCartMutations = () => {
 
 export const useCartState = () => {
   const { data: cartData, isLoading: syncing } = useCartQuery();
+  const { appliedGiftCard, applyGiftCard, removeGiftCard } = useGiftCard();
   
   // Handle both array (guest) and object (auth) shapes safely
   const cartItems = Array.isArray(cartData) ? cartData : (cartData?.items || []);
@@ -219,13 +221,30 @@ export const useCartState = () => {
   const fallbackShipping = fallbackDiscountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
   const fallbackGrandTotal = Number((fallbackDiscountedSubtotal + fallbackTax + fallbackShipping).toFixed(2));
 
-  const cartTotals = (!Array.isArray(cartData) && cartData?.totals) ? cartData.totals : {
+  const cartTotals = (!Array.isArray(cartData) && cartData?.totals) ? { ...cartData.totals } : {
     subtotal: cartSubtotal,
     discount: fallbackDiscount,
     tax: fallbackTax,
     shipping: fallbackShipping,
     grandTotal: fallbackGrandTotal,
     totalItems: cartCount
+  };
+
+  const subtotal = Number(cartTotals.subtotal) || 0;
+  const couponDiscount = Number(cartTotals.discount) || 0;
+  const tax = Number(cartTotals.tax) || 0;
+  const shipping = Number(cartTotals.shipping) || 0;
+  const totalBeforeGiftCard = subtotal - couponDiscount + tax + shipping;
+
+  const giftCardDiscount = appliedGiftCard
+    ? Number(Math.min(appliedGiftCard.giftCardValue, totalBeforeGiftCard).toFixed(2))
+    : 0;
+  const grandTotal = Number(Math.max(0, totalBeforeGiftCard - giftCardDiscount).toFixed(2));
+
+  const finalTotals = {
+    ...cartTotals,
+    grandTotal,
+    giftCardDiscount,
   };
   
   const couponCode = (!Array.isArray(cartData) && cartData?.couponCode) ? cartData.couponCode : null;
@@ -234,8 +253,12 @@ export const useCartState = () => {
     cartItems,
     cartCount,
     cartSubtotal,
-    cartTotals,
+    cartTotals: finalTotals,
     couponCode,
+    appliedGiftCard,
+    giftCardDiscount,
+    applyGiftCard,
+    removeGiftCard,
     syncing
   };
 };

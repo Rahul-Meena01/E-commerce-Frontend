@@ -17,7 +17,6 @@ import {
 } from "@/features/auth/context/AuthContext";
 import { useCategories } from "../../../features/products/hooks/useCategories";
 import { useSubCategories } from "../../../features/products/hooks/useSubCategories";
-import { formatPrice } from "@/utils/pricing";
 import SearchOverlay from "../../../features/search/components/SearchOverlay";
 import NavbarMobileMenu from "./NavbarMobileMenu";
 import NavbarDesktopMenu from "./NavbarDesktopMenu";
@@ -34,7 +33,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchTriggerRef = useRef(null);
-  
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -51,18 +50,26 @@ const Navbar = () => {
   const { categories } = useCategories();
   const { subcategories: allSubCategories = [] } = useSubCategories();
   const shopMenuItems = categories.map((cat) => {
-    const catKey = cat.slug || normalizeMenuKey(cat.name);
+    const catKey =
+      cat.slug ||
+      cat.name
+        ?.toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "") ||
+      cat._id;
+
     const catSubCats = allSubCategories.filter(
       (sub) =>
-        sub.parentCategory?._id === cat._id ||
-        sub.parentCategory === cat._id
+        sub.parentCategory?._id === cat._id || sub.parentCategory === cat._id,
     );
+
     return {
       key: catKey,
       label: cat.name,
       route: `/shop/${cat.slug}`,
       note: "",
-      description: cat.description || `Explore our dynamic ${cat.name} collection.`,
+      description:
+        cat.description || `Explore our dynamic ${cat.name} collection.`,
       subCategories: catSubCats.map((sub) => ({
         label: sub.name,
         slug: sub.slug,
@@ -70,6 +77,7 @@ const Navbar = () => {
       })),
     };
   });
+
   const activeShopItem =
     shopMenuItems.find((item) => item.key === activeShopKey) ||
     shopMenuItems[0];
@@ -184,164 +192,171 @@ const Navbar = () => {
   return (
     <>
       <div className="announcement-bar">
-        <p>Free standard shipping on orders over {formatPrice(1000)} • 30-day premium return policy</p>
+        <p>
+          New Arrivals: Summer Edit Now Live • 30-day premium return policy
+        </p>
       </div>
-      <nav className={`navbar ${isScrolled ? "scrolled" : ""}`} aria-label="Main navigation">
+      <nav
+        className={`navbar ${isScrolled ? "scrolled" : ""}`}
+        aria-label="Main navigation"
+      >
         <Link to="/" className="navbar-logo">
           Loft
         </Link>
 
-      <ul className="navbar-links">
-        <li
-          className={`shop-dropdown ${shopMenuOpen ? "open" : ""}`}
-          onMouseEnter={() => openShopMenu(activeShopItem?.key)}
-          onMouseLeave={closeShopMenu}
-          onFocusCapture={() => openShopMenu(activeShopItem?.key)}
-          onBlurCapture={closeShopMenu}
-        >
-          <button
-            className="shop-link"
-            aria-haspopup="menu"
-            aria-expanded={shopMenuOpen}
-            aria-label="Shop categories"
+        <ul className="navbar-links">
+          <li
+            className={`shop-dropdown ${shopMenuOpen ? "open" : ""}`}
             onMouseEnter={() => openShopMenu(activeShopItem?.key)}
-            onFocus={() => openShopMenu(activeShopItem?.key)}
+            onMouseLeave={closeShopMenu}
+            onFocusCapture={() => openShopMenu(activeShopItem?.key)}
+            onBlurCapture={closeShopMenu}
           >
-            Shop <ChevronDown size={15} strokeWidth={2} />
+            <button
+              className="shop-link"
+              aria-haspopup="menu"
+              aria-expanded={shopMenuOpen}
+              aria-label="Shop categories"
+              onMouseEnter={() => openShopMenu(activeShopItem?.key)}
+              onFocus={() => openShopMenu(activeShopItem?.key)}
+            >
+              Shop <ChevronDown size={15} strokeWidth={2} />
+            </button>
+
+            <NavbarDesktopMenu
+              shopMenuItems={shopMenuItems}
+              activeShopKey={activeShopKey}
+              setActiveShopKey={setActiveShopKey}
+              activeShopItem={activeShopItem}
+              activeShopSubCategories={activeShopSubCategories}
+              setShopMenuOpen={setShopMenuOpen}
+              navigate={navigate}
+            />
+          </li>
+
+          <li>
+            <Link to="/about">About</Link>
+          </li>
+          <li>
+            <Link to="/contact">Contact</Link>
+          </li>
+        </ul>
+
+        <div className="navbar-icons">
+          <button
+            ref={searchTriggerRef}
+            className="navbar-icon-link"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search products"
+            aria-expanded={searchOpen}
+            aria-controls="search-overlay"
+          >
+            <Search size={20} strokeWidth={2} />
           </button>
+          <Link
+            to="/profile?tab=Wishlist"
+            className="navbar-icon-link"
+            aria-label="View wishlist"
+          >
+            <Heart size={20} strokeWidth={2} />
+            {wishlistCount > 0 && (
+              <span className="wishlist-badge">{wishlistCount}</span>
+            )}
+          </Link>
+          {isAuthenticated ? (
+            <div className="user-dropdown-container">
+              <Link
+                to="/profile"
+                className="navbar-icon-link"
+                aria-label="View profile"
+              >
+                <User size={20} strokeWidth={2} />
+              </Link>
+              <div className="user-dropdown-menu" role="menu">
+                <div className="user-dropdown-header">
+                  <span className="user-dropdown-name">{user?.name}</span>
+                  <span className="user-dropdown-email">{user?.email}</span>
+                </div>
+                <div className="user-dropdown-divider" />
+                <Link
+                  to="/profile"
+                  className="user-dropdown-item"
+                  role="menuitem"
+                >
+                  My Profile
+                </Link>
 
-          <NavbarDesktopMenu
-            shopMenuItems={shopMenuItems}
-            activeShopKey={activeShopKey}
-            setActiveShopKey={setActiveShopKey}
-            activeShopItem={activeShopItem}
-            activeShopSubCategories={activeShopSubCategories}
-            setShopMenuOpen={setShopMenuOpen}
-            navigate={navigate}
-          />
-        </li>
-
-        <li>
-          <Link to="/about">About</Link>
-        </li>
-        <li>
-          <Link to="/contact">Contact</Link>
-        </li>
-
-      </ul>
-
-      <div className="navbar-icons">
-        <button
-          ref={searchTriggerRef}
-          className="navbar-icon-link"
-          onClick={() => setSearchOpen(true)}
-          aria-label="Search products"
-          aria-expanded={searchOpen}
-          aria-controls="search-overlay"
-        >
-          <Search size={20} strokeWidth={2} />
-        </button>
-        <Link
-          to="/profile?tab=Wishlist"
-          className="navbar-icon-link"
-          aria-label="View wishlist"
-        >
-          <Heart size={20} strokeWidth={2} />
-          {wishlistCount > 0 && (
-            <span className="wishlist-badge">{wishlistCount}</span>
-          )}
-        </Link>
-        {isAuthenticated ? (
-          <div className="user-dropdown-container">
+                <Link
+                  to="/profile?tab=Orders"
+                  className="user-dropdown-item"
+                  role="menuitem"
+                >
+                  My Orders
+                </Link>
+                <button
+                  onClick={logout}
+                  className="user-dropdown-item logout-btn"
+                  role="menuitem"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          ) : (
             <Link
-              to="/profile"
+              to="/login"
               className="navbar-icon-link"
-              aria-label="View profile"
+              aria-label="Open login"
             >
               <User size={20} strokeWidth={2} />
             </Link>
-            <div className="user-dropdown-menu" role="menu">
-              <div className="user-dropdown-header">
-                <span className="user-dropdown-name">{user?.name}</span>
-                <span className="user-dropdown-email">{user?.email}</span>
-              </div>
-              <div className="user-dropdown-divider" />
-              <Link
-                to="/profile"
-                className="user-dropdown-item"
-                role="menuitem"
-              >
-                My Profile
-              </Link>
+          )}
 
-              <Link
-                to="/profile?tab=Orders"
-                className="user-dropdown-item"
-                role="menuitem"
-              >
-                My Orders
-              </Link>
-              <button
-                onClick={logout}
-                className="user-dropdown-item logout-btn"
-                role="menuitem"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        ) : (
-          <Link
-            to="/login"
-            className="navbar-icon-link"
-            aria-label="Open login"
+          <button
+            className="cart-icon"
+            onClick={() => setCartDrawerOpen(true)}
+            aria-label="Open cart drawer"
           >
-            <User size={20} strokeWidth={2} />
-          </Link>
-        )}
+            <ShoppingCart size={20} strokeWidth={2} />
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </button>
 
-        <button
-          className="cart-icon"
-          onClick={() => setCartDrawerOpen(true)}
-          aria-label="Open cart drawer"
-        >
-          <ShoppingCart size={20} strokeWidth={2} />
-          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-        </button>
+          <button
+            className="hamburger-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+          >
+            <Menu size={22} strokeWidth={2} />
+          </button>
+        </div>
 
-        <button
-          className="hamburger-btn"
-          onClick={() => setMobileMenuOpen(true)}
-          aria-label="Open menu"
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-menu"
-        >
-          <Menu size={22} strokeWidth={2} />
-        </button>
-      </div>
+        <SearchOverlay
+          searchOpen={searchOpen}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          closeSearch={closeSearch}
+          navigate={navigate}
+        />
 
-      <SearchOverlay
-        searchOpen={searchOpen}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        closeSearch={closeSearch}
-        navigate={navigate}
-      />
-
-      <NavbarMobileMenu
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        mobileMenuRef={mobileMenuRef}
-        categories={categories}
-        handleMobileNav={handleMobileNav}
-        isAuthenticated={isAuthenticated}
-        user={user}
-        wishlistCount={wishlistCount}
-        cartCount={cartCount}
-        logout={logout}
-      />
+        <NavbarMobileMenu
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          mobileMenuRef={mobileMenuRef}
+          categories={categories}
+          handleMobileNav={handleMobileNav}
+          isAuthenticated={isAuthenticated}
+          user={user}
+          wishlistCount={wishlistCount}
+          cartCount={cartCount}
+          logout={logout}
+        />
       </nav>
-      <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
+      <CartDrawer
+        isOpen={cartDrawerOpen}
+        onClose={() => setCartDrawerOpen(false)}
+      />
     </>
   );
 };
