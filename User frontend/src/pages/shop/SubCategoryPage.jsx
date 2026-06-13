@@ -10,6 +10,7 @@ import ProductCardSkeleton from "@/features/products/components/ProductCardSkele
 import "../../styles/SubCategory.css";
 
 import { productsApi } from "@/features/products/services/products.service";
+import logger from "@/shared/utils/logger";
 
 const SubCategoryPage = () => {
   const { category, subCategory } = useParams();
@@ -55,7 +56,7 @@ const SubCategoryPage = () => {
           setAllProducts(data?.data || []);
         }
       } catch (error) {
-        console.error(error);
+        logger.error(error);
 
         if (!cancelled) {
           setAllProducts([]);

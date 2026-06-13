@@ -55,7 +55,7 @@ const StickyPurchaseBar = ({
             disabled={disabled}
             aria-disabled={disabled}
           >
-            {disabled ? "Unavailable" : "Add to Cart"}
+            {disabled ? "Unavailable" : "Add to Bag"}
           </button>
         </div>
       </div>

@@ -2,10 +2,10 @@
 
 .loft-filter-sidebar {
   padding: 1.75rem;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #eaeaea;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  background: var(--ds-color-surface, #ffffff);
+  border-radius: 0;
+  border: 1px solid var(--ds-color-border, #eaeaea);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -32,21 +32,24 @@
 .loft-filter-reset-btn {
   background: none;
   border: none;
-  color: #9ca3af;
-  font-size: 12px;
-  font-weight: 500;
+  color: var(--ds-color-text-subtle, #9ca3af);
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .loft-filter-reset-btn:hover {
-  color: #c4a163; /* Loft Gold */
-  background: #fdfaf4;
+  color: var(--ds-color-accent, #c4a163); /* Loft Gold */
+  background: var(--ds-color-surface-warm, #fdfaf4);
 }
 
 /* Section */
@@ -111,12 +114,12 @@
 .loft-custom-checkbox {
   width: 18px;
   height: 18px;
-  border: 2px solid #d1d5db;
-  border-radius: 4px;
+  border: 2px solid var(--ds-color-border-strong, #d1d5db);
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: var(--ds-color-canvas, #ffffff);
   color: #ffffff;
   transition: all 0.2s ease;
 }
@@ -193,26 +196,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #374151;
+  border: 1px solid var(--ds-color-border, #e5e7eb);
+  border-radius: 0;
+  background: var(--ds-color-canvas, #ffffff);
+  color: var(--ds-color-text, #374151);
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loft-size-pill:hover {
-  border-color: #9ca3af;
-  background: #f9fafb;
+  border-color: var(--ds-color-border-strong, #9ca3af);
+  background: var(--ds-color-surface-muted, #f9fafb);
 }
 
 .loft-size-pill.active {
-  background-color: #1a1a1a;
-  border-color: #1a1a1a;
-  color: #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--ds-color-brand, #1a1a1a);
+  border-color: var(--ds-color-brand, #1a1a1a);
+  color: var(--ds-color-canvas, #ffffff);
+  box-shadow: none;
 }
 
 /* Tags Badge Grid */
@@ -223,15 +227,18 @@
 }
 
 .loft-tag-badge {
-  background: #f3f4f6;
+  background: var(--ds-color-surface-muted, #f3f4f6);
   border: 1px solid transparent;
-  color: #4b5563;
+  color: var(--ds-color-text-muted, #4b5563);
   padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: 0;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .loft-tag-badge:hover {
@@ -276,20 +283,20 @@
 .loft-price-input {
   width: 100%;
   padding: 8px 8px 8px 22px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--ds-color-border, #e5e7eb);
+  border-radius: 0;
   font-size: 13px;
   font-weight: 500;
-  color: #1f2937;
-  background: #f9fafb;
+  color: var(--ds-color-text, #1f2937);
+  background: var(--ds-color-surface-muted, #f9fafb);
   outline: none;
   transition: all 0.2s ease;
 }
 
 .loft-price-input:focus {
-  border-color: #1a1a1a;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.03);
+  border-color: var(--ds-color-brand, #1a1a1a);
+  background: var(--ds-color-canvas, #ffffff);
+  box-shadow: none;
 }
 
 .loft-price-range-divider {
@@ -302,19 +309,20 @@
 .loft-price-btn {
   width: 100%;
   padding: 10px;
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--ds-color-brand, #1a1a1a);
+  color: var(--ds-color-canvas, #ffffff);
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
+  border-radius: 0;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.20em;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loft-price-btn:hover {
-  background-color: #c4a163; /* Loft Gold */
-  box-shadow: 0 4px 12px rgba(196, 161, 99, 0.2);
+  background-color: var(--ds-color-brand-hover, #1E1D19);
+  box-shadow: none;
 }

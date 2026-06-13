@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useIntersectionObserver } from "../../hooks/useIntersectionObserver";
 import "../../../styles/Reveal.css";
 
-export const Reveal = ({ children, delay = 0, duration = 0.8, direction = "up", className = "" }) => {
+export const Reveal = ({ children, delay = 0, duration = 0.5, direction = "up", className = "" }) => {
   const [ref, isIntersecting] = useIntersectionObserver({ triggerOnce: true });
 
   const style = {

@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(15, 14, 12, 0.6);
   backdrop-filter: blur(8px);
   z-index: 1100;
   display: flex;
@@ -15,11 +15,11 @@
 }
 
 .sgm-container {
-  background: #ffffff;
+  background: var(--ds-color-surface, #ffffff);
   width: 100%;
   max-width: 600px;
-  border-radius: var(--ds-radius-sm, 6px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-radius: 0;
+  box-shadow: none;
   position: relative;
   display: flex;
   flex-direction: column;

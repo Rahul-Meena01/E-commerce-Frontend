@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import logger from "@/shared/utils/logger";
 import { Shield, Truck, ArrowLeft } from "lucide-react";
 import { useCartActions, useCartState } from "@/features/cart/hooks/useCart";
 import { useAuthState } from "@/features/auth/context/AuthContext";
@@ -128,7 +129,7 @@ const CheckoutPage = () => {
       try {
         await api.put(`/giftCard/update/${appliedGiftCard._id}`, { status: "inactive" });
       } catch (err) {
-        console.error("Failed to redeem gift card:", err);
+        logger.error("Failed to redeem gift card:", err);
       }
       removeGiftCard();
     }
@@ -207,7 +208,7 @@ const CheckoutPage = () => {
       // Regression validation: Assert checkoutTotal === handoffModalTotal === razorpayAmount
       const expectedAmountInPaise = Math.round(total * 100);
       if (rzpOrderData.amount !== expectedAmountInPaise) {
-        console.error("Payment Integrity Mismatch:", {
+        logger.error("Payment Integrity Mismatch:", {
           checkoutTotal: total,
           handoffModalTotal: total,
           razorpayAmount: rzpOrderData.amount / 100,
@@ -230,7 +231,7 @@ const CheckoutPage = () => {
           contact: formData.phone,
         },
         theme: {
-          color: "#1f2a44",
+          color: "#0F0E0C",
         },
         handler: async function (response) {
           try {

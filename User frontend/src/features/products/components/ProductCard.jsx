@@ -5,10 +5,12 @@ import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
 import { useCart } from "@/features/cart/hooks/useCart";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "@/utils/pricing";
+import { useToast } from "@/context/ToastContext";
 
 const ProductCard = ({ product }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const toast = useToast();
 
   const productId = product._id || product.id;
   const wishlisted = isInWishlist(productId);
@@ -40,6 +42,12 @@ const ProductCard = ({ product }) => {
       brand: product.brand,
       category: product.category,
     });
+
+    if (wishlisted) {
+      toast.success(`${product.name} removed from wishlist`);
+    } else {
+      toast.success(`${product.name} added to wishlist!`);
+    }
   };
 
   const handleAddToCart = (e) => {
@@ -59,6 +67,7 @@ const ProductCard = ({ product }) => {
       color: "",
       quantity: 1,
     });
+    toast.success(`${product.name} added to bag!`);
   };
 
   return (
@@ -109,9 +118,9 @@ const ProductCard = ({ product }) => {
           className="pc-add"
           type="button"
           onClick={handleAddToCart}
-          aria-label={`Add ${product.name} to cart`}
+          aria-label={`Add ${product.name} to bag`}
         >
-          Add to cart
+          Add to bag
         </button>
       </div>
     </div>

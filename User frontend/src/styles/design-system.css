@@ -5,11 +5,13 @@
   justify-content: center;
   gap: var(--ds-space-2);
   border: 1px solid transparent;
-  border-radius: var(--ds-radius-md);
+  border-radius: 0;
   padding: 0 var(--ds-space-4);
-  font-family: var(--ds-font-sans);
-  font-size: var(--ds-text-sm);
-  font-weight: 700;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
@@ -22,7 +24,7 @@
 }
 
 .ds-button:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .ds-button:disabled {
@@ -32,13 +34,13 @@
 
 .ds-button--primary {
   background: var(--ds-color-brand);
-  color: #fff;
-  box-shadow: var(--ds-shadow-xs);
+  color: var(--ds-color-canvas);
+  box-shadow: none;
 }
 
 .ds-button--primary:hover:not(:disabled) {
   background: var(--ds-color-brand-hover);
-  box-shadow: var(--ds-shadow-sm);
+  box-shadow: none;
 }
 
 .ds-button--secondary {
@@ -105,7 +107,7 @@
 .ds-input:focus,
 .ds-select:focus {
   border-color: var(--ds-color-brand);
-  box-shadow: 0 0 0 4px rgba(31, 42, 68, 0.12);
+  box-shadow: none;
   outline: none;
 }
 

@@ -109,7 +109,9 @@
 .info-image-block {
   position: relative;
   height: 400px;
-  background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5)), url('/luxury_atelier.jpg');
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)),
+    url("https://cdn.pixabay.com/photo/2016/11/22/21/57/apparel-1850804_1280.jpg");
   background-size: cover;
   background-position: center;
   border-radius: var(--ds-radius-lg);
@@ -492,18 +494,18 @@
     grid-template-columns: 1fr;
     gap: var(--ds-space-8);
   }
-  
+
   .info-sidebar {
     position: relative;
     top: 0;
   }
-  
+
   .info-nav {
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--ds-space-2);
   }
-  
+
   .info-nav-link {
     width: auto;
   }
@@ -514,7 +516,7 @@
     grid-template-columns: 1fr;
     gap: var(--ds-space-6);
   }
-  
+
   .help-grid-3 {
     grid-template-columns: 1fr;
     gap: var(--ds-space-4);

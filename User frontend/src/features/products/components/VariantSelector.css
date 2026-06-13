@@ -70,7 +70,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--ds-duration-normal) var(--ds-ease-luxury);
+  transition:
+    background-color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
   position: relative;
   font-family: var(--ds-font-sans), sans-serif;
   box-shadow: none;
@@ -99,7 +104,10 @@
   background: transparent;
   min-width: 32px;
   min-height: 32px;
-  transition: transform var(--ds-duration-fast) ease, border-color var(--ds-duration-fast) ease;
+  transition:
+    transform var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
 }
 
 .vs-options--color .vs-option:hover:not(.vs-option--disabled) {

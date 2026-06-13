@@ -2,8 +2,10 @@ import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "../../../utils/pricing";
+import { useToast } from "@/context/ToastContext";
 
 const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishlist, addToCart, navigate }) => {
+  const toast = useToast();
   return (
     <div className="profile-section-wishlist">
       <div className="profile-section-header">
@@ -34,7 +36,7 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
                 <p className="profile-wishlist-price">{formatPrice(item.price)}</p>
                 <button
                   className="profile-wishlist-add-btn"
-                  onClick={() =>
+                  onClick={() => {
                     addToCart({
                       product: {
                         productId: item.id,
@@ -47,10 +49,11 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
                       size: "",
                       color: "",
                       quantity: 1,
-                    })
-                  }
+                    });
+                    toast.success(`${item.name} added to bag!`);
+                  }}
                 >
-                  Add to Cart
+                  Add to Bag
                 </button>
               </div>
             </div>

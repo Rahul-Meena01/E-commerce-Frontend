@@ -107,7 +107,7 @@
   display: block;
   padding: 0; /* No beige padding blocks or white space */
   opacity: 0;
-  animation: pgFadeIn var(--ds-duration-normal, 220ms) var(--ds-ease-luxury) forwards;
+  animation: pgFadeIn 250ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
   transition: transform var(--ds-duration-slow, 400ms) var(--ds-ease-luxury);
 }
 
@@ -117,7 +117,7 @@
 
 @keyframes pgFadeIn {
   from {
-    opacity: 0.65;
+    opacity: 0;
   }
   to {
     opacity: 1;

@@ -21,7 +21,7 @@
   width: 60px;
   height: 3px;
   background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .newsletter-container {
@@ -62,17 +62,17 @@
 .newsletter-input-wrap {
   display: flex;
   align-items: center;
-  background: #ffffff;
-  border: 1.5px solid var(--ds-color-border, #e4e7ec);
-  border-radius: var(--ds-radius-pill, 999px);
+  background: var(--ds-color-canvas, #ffffff);
+  border: 1px solid var(--ds-color-border, #e4e7ec);
+  border-radius: 0;
   padding: 5px 5px 5px 24px;
   transition: all var(--ds-duration-normal, 220ms) var(--ds-ease-standard, ease);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .newsletter-input-wrap:focus-within {
-  border-color: var(--color-gold);
-  box-shadow: 0 4px 20px rgba(168, 153, 104, 0.12);
+  border-color: var(--ds-color-border-strong, #cdc9c0);
+  box-shadow: none;
 }
 
 .newsletter-input-wrap input {
@@ -93,13 +93,14 @@
 .newsletter-btn {
   height: 48px;
   padding: 0 28px;
-  background: var(--ds-color-brand, #1f2a44);
-  color: white;
+  background: var(--ds-color-brand, #0F0E0C);
+  color: var(--ds-color-canvas, #ffffff);
   border: none;
-  border-radius: var(--ds-radius-pill, 999px);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  border-radius: 0;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
@@ -108,9 +109,9 @@
 }
 
 .newsletter-btn:hover {
-  background: var(--ds-color-brand-hover, #111827);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(31, 42, 68, 0.25);
+  background: var(--ds-color-brand-hover, #1E1D19);
+  transform: none;
+  box-shadow: none;
 }
 
 .newsletter-privacy {
@@ -151,7 +152,7 @@
 
   .newsletter-input-wrap {
     flex-direction: column;
-    border-radius: var(--ds-radius-lg, 12px);
+    border-radius: 0;
     padding: 4px;
     gap: 0;
   }
@@ -164,6 +165,6 @@
 
   .newsletter-btn {
     width: 100%;
-    border-radius: var(--ds-radius-md, 8px);
+    border-radius: 0;
   }
 }

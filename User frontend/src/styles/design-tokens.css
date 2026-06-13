@@ -1,29 +1,29 @@
 :root {
   color-scheme: light;
 
-  --ds-color-canvas: #f6f7f9;
-  --ds-color-surface: #ffffff;
-  --ds-color-surface-muted: #f8fafc;
-  --ds-color-surface-raised: rgba(255, 255, 255, 0.94);
-  --ds-color-surface-warm: #faf8f5;
-  --ds-color-text: #111827;
-  --ds-color-text-muted: #667085;
-  --ds-color-text-subtle: #98a2b3;
-  --ds-color-border: #e4e7ec;
-  --ds-color-border-strong: #cbd5e1;
-  --ds-color-border-subtle: #f0f0f0;
-  --ds-color-brand: #1f2a44;
-  --ds-color-brand-hover: #111827;
-  --ds-color-accent: #a47551;
-  --ds-color-accent-soft: #f6eee8;
+  --ds-color-canvas: #F7F5F0;
+  --ds-color-surface: #F7F5F0;
+  --ds-color-surface-warm: #FAF8F5;
+  --ds-color-surface-muted: #EFECE6;
+  --ds-color-surface-raised: rgba(247, 245, 240, 0.94);
+  --ds-color-text: #0F0E0C;
+  --ds-color-text-muted: #6C6861;
+  --ds-color-text-subtle: #A39E96;
+  --ds-color-border: #E8E5DE;
+  --ds-color-border-strong: #CDC9C0;
+  --ds-color-border-subtle: #F0EDE6;
+  --ds-color-brand: #0F0E0C;
+  --ds-color-brand-hover: #1E1D19;
+  --ds-color-accent: #C9A96E;
+  --ds-color-accent-soft: #F6F1E5;
   --ds-color-info: #2563eb;
   --ds-color-info-soft: #eff6ff;
-  --ds-color-success: #047857;
-  --ds-color-success-soft: #ecfdf3;
-  --ds-color-warning: #b45309;
-  --ds-color-warning-soft: #fffbeb;
-  --ds-color-danger: #b42318;
-  --ds-color-danger-soft: #fef3f2;
+  --ds-color-success: #1B4332;
+  --ds-color-success-soft: #EBF2EE;
+  --ds-color-warning: #5C3A21;
+  --ds-color-warning-soft: #F4EFEA;
+  --ds-color-danger: #8B3A3A;
+  --ds-color-danger-soft: #F6EEEE;
 
   /* ── Premium Spacing Scale ── */
   --ds-space-1: 4px;
@@ -40,9 +40,9 @@
   --ds-space-24: clamp(80px, 10vw + 32px, 100px);
 
   /* ── Typography ── */
-  --ds-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --ds-font-serif: Georgia, "Times New Roman", serif;
-  --ds-font-display: "Playfair Display", Georgia, serif;
+  --ds-font-sans: 'Jost', ui-sans-serif, system-ui, sans-serif;
+  --ds-font-serif: 'Cormorant Garamond', Georgia, serif;
+  --ds-font-display: 'Cormorant Garamond', Georgia, serif;
 
   --ds-text-xs: 12px;
   --ds-text-sm: 14px;
@@ -56,29 +56,38 @@
 
   /* ── Editorial Typography ── */
   --ds-eyebrow-size: 11px;
-  --ds-eyebrow-weight: 600;
-  --ds-eyebrow-spacing: 3px;
+  --ds-eyebrow-weight: 500;
+  --ds-eyebrow-spacing: 0.18em;
 
   --ds-leading-tight: 1.2;
   --ds-leading-normal: 1.5;
   --ds-leading-relaxed: 1.65;
 
   /* ── Radius ── */
-  --ds-radius-xs: 4px;
-  --ds-radius-sm: 6px;
-  --ds-radius-md: 8px;
-  --ds-radius-lg: 12px;
-  --ds-radius-xl: 16px;
-  --ds-radius-2xl: 24px;
-  --ds-radius-pill: 999px;
+  --ds-radius-xs: 0px;
+  --ds-radius-sm: 0px;
+  --ds-radius-md: 0px;
+  --ds-radius-lg: 0px;
+  --ds-radius-xl: 0px;
+  --ds-radius-2xl: 0px;
+  --ds-radius-pill: 0px;
+  --border-radius-sm: 0px;
+  --border-radius-md: 0px;
+  --border-radius-lg: 0px;
+  --border-radius-xl: 0px;
 
   /* ── Shadows — Elevated ── */
-  --ds-shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --ds-shadow-sm: 0 2px 8px rgba(16, 24, 40, 0.08);
-  --ds-shadow-md: 0 12px 28px rgba(16, 24, 40, 0.10);
-  --ds-shadow-lg: 0 24px 60px rgba(16, 24, 40, 0.14);
-  --ds-shadow-xl: 0 32px 80px rgba(16, 24, 40, 0.18);
-  --ds-shadow-editorial: 0 20px 50px rgba(0, 0, 0, 0.06);
+  --ds-shadow-xs: none;
+  --ds-shadow-sm: none;
+  --ds-shadow-md: none;
+  --ds-shadow-lg: none;
+  --ds-shadow-xl: none;
+  --ds-shadow-editorial: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
 
   /* ── Luxury Motion Curves ── */
   --ds-duration-fast: 140ms;
@@ -89,6 +98,16 @@
   --ds-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ds-ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
   --ds-ease-editorial: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* Centralized Motion Tokens */
+  --motion-fast: 150ms;
+  --motion-normal: 300ms;
+  --motion-premium: 500ms;
+  --motion-luxury: 800ms;
+  --motion-page: 400ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
 
   /* ── Z-Index ── */
   --ds-z-dropdown: 100;
@@ -104,5 +123,20 @@
     --ds-duration-slow: 1ms;
     --ds-duration-slower: 1ms;
     --ds-duration-editorial: 1ms;
+    --motion-fast: 0ms !important;
+    --motion-normal: 0ms !important;
+    --motion-premium: 0ms !important;
+    --motion-luxury: 0ms !important;
+    --motion-page: 0ms !important;
+  }
+  * {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
   }
 }
+
+
+

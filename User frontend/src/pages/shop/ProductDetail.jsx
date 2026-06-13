@@ -26,6 +26,7 @@ import ProductGallery from "@/features/products/components/ProductGallery";
 import LightboxModal from "@/features/products/components/LightboxModal";
 import { API_BASE_URL, buildApiUrl, resolveProductImage } from "@/shared/utils/api";
 import authFetch from "@/shared/utils/http";
+import logger from "@/shared/utils/logger";
 import { recordRecentlyViewedProduct } from "../../features/search/hooks/useRecentlyViewedProducts";
 import { siteContent } from "@/config/siteContent";
 import { formatPrice } from "../../utils/pricing";
@@ -159,15 +160,10 @@ const ProductAccordion = ({ product }) => {
             type="button"
           >
             <span className="pd-accordion-title-wrap">
-              <span className="pd-accordion-icon-left">{item.icon}</span>
               <span className="pd-accordion-title-text">{item.title}</span>
             </span>
             <span className="pd-accordion-chevron">
-              {openIndex === i ? (
-                <ChevronUp size={16} strokeWidth={2} />
-              ) : (
-                <ChevronDown size={16} strokeWidth={2} />
-              )}
+              {openIndex === i ? "−" : "+"}
             </span>
           </button>
           <div className="pd-accordion-content-wrap">
@@ -212,7 +208,7 @@ const ProductDetail = () => {
         );
         return found ? found._id : "invalid";
       } catch (err) {
-        console.error("Slug resolution error:", err);
+        logger.error("Slug resolution error:", err);
         return "invalid";
       }
     },
@@ -545,7 +541,7 @@ const ProductDetail = () => {
       color: selectedColor,
       quantity: qtyToSubmit,
     });
-    toast.success(`${activeProduct.name} added to cart!`);
+    toast.success(`${activeProduct.name} added to bag!`);
     setAddedToCart(true);
     setQuantity(1);
     setTimeout(() => setAddedToCart(false), 2500);
@@ -573,7 +569,7 @@ const ProductDetail = () => {
       color: selectedColor,
       quantity: qtyToSubmit,
     });
-    toast.success(`${activeProduct.name} added to cart!`);
+    toast.success(`${activeProduct.name} added to bag!`);
     navigate("/checkout");
   };
 
@@ -795,21 +791,14 @@ const ProductDetail = () => {
           )}
 
           <div className="pd-actions" ref={ctaRef}>
-            <button
-              className="pd-buy-now"
-              onClick={handleBuyNow}
-              disabled={!isProductInStock}
-            >
-              Buy Now
-            </button>
             <div className="pd-actions-row">
               <button
-                className="pd-add-to-cart"
+                className={`pd-add-to-cart ${addedToCart ? "added" : ""}`}
                 onClick={handleAddToCart}
                 disabled={!isProductInStock}
               >
                 <ShoppingBag size={18} style={{ marginRight: "8px", verticalAlign: "middle" }} />
-                {addedToCart ? "Added ✓" : "Add to Cart"}
+                {addedToCart ? "Added ✓" : "Add to Bag"}
               </button>
               <button
                 type="button"
@@ -817,7 +806,7 @@ const ProductDetail = () => {
                 onClick={handleWishlistToggle}
                 aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
-                <Heart size={20} fill={wishlisted ? "var(--ds-color-danger, #b42318)" : "none"} color={wishlisted ? "var(--ds-color-danger, #b42318)" : "currentColor"} />
+                <Heart size={20} fill={wishlisted ? "var(--ds-color-danger, #8B3A3A)" : "none"} color={wishlisted ? "var(--ds-color-danger, #8B3A3A)" : "currentColor"} />
               </button>
             </div>
           </div>

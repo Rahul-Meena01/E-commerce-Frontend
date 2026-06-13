@@ -59,7 +59,7 @@ export default function SearchDiscovery({ onSelect }) {
   }, [trendingSource]);
 
   const popularCategories = useMemo(() => {
-    const orderedCategories = [...categories].sort((left, right) => {
+    const orderedCategories = [...(categories || [])].sort((left, right) => {
       const rightCount = categoryCounts[right.name] || 0;
       const leftCount = categoryCounts[left.name] || 0;
 

@@ -18,12 +18,13 @@
 }
 
 .cat-title {
-  font-family: var(--ds-font-display, "Playfair Display", serif);
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(28px, 4vw, 42px);
-  font-weight: 500;
+  font-weight: 300;
   margin: 0 0 8px;
   color: var(--ds-color-text, #111827);
   line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
 .cat-sub {
@@ -217,32 +218,34 @@
   width: 220px;
   height: 56px;
   border: none;
-  background-color: var(--ds-color-brand, #1f2a44);
+  background-color: var(--ds-color-brand, #0F0E0C);
   color: white;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all var(--ds-duration-normal, 220ms) var(--ds-ease-luxury, ease);
-  box-shadow: var(--ds-shadow-sm);
-  border-radius: var(--ds-radius-sm, 6px);
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .explore-button {
   width: 220px;
   height: 56px;
   border: none;
-  background-color: var(--ds-color-brand, #1f2a44);
+  background-color: var(--ds-color-brand, #0F0E0C);
   color: white;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all var(--ds-duration-normal, 220ms) var(--ds-ease-luxury, ease);
-  box-shadow: var(--ds-shadow-sm);
-  border-radius: var(--ds-radius-sm, 6px);
+  box-shadow: none;
+  border-radius: 0;
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -251,9 +254,9 @@
 
 .categories-button button:hover,
 .explore-button:hover {
-  background-color: var(--ds-color-brand-hover, #111827);
-  box-shadow: 0 8px 20px rgba(31, 42, 68, 0.2);
-  transform: translateY(-2px);
+  background-color: var(--ds-color-brand-hover, #1E1D19);
+  box-shadow: none;
+  transform: none;
 }
 
 @media (max-width: 1024px) {

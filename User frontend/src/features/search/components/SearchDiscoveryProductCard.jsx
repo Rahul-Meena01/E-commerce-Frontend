@@ -22,7 +22,6 @@ export default function SearchDiscoveryProductCard({
   const price = Number(product?.price) || 0;
   const categoryLabel =
     product?.categoryName || product?.category || "Featured";
-  console.log(categoryLabel)
   return (
     <Link
       to={`/product/${productId}`}

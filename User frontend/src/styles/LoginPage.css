@@ -569,19 +569,19 @@
 
 /* Accessibility Focus States */
 .login-submit-btn:focus-visible {
-  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline: 2px solid var(--ds-color-brand, #0F0E0C);
   outline-offset: 2px;
 }
 
 .login-social-btn:focus-visible {
-  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline: 2px solid var(--ds-color-brand, #0F0E0C);
   outline-offset: 2px;
 }
 
 .login-eye-btn:focus-visible {
-  outline: 2px solid var(--ds-color-brand, #1f2a44);
+  outline: 2px solid var(--ds-color-brand, #0F0E0C);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .login-top-link-btn:focus-visible,

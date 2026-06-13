@@ -7,14 +7,19 @@
   border: 2px solid var(--color-dark);
   background-color: transparent;
   color: var(--color-dark);
-  font-size: 12px;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 1.5px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
   text-decoration: none;
   position: relative;
   overflow: hidden;
-  transition: all var(--transition-slow);
+  transition:
+    background-color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
   cursor: pointer;
   z-index: 1;
 }
@@ -28,7 +33,7 @@
   height: 100%;
   background-color: var(--color-dark);
   z-index: -1;
-  transition: left var(--transition-slow);
+  transition: left 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
 }
 
 .btn-primary:hover {
@@ -48,11 +53,16 @@
   border: 1px solid var(--color-border);
   background-color: var(--color-light);
   color: var(--color-dark);
-  font-size: 13px;
-  font-weight: var(--font-weight-medium);
-  letter-spacing: 0.5px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition:
+    background-color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
   cursor: pointer;
 }
 
@@ -70,18 +80,35 @@
   border: 2px solid var(--color-gold);
   background-color: var(--color-gold);
   color: var(--color-light);
-  font-size: 12px;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 1px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition:
+    background-color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    color 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
   cursor: pointer;
 }
 
 .btn-accent:hover {
   background-color: var(--color-light-gold);
   border-color: var(--color-light-gold);
+}
+
+/* Arrow transition */
+.btn-primary svg,
+.btn-secondary svg,
+.btn-accent svg {
+  transition: transform 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.btn-primary:hover svg,
+.btn-secondary:hover svg,
+.btn-accent:hover svg {
+  transform: translateX(4px);
 }
 
 .btn-icon {
@@ -95,7 +122,7 @@
   color: var(--color-dark);
   transition: all var(--transition-fast);
   cursor: pointer;
-  border-radius: var(--border-radius-lg);
+  border-radius: 0;
 }
 
 .btn-icon:hover {

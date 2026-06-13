@@ -83,6 +83,7 @@ const ProfileSectionAddresses = () => {
           setAddresses((prev) =>
             prev.map((addr) => (addr._id === editingId ? json.address : addr)),
           );
+          window.dispatchEvent(new Event("addresses:updated"));
         }
       } else {
         const res = await authFetch("/api/addresses", {
@@ -93,6 +94,7 @@ const ProfileSectionAddresses = () => {
         if (res.ok) {
           const json = await res.json();
           setAddresses((prev) => [...prev, json.address]);
+          window.dispatchEvent(new Event("addresses:updated"));
         }
       }
     } catch (err) {
@@ -111,6 +113,7 @@ const ProfileSectionAddresses = () => {
       const res = await authFetch(`/api/addresses/${id}`, { method: "DELETE" });
       if (res.ok) {
         setAddresses((prev) => prev.filter((addr) => addr._id !== id));
+        window.dispatchEvent(new Event("addresses:updated"));
       }
     } catch (err) {
       void err;

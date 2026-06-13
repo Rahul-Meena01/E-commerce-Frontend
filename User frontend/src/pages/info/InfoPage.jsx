@@ -117,6 +117,11 @@ const OPEN_POSITIONS = [
   },
 ];
 
+const SLUG_MAP = {
+  "shipping-policy": "shipping",
+  "return-policy": "returns",
+};
+
 export default function InfoPage() {
   const { pageSlug } = useParams();
   const navigate = useNavigate();
@@ -127,14 +132,16 @@ export default function InfoPage() {
     // If route path is direct /about, etc., we resolve from location
     const pathParts = location.pathname.split("/");
     const pathSlug = pathParts[pathParts.length - 1];
-    return INFO_PAGES[pathSlug] ? pathSlug : "about";
+    const normalized = SLUG_MAP[pathSlug] || pathSlug;
+    return INFO_PAGES[normalized] ? normalized : "about";
   });
 
   useEffect(() => {
     const pathParts = location.pathname.split("/");
     const pathSlug = pathParts[pathParts.length - 1];
-    if (INFO_PAGES[pathSlug]) {
-      setActiveTab(pathSlug);
+    const normalized = SLUG_MAP[pathSlug] || pathSlug;
+    if (INFO_PAGES[normalized]) {
+      setActiveTab(normalized);
     }
   }, [location.pathname]);
 

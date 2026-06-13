@@ -7,7 +7,7 @@ export const siteContent = {
     description: "Discover our curated collection of premium clothing pieces designed to bring sophistication and style to your wardrobe. Crafted with finest materials and contemporary design principles.",
     ctaLink: "/shop",
     ctaLabel: "Shop Now",
-    heroImageUrl: "/heroSection.png"
+    heroVideoUrl: "/hero-video.mp4"
   },
   newsletter: {
     label: "THE LOFT JOURNAL",

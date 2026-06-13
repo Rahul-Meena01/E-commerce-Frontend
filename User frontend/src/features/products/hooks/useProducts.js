@@ -29,7 +29,7 @@ export const useProducts = (filters = {}) => {
   const query = useProductsQuery(queryFilters);
 
   return {
-    products: query.data?.items || [],
+    products: query.data?.data || query.data?.items || (Array.isArray(query.data) ? query.data : []),
     loading: query.isLoading,
     error: query.error?.message || null,
     refetch: query.refetch,

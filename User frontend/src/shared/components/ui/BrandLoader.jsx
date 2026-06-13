@@ -49,12 +49,12 @@ export default function BrandLoader({ onComplete }) {
   const logoVariants = {
     initial: {
       opacity: 0,
-      letterSpacing: shouldReduceMotion ? "0.4em" : "0.15em",
+      letterSpacing: shouldReduceMotion ? "0.18em" : "0.05em",
       scale: shouldReduceMotion ? 1 : 0.98,
     },
     animate: {
       opacity: 1,
-      letterSpacing: shouldReduceMotion ? "0.4em" : "0.55em",
+      letterSpacing: shouldReduceMotion ? "0.18em" : "0.18em",
       scale: 1,
       transition: {
         duration: shouldReduceMotion ? 0.8 : 1.2,
@@ -90,12 +90,13 @@ export default function BrandLoader({ onComplete }) {
           animate="animate"
           style={{
             color: "#ffffff",
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontWeight: 400, // Elegant serif thin/light weight
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: 300, // Elegant serif thin/light weight
+            fontStyle: "italic",
             fontSize: "clamp(2.5rem, 5vw, 4rem)", // Fluid typography
             textTransform: "uppercase",
             margin: 0,
-            paddingLeft: "0.55em", // Counter-balance letter-spacing to ensure absolute horizontal centering
+            paddingLeft: "0.18em", // Counter-balance letter-spacing to ensure absolute horizontal centering
             textAlign: "center",
             lineHeight: 1,
             colorScheme: "dark",

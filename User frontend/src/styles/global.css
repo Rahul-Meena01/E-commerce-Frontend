@@ -3,19 +3,19 @@
 
 :root {
   /* Legacy alias variables mapped to premium design system tokens */
-  --color-dark: var(--ds-color-text, #111827);
-  --color-dark-hover: var(--ds-color-brand-hover, #111827);
-  --color-light: var(--ds-color-surface, #ffffff);
-  --color-gray: var(--ds-color-text-muted, #667085);
-  --color-light-gray: var(--ds-color-text-subtle, #98a2b3);
-  --color-border: var(--ds-color-border, #e4e7ec);
-  --color-background: var(--ds-color-canvas, #f6f7f9);
-  --color-gold: var(--ds-color-accent, #a47551);
-  --color-light-gold: var(--ds-color-accent-soft, #f6eee8);
-  --color-footer: #111111;
-  --color-success: var(--ds-color-success, #047857);
-  --color-error: var(--ds-color-danger, #b42318);
-  --color-warning: var(--ds-color-warning, #b45309);
+  --color-dark: #0F0E0C;
+  --color-dark-hover: var(--ds-color-brand-hover, #1E1D19);
+  --color-light: #F7F5F0;
+  --color-gray: var(--ds-color-text-muted, #6C6861);
+  --color-light-gray: var(--ds-color-text-subtle, #A39E96);
+  --color-border: var(--ds-color-border, #E8E5DE);
+  --color-background: var(--ds-color-canvas, #F7F5F0);
+  --color-gold: #C9A96E;
+  --color-light-gold: var(--ds-color-accent-soft, #F6F1E5);
+  --color-footer: #0F0E0C;
+  --color-success: var(--ds-color-success, #1B4332);
+  --color-error: var(--ds-color-danger, #8B3A3A);
+  --color-warning: var(--ds-color-warning, #5C3A21);
   
   --spacing-xs: var(--ds-space-2, 8px);
   --spacing-sm: var(--ds-space-3, 12px);
@@ -24,8 +24,8 @@
   --spacing-xl: var(--ds-space-6, 24px);
   --spacing-xxl: var(--ds-space-8, 32px);
   --spacing-xxxl: var(--ds-space-10, 40px);
-  --spacing-section: var(--ds-space-12, 48px);
-  --spacing-section-lg: var(--ds-space-16, 64px);
+  --spacing-section: 96px;
+  --spacing-section-lg: 120px;
   
   --font-family: var(--ds-font-sans);
   --font-family-serif: var(--ds-font-display);

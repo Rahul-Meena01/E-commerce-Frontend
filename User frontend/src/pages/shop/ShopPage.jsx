@@ -7,6 +7,7 @@ import ProductCard from "@/features/products/components/ProductCard";
 import ProductCardSkeleton from "@/features/products/components/ProductCardSkeleton";
 import "../../styles/SubCategory.css";
 import { productsApi } from "@/features/products/services/products.service";
+import logger from "@/shared/utils/logger";
 
 const ShopPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,7 +80,7 @@ const ShopPage = () => {
           setAllProducts(data?.data || []);
         }
       } catch (err) {
-        console.error("Shop page products fetch error:", err);
+        logger.error("Shop page products fetch error:", err);
 
         if (!cancelled) {
           setAllProducts([]);

@@ -38,7 +38,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
     const y = ((e.clientY - top) / height) * 100;
     if (heroImgRef.current) {
       heroImgRef.current.style.transformOrigin = `${x}% ${y}%`;
-      heroImgRef.current.style.transform = "scale(1.35)";
+      heroImgRef.current.style.transform = "scale(1.08)";
     }
   };
 

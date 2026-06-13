@@ -1,6 +1,5 @@
 import "@/styles/HeroSection.css";
 import { Link } from "react-router-dom";
-import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { siteContent } from "@/config/siteContent";
 
 const HeroSection = () => {
@@ -9,7 +8,14 @@ const HeroSection = () => {
   return (
     <section className="hero">
       <div className="hero-left">
-        <OptimizedImage src={hero.heroImageUrl || "/heroSection.png"} alt="Premium Fashion Collection" />
+        <video
+          src={hero.heroVideoUrl || "/hero-video.mp4"}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="hero-video"
+        />
 
         <div className="hero-overlay">
           <p>{hero.subtitle}</p>

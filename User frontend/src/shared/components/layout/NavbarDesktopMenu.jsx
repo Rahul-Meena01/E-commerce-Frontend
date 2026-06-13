@@ -42,7 +42,7 @@ const NavbarDesktopMenu = ({
             </div>
           </div>
 
-          <div className="mega-menu-center">
+          <div className="mega-menu-center" key={activeShopKey}>
             <div className="mega-menu-section-heading">
               <span className="mega-menu-section-eyebrow">
                 Selected category

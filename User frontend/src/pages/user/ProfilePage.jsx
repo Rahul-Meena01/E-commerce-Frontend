@@ -96,6 +96,15 @@ const ProfilePage = () => {
   const [couponsCount, setCouponsCount] = useState(0);
 
   useEffect(() => {
+    if (user) {
+      const data = buildProfileData(user);
+      setProfileData(data);
+      setFormData(data);
+      setAvatarPreview(data.image);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (isAuthenticated) {
       authFetch("/api/coupon")
         .then((res) => {

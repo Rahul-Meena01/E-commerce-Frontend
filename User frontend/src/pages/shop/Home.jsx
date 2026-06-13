@@ -7,9 +7,7 @@ import Reveal from "@/shared/components/ui/Reveal";
 const Home = () => {
   return (
     <>
-      <Reveal direction="up" duration={1.0}>
-        <HeroSection />
-      </Reveal>
+      <HeroSection />
       
       <Reveal direction="up" delay={0.1}>
         <ProductSlider 
