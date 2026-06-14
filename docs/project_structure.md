@@ -1,13 +1,13 @@
 # LOFT Customer Storefront - Project Structure
 
-This document outlines the architecture and directory organization of the LOFT Customer Storefront at the repository root.
+This document outlines the architecture and directory organization of the LOFT Customer Storefront (`User frontend`).
 
 ---
 
 ## 1. Directory Structure
 
 ```text
-./ (Repository Root)
+User frontend/
 ├── public/                 # Static public assets (images, logos, icons)
 ├── src/
 │   ├── app/                # Application-level providers and routes configuration

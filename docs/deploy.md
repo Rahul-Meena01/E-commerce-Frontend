@@ -1,6 +1,6 @@
 # LOFT Customer Storefront - Production Deployment Guide
 
-This guide details the steps and considerations for building and deploying the LOFT Customer Storefront to production.
+This guide details the steps and considerations for building and deploying the LOFT Customer Storefront (`User frontend`) to production.
 
 ---
 
@@ -21,6 +21,9 @@ The storefront application relies on the following environment variables. In pro
 Before deploying to your hosting provider, always validate that the production build succeeds locally:
 
 ```bash
+# Navigate to the storefront directory
+cd "User frontend"
+
 # Install production dependencies (if not already done)
 npm install
 
@@ -42,10 +45,10 @@ The Customer Storefront is a Single Page Application (SPA) built with Vite. It c
 ### Option A: Vercel (Recommended)
 
 1. Connect your GitHub repository to Vercel.
-2. Add a new project and select the root directory.
+2. Add a new project and select the root directory (or configure the root to point to `/User frontend`).
 3. Set the **Framework Preset** to **Vite**.
 4. Configure the build settings:
-   - **Root Directory**: `.` (or leave empty)
+   - **Root Directory**: `User frontend`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
 5. Add the production environment variables listed in Section 1.
@@ -55,9 +58,9 @@ The Customer Storefront is a Single Page Application (SPA) built with Vite. It c
 
 1. Create a new site on Netlify from Git.
 2. Select your repository and set the following build settings:
-   - **Base directory**: `.` (or leave empty)
+   - **Base directory**: `User frontend`
    - **Build command**: `npm run build`
-   - **Publish directory**: `dist`
+   - **Publish directory**: `User frontend/dist`
 3. Under **Environment variables**, define `VITE_API_URL`, `VITE_ADMIN_PORTAL_URL`, and `VITE_RAZORPAY_KEY_ID`.
 4. To support React Router client-side routing on page refresh, add a `_redirects` file to your `public/` directory (or use a `netlify.toml` file) with the following content:
    ```text
