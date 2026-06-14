@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ResponsiveImage from "@/shared/components/ui/ResponsiveImage";
 import "./LightboxModal.css";
 

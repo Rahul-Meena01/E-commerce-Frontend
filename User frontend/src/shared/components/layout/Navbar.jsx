@@ -41,7 +41,6 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  const mobileMenuRef = useRef(null);
   const shopMenuCloseTimerRef = useRef(null);
   const { wishlistCount } = useWishlistState();
   const { cartCount } = useCartState();
@@ -116,41 +115,6 @@ const Navbar = () => {
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = "hidden";
-
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape") {
-          setMobileMenuOpen(false);
-          return;
-        }
-
-        if (e.key === "Tab") {
-          const container = mobileMenuRef.current;
-          if (!container) return;
-          const focusables = container.querySelectorAll(
-            'button, a, [tabindex="0"]',
-          );
-          if (focusables.length === 0) return;
-          const first = focusables[0];
-          const last = focusables[focusables.length - 1];
-
-          if (e.shiftKey) {
-            if (document.activeElement === first) {
-              last.focus();
-              e.preventDefault();
-            }
-          } else {
-            if (document.activeElement === last) {
-              first.focus();
-              e.preventDefault();
-            }
-          }
-        }
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.body.style.overflow = "";
-        window.removeEventListener("keydown", handleKeyDown);
-      };
     } else {
       document.body.style.overflow = "";
     }
@@ -164,6 +128,7 @@ const Navbar = () => {
       clearTimeout(shopMenuCloseTimerRef.current);
       shopMenuCloseTimerRef.current = null;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchOpen(false);
     setSearchQuery("");
     setMobileMenuOpen(false);
@@ -343,7 +308,6 @@ const Navbar = () => {
         <NavbarMobileMenu
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
-          mobileMenuRef={mobileMenuRef}
           categories={categories}
           handleMobileNav={handleMobileNav}
           isAuthenticated={isAuthenticated}

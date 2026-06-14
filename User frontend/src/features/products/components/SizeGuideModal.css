@@ -32,20 +32,7 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--ds-color-text-muted, #667085);
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color var(--ds-duration-fast, 150ms) ease;
   z-index: 10;
-}
-
-.sgm-close-btn:hover {
-  color: var(--ds-color-text, #111827);
 }
 
 .sgm-header {

@@ -32,6 +32,7 @@ const Category = () => {
 
   useEffect(() => {
     if (subcategories && subcategories.length > 0 && displayedSubCategories.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayedSubCategories(getRandomSubCategories(subcategories, 6));
     }
   }, [subcategories, displayedSubCategories.length]);

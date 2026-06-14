@@ -15,7 +15,6 @@ import {
   RotateCcw,
   BookOpen,
 } from "lucide-react";
-import "../../styles/buttons.css";
 import "../../styles/ui.css";
 import "./InfoPage.css";
 
@@ -123,7 +122,7 @@ const SLUG_MAP = {
 };
 
 export default function InfoPage() {
-  const { pageSlug } = useParams();
+  useParams();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -141,6 +140,7 @@ export default function InfoPage() {
     const pathSlug = pathParts[pathParts.length - 1];
     const normalized = SLUG_MAP[pathSlug] || pathSlug;
     if (INFO_PAGES[normalized]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(normalized);
     }
   }, [location.pathname]);

@@ -73,7 +73,8 @@ export default function NavbarSearchOverlay({
                   {product.category}
                 </span>
               </button>
-            ))
+              )
+            })
           ) : (
             <div className="search-no-results">
               No products found for "{searchQuery}"

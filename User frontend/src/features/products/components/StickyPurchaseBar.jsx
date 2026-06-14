@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import StockIndicator from "./StockIndicator";
 import { formatPrice } from "@/utils/pricing";
 import "./StickyPurchaseBar.css";
 
 const StickyPurchaseBar = ({
-  product,
   thumbnail,
   title,
   selectedVariantSummary,
@@ -68,7 +66,6 @@ const StickyPurchaseBar = ({
 };
 
 StickyPurchaseBar.propTypes = {
-  product: PropTypes.object,
   thumbnail: PropTypes.string,
   title: PropTypes.string,
   selectedVariantSummary: PropTypes.string,
@@ -79,7 +76,6 @@ StickyPurchaseBar.propTypes = {
 };
 
 StickyPurchaseBar.defaultProps = {
-  product: null,
   thumbnail: "",
   title: "",
   selectedVariantSummary: "",

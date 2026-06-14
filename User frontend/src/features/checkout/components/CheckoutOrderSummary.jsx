@@ -10,13 +10,13 @@ import {
   Trash2,
   Calendar,
 } from "lucide-react";
+import { Button } from "@/shared/ui";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "../../../utils/pricing";
 
 export default function CheckoutOrderSummary({
   cartItems,
   cartSubtotal,
-  shippingMethod,
   shippingCost,
   tax,
   total,
@@ -64,7 +64,7 @@ export default function CheckoutOrderSummary({
     try {
       await removeGiftCard();
       setGiftCardSuccess("Gift card removed.");
-    } catch (err) {
+    } catch {
       setGiftCardError("Failed to remove gift card.");
     }
   };
@@ -92,7 +92,7 @@ export default function CheckoutOrderSummary({
     try {
       await removeCoupon();
       setCouponSuccess("Coupon removed.");
-    } catch (err) {
+    } catch {
       setCouponError("Failed to remove coupon.");
     }
   };
@@ -165,8 +165,9 @@ export default function CheckoutOrderSummary({
                   >
                     <Plus size={12} />
                   </button>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    icon={<Trash2 size={12} />}
                     className="checkout-remove-btn"
                     onClick={() =>
                       removeFromCart({
@@ -177,9 +178,7 @@ export default function CheckoutOrderSummary({
                       })
                     }
                     aria-label="Remove item"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                  />
                 </div>
               </div>
               <div className="checkout-item-price">
@@ -209,9 +208,9 @@ export default function CheckoutOrderSummary({
           {couponCode ? (
             <div className="checkout-coupon-applied">
               <span className="coupon-code-badge">{couponCode}</span>
-              <button type="button" className="coupon-remove-btn-link" onClick={handleRemove}>
+              <Button variant="ghost" onClick={handleRemove}>
                 Remove
-              </button>
+              </Button>
             </div>
           ) : (
             <form onSubmit={handleApply} className="checkout-coupon-form">
@@ -223,9 +222,9 @@ export default function CheckoutOrderSummary({
                 className="checkout-coupon-input"
                 disabled={applying}
               />
-              <button type="submit" className="checkout-coupon-btn" disabled={applying || !couponInput.trim()}>
+              <Button variant="primary" type="submit" disabled={applying || !couponInput.trim()}>
                 {applying ? "..." : "Apply"}
-              </button>
+              </Button>
             </form>
           )}
           {couponError && <p className="coupon-message error">{couponError}</p>}
@@ -240,9 +239,9 @@ export default function CheckoutOrderSummary({
               <span className="coupon-code-badge">
                 {appliedGiftCard.code} ({formatPrice(appliedGiftCard.giftCardValue)})
               </span>
-              <button type="button" className="coupon-remove-btn-link" onClick={handleRemoveGiftCard}>
+              <Button variant="ghost" onClick={handleRemoveGiftCard}>
                 Remove
-              </button>
+              </Button>
             </div>
           ) : (
             <form onSubmit={handleApplyGiftCard} className="checkout-coupon-form">
@@ -254,9 +253,9 @@ export default function CheckoutOrderSummary({
                 className="checkout-coupon-input"
                 disabled={applyingGiftCard}
               />
-              <button type="submit" className="checkout-coupon-btn" disabled={applyingGiftCard || !giftCardInput.trim()}>
+              <Button variant="primary" type="submit" disabled={applyingGiftCard || !giftCardInput.trim()}>
                 {applyingGiftCard ? "..." : "Apply"}
-              </button>
+              </Button>
             </form>
           )}
           {giftCardError && <p className="coupon-message error">{giftCardError}</p>}

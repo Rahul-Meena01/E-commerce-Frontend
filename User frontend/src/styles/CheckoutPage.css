@@ -811,22 +811,12 @@
 .checkout-remove-btn {
   width: 26px;
   height: 26px;
-  border: 1px solid transparent;
-  border-radius: 0;
-  background: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--color-light-gray);
   margin-left: 4px;
-  transition: all var(--transition-fast);
 }
 
 .checkout-remove-btn:hover {
-  color: #c0392b;
-  border-color: #c0392b;
-  background-color: #fdf0ef;
+  color: var(--ds-color-danger, #c0392b) !important;
+  background-color: var(--ds-color-danger-bg, #fdf0ef) !important;
 }
 
 .checkout-continue-btn:disabled {
@@ -1475,44 +1465,6 @@
   cursor: not-allowed;
 }
 
-.checkout-coupon-btn {
-  background-color: var(--ds-color-text, #0F0E0C);
-  color: var(--ds-color-surface, #ffffff);
-  border: 1px solid var(--ds-color-text, #0F0E0C);
-  border-radius: 0;
-  padding: 10px var(--ds-space-5, 20px);
-  font-family: var(--ds-font-sans, sans-serif);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-  transition: all var(--ds-duration-fast, 140ms) var(--ds-ease-standard, cubic-bezier(0.2, 0.8, 0.2, 1));
-}
-
-.checkout-coupon-btn:hover:not(:disabled) {
-  background-color: var(--ds-color-accent, #a47551);
-  border-color: var(--ds-color-accent, #a47551);
-  color: var(--ds-color-surface, #ffffff);
-  transform: none;
-  box-shadow: none;
-}
-
-.checkout-coupon-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.checkout-coupon-btn:disabled {
-  background-color: var(--ds-color-surface-muted, #f8fafc);
-  border-color: var(--ds-color-border, #e4e7ec);
-  color: var(--ds-color-text-subtle, #98a2b3);
-  cursor: not-allowed;
-}
-
 .checkout-coupon-applied {
   display: flex;
   align-items: center;
@@ -1540,27 +1492,6 @@
   font-size: 10px;
   color: var(--ds-color-accent, #a47551);
   animation: badgeSparkle 2s infinite ease-in-out;
-}
-
-.coupon-remove-btn-link {
-  background: none;
-  border: none;
-  color: var(--ds-color-text-muted, #667085);
-  font-family: var(--ds-font-sans, sans-serif);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  padding: 4px var(--ds-space-2, 8px);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  transition: all var(--ds-duration-fast, 140ms) var(--ds-ease-standard, cubic-bezier(0.2, 0.8, 0.2, 1));
-}
-
-.coupon-remove-btn-link:hover {
-  color: var(--ds-color-danger, #b42318);
-  transform: scale(1.02);
 }
 
 .coupon-message {

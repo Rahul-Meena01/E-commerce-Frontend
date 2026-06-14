@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { useIntersectionObserver } from "../../hooks/useIntersectionObserver";
 import "../../../styles/Reveal.css";

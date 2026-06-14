@@ -270,23 +270,6 @@ ol {
   flex-grow: 1;
 }
 
-.toast-close-btn {
-  background: transparent;
-  color: var(--color-light-gray);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border-radius: 50%;
-  transition: all var(--transition-fast);
-}
-
-.toast-close-btn:hover {
-  background: var(--color-border);
-  color: var(--color-dark);
-}
 @keyframes toast-slide-in {
   from {
     transform: translateX(120%);

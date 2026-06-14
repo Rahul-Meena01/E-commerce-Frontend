@@ -144,12 +144,20 @@ Vite builds output to their local `dist/` folders. Those folders are generated a
 ## Deployment Notes
 
 - Deploy `User frontend/` and `frontend/` as separate Vite static applications on platforms such as Vercel, Netlify, or any static asset hosting.
+- For detailed storefront deployment instructions, environment variables configuration, and a production checklist, see the [Production Deployment Guide](file:///c:/Users/dell/OneDrive/Documents/Projects/E-commerce/docs/deploy.md).
 - Deploy `backend/` as a Node.js service on Render, Railway, Heroku, or a VPS.
 - Configure production environment variables in the hosting provider dashboard, not in source control.
 - Set `CLIENT_URL` to the deployed storefront and admin origins so CORS and cookie behavior work correctly.
 - Ensure production payment webhook secrets are configured before enabling live payments.
 - Keep uploaded media outside the git repository, preferably in object storage (like AWS S3 or Google Cloud Storage) or a managed media service.
 
+## Project Structure
+
+For a detailed breakdown of the storefront's modular folder organization and naming conventions, refer to the [Project Structure Overview](file:///c:/Users/dell/OneDrive/Documents/Projects/E-commerce/docs/project_structure.md).
+
 ## GitHub Readiness
 
-The repository is configured as a monorepo containing `backend/`, `frontend/`, and `User frontend/`. Generated folders such as `node_modules/`, `dist/`, `build/`, local `.env` files, logs, uploads, and temporary scratch files are ignored by the root `.gitignore`.
+The repository is configured as a clean monorepo containing `backend/`, `frontend/`, and `User frontend/`. Generated folders such as `node_modules/`, `dist/`, `build/`, local `.env` files, logs, uploads, and temporary scratch files are ignored by the root `.gitignore`.
+
+An audit has been performed on the `User frontend` to remove all unused code, dead components, and obsolete assets, making it fully ready for publication.
+

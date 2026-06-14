@@ -1,11 +1,14 @@
 import { forwardRef } from "react";
 
+const VALID_VARIANTS = ["primary", "secondary", "accent", "outline", "ghost", "danger"];
+
 export const Button = forwardRef(function Button(
   {
     as: Component = "button",
     children,
     className = "",
     icon,
+    loading = false,
     size = "md",
     type = "button",
     variant = "primary",
@@ -13,11 +16,15 @@ export const Button = forwardRef(function Button(
   },
   ref,
 ) {
+  const safeVariant = VALID_VARIANTS.includes(variant) ? variant : "primary";
+  const isIconOnly = !children;
+
   const classes = [
     "ds-button",
-    `ds-button--${variant}`,
+    `ds-button--${safeVariant}`,
     size !== "md" ? `ds-button--${size}` : "",
-    props["aria-label"] && !children ? "ds-button--icon" : "",
+    isIconOnly ? "ds-button--icon" : "",
+    loading ? "ds-button--loading" : "",
     className,
   ]
     .filter(Boolean)
@@ -27,6 +34,7 @@ export const Button = forwardRef(function Button(
     <Component
       ref={ref}
       className={classes}
+      disabled={props.disabled || loading}
       type={Component === "button" ? type : undefined}
       {...props}
     >

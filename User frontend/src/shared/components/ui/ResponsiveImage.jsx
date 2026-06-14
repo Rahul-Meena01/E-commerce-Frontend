@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./ResponsiveImage.css";
 
 /**
@@ -31,7 +31,11 @@ const ResponsiveImage = ({
 
   useEffect(() => {
     if (inView) return;
-    if (typeof window === "undefined") return setInView(true);
+    if (typeof window === "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInView(true);
+      return;
+    }
 
     if ("IntersectionObserver" in window) {
       const io = new IntersectionObserver(

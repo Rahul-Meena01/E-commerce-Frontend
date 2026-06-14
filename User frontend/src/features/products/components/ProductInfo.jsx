@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import VariantSelector from "./VariantSelector";
 import { formatPrice } from "@/utils/pricing";

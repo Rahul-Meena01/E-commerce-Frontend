@@ -1,12 +1,51 @@
-
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import rateLimit from "express-rate-limit";
 import slugify from "slugify"; // npm i slugify
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import User from "../models/User.js";
 import Vendor from "../models/VendorSchema.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const saveBase64Image = (base64String, userId) => {
+  if (!base64String || !base64String.startsWith("data:image/")) {
+    return base64String;
+  }
+
+  const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error("Invalid base64 image format");
+  }
+
+  const imageType = matches[1];
+  const base64Data = matches[2];
+  const buffer = Buffer.from(base64Data, "base64");
+
+  let extension = "png";
+  if (imageType.includes("jpeg") || imageType.includes("jpg")) {
+    extension = "jpg";
+  } else if (imageType.includes("gif")) {
+    extension = "gif";
+  } else if (imageType.includes("webp")) {
+    extension = "webp";
+  }
+
+  const filename = `profile-${userId}-${Date.now()}.${extension}`;
+  const uploadsDir = path.join(__dirname, "../uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+  return `/uploads/${filename}`;
+};
 
 const router = express.Router();
 
@@ -49,6 +88,9 @@ const buildUserPayload = (user, vendor = null) => ({
   phone: user.phone,
   role: user.role,
   vendorSlug: vendor?.slug ?? null, // null for admin and regular users
+  profileImage: user.profileImage || "",
+  location: user.location || "",
+  bio: user.bio || "",
 });
 
 const sendAuthResponse = (res, statusCode, message, user, vendor = null) => {
@@ -399,6 +441,79 @@ router.post("/logout", (req, res) => {
   return res
     .status(200)
     .json({ success: true, message: "Logged out successfully" });
+});
+
+// @route   GET /api/auth/profile
+// @desc    Get logged-in user profile
+// @access  Private
+router.get("/profile", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("vendorProfile", "slug status shopName");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    return res.status(200).json({
+      success: true,
+      user: buildUserPayload(user, user.vendorProfile),
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// @route   PUT /api/auth/profile
+// @desc    Update logged-in user profile
+// @access  Private
+router.put("/profile", protect, async (req, res) => {
+  try {
+    const { name, email, phone, location, bio, image } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (name !== undefined) user.name = name.trim();
+    if (email !== undefined) {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail !== user.email) {
+        const emailExists = await User.findOne({ email: normalizedEmail });
+        if (emailExists) {
+          return res.status(400).json({ success: false, message: "Email is already in use" });
+        }
+        user.email = normalizedEmail;
+      }
+    }
+    if (phone !== undefined) user.phone = phone.trim();
+    if (location !== undefined) user.location = location.trim();
+    if (bio !== undefined) user.bio = bio.trim();
+
+    if (image !== undefined) {
+      try {
+        user.profileImage = saveBase64Image(image, user._id);
+      } catch (uploadError) {
+        return res.status(400).json({ success: false, message: uploadError.message });
+      }
+    }
+
+    await user.save();
+
+    // If vendor, populate vendor profile
+    let vendor = null;
+    if (user.role === "vendor") {
+      vendor = await Vendor.findOne({ user: user._id });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: buildUserPayload(user, vendor),
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
 });
 
 export default router;

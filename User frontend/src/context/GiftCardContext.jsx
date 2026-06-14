@@ -21,6 +21,7 @@ export const GiftCardProvider = ({ children }) => {
   // Clear gift card if user logs out
   useEffect(() => {
     if (!isAuthenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAppliedGiftCard(null);
       localStorage.removeItem("loft_applied_gift_card");
     }
@@ -70,6 +71,7 @@ export const GiftCardProvider = ({ children }) => {
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Failed to apply gift card.";
       setError(msg);
+      // eslint-disable-next-line preserve-caught-error
       throw new Error(msg);
     } finally {
       setLoading(false);
@@ -98,6 +100,7 @@ export const GiftCardProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useGiftCard = () => {
   const context = useContext(GiftCardContext);
   if (!context) {

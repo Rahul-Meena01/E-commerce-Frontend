@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logger from "@/shared/utils/logger";
-import { Shield, Truck, ArrowLeft } from "lucide-react";
+import { Shield, ArrowLeft } from "lucide-react";
 import { useCartActions, useCartState } from "@/features/cart/hooks/useCart";
 import { useAuthState } from "@/features/auth/context/AuthContext";
 import PaymentModal from "@/features/checkout/components/PaymentModal";
@@ -35,7 +35,7 @@ const CheckoutPage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [orderError, setOrderError] = useState("");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isPaying, setIsPaying] = useState(false);
+  const [, setIsPaying] = useState(false);
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
 
@@ -111,7 +111,6 @@ const CheckoutPage = () => {
     setActiveStep(3);
   };
 
-  const subtotalSafe = Number(cartTotals?.subtotal) || 0;
   const discount = Number(cartTotals?.discount) || 0;
   const shippingCost = Number(cartTotals?.shipping) || 0;
   const tax = Number(cartTotals?.tax) || 0;
@@ -120,6 +119,7 @@ const CheckoutPage = () => {
   // Auto-switch to COD if a gift card is applied or total is 0
   useEffect(() => {
     if (appliedGiftCard || total === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPaymentMethod("COD");
     }
   }, [appliedGiftCard, total]);

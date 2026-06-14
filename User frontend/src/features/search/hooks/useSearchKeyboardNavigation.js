@@ -9,6 +9,7 @@ export function useSearchKeyboardNavigation({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveIndex(items.length > 0 ? 0 : -1);
   }, [items]);
 

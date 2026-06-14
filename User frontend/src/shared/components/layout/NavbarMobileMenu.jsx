@@ -1,9 +1,10 @@
 import { X, User, Heart, ShoppingCart } from "lucide-react";
+import { useFocusTrap } from "@/shared/hooks/useFocusTrap";
+import { useEscapeKey } from "@/shared/hooks/useEscapeKey";
 
 const NavbarMobileMenu = ({
   mobileMenuOpen,
   setMobileMenuOpen,
-  mobileMenuRef,
   categories,
   handleMobileNav,
   isAuthenticated,
@@ -12,6 +13,9 @@ const NavbarMobileMenu = ({
   cartCount,
   logout,
 }) => {
+  const drawerRef = useFocusTrap(mobileMenuOpen);
+  useEscapeKey(mobileMenuOpen, () => setMobileMenuOpen(false));
+
   if (!mobileMenuOpen) return null;
 
   return (
@@ -20,7 +24,7 @@ const NavbarMobileMenu = ({
       onClick={() => setMobileMenuOpen(false)}
     >
       <div
-        ref={mobileMenuRef}
+        ref={drawerRef}
         className="mobile-menu"
         id="mobile-menu"
         role="dialog"

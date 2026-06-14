@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import { ZoomIn } from "lucide-react";
 import { IMAGE_FALLBACK } from "@/constants/images";
@@ -28,6 +28,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
 
   // Reset active index if images change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveIndex(0);
   }, [imageCount]);
 

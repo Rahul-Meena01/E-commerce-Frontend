@@ -1,4 +1,4 @@
-import { ShieldCheck, Lock, ArrowRight, X } from "lucide-react";
+import { Lock, ArrowRight, X } from "lucide-react";
 import { formatPrice } from "@/utils/pricing";
 import { motion, AnimatePresence } from "framer-motion";
 import "@/styles/PaymentModal.css";

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ResponsiveImage from "@/shared/components/ui/ResponsiveImage";
 import "./StyleInspiration.css";
 

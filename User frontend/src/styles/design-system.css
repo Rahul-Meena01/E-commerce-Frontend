@@ -76,6 +76,53 @@
   padding: 0;
 }
 
+.ds-button--accent {
+  background: var(--ds-color-accent, var(--color-gold, #C9A96E));
+  color: #fff;
+}
+
+.ds-button--accent:hover:not(:disabled) {
+  background: var(--ds-color-accent-hover, var(--color-light-gold, #D4B88C));
+}
+
+.ds-button--outline {
+  background: transparent;
+  border-color: var(--ds-color-border-strong, var(--color-border, #D1D1D1));
+  color: var(--ds-color-text, var(--color-dark, #1A1A1A));
+}
+
+.ds-button--outline:hover:not(:disabled) {
+  border-color: var(--ds-color-brand, var(--color-gold, #C9A96E));
+  color: var(--ds-color-brand, var(--color-gold, #C9A96E));
+}
+
+.ds-button--loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.ds-button--loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: ds-spin 0.6s linear infinite;
+}
+
+@keyframes ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .ds-field {
   display: grid;
   gap: var(--ds-space-2);

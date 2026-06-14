@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
+import { Button } from "@/shared/ui";
+import { useFocusTrap, useEscapeKey } from "@/shared/hooks";
 import { useCart } from "@/features/cart/hooks/useCart";
 import { useNavigate, Link } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
@@ -24,7 +26,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
     removeGiftCard,
   } = useCart();
   const navigate = useNavigate();
-  const drawerRef = useRef(null);
+  const drawerRef = useFocusTrap(isOpen);
+
+  useEscapeKey(() => { if (isOpen) onClose(); }, isOpen);
 
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState({ type: "", text: "" });
@@ -50,7 +54,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
     try {
       await removeCoupon();
       setCouponMsg({ type: "success", text: "Coupon removed." });
-    } catch (err) {
+    } catch {
       setCouponMsg({ type: "error", text: "Failed to remove coupon." });
     }
   };
@@ -79,29 +83,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
     setGiftCardMsg({ type: "success", text: "Gift card removed." });
   };
 
-  // Close on ESC key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Trap focus when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      const focusableElements = drawerRef.current?.querySelectorAll(
-        'button, a, input, select, textarea, [tabindex="0"]'
-      );
-      if (focusableElements && focusableElements.length > 0) {
-        focusableElements[0].focus();
-      }
-    } else {
-      document.body.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
@@ -130,9 +114,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
             <ShoppingBag size={20} />
             <h2>Your Cart ({cartCount})</h2>
           </div>
-          <button className="cart-drawer-close" onClick={onClose} aria-label="Close cart drawer">
-            <X size={20} />
-          </button>
+          <Button variant="ghost" icon={<X size={20} />} onClick={onClose} aria-label="Close cart drawer" />
         </div>
 
         <div className="cart-drawer-items">
@@ -140,9 +122,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
             <div className="cart-drawer-empty">
               <ShoppingBag size={48} className="empty-icon" />
               <p>Your shopping cart is empty</p>
-              <button className="explore-btn" onClick={onClose}>
+              <Button variant="primary" onClick={onClose}>
                 Continue Shopping
-              </button>
+              </Button>
             </div>
           ) : (
             cartItems.map((item) => {
@@ -354,9 +336,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </div>
 
             <p className="footer-notice">Shipping, taxes, and discounts calculated at checkout.</p>
-            <button className="checkout-btn" onClick={handleCheckoutRedirect}>
-              Proceed to Checkout <ArrowRight size={16} />
-            </button>
+            <Button variant="primary" icon={<ArrowRight size={16} />} onClick={handleCheckoutRedirect}>
+              Proceed to Checkout
+            </Button>
           </div>
         )}
       </div>

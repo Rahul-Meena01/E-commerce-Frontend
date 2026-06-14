@@ -42,26 +42,6 @@
   margin: 0;
 }
 
-.cart-drawer-close {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--ds-color-text-muted, #6C6861);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  width: 44px; /* Ensure 44px touch target */
-  height: 44px; /* Ensure 44px touch target */
-  border-radius: 0;
-  transition: background-color var(--ds-duration-fast) var(--ds-ease-standard);
-}
-
-.cart-drawer-close:hover {
-  background-color: var(--ds-color-canvas, #f6f7f9);
-  color: var(--ds-color-text, #0F0E0C);
-}
-
 .cart-drawer-items {
   flex: 1;
   overflow-y: auto;
@@ -88,25 +68,6 @@
 
 .cart-drawer-empty p {
   font-size: var(--ds-text-sm, 14px);
-}
-
-.cart-drawer-empty .explore-btn {
-  background-color: var(--ds-color-brand, #0F0E0C);
-  color: var(--ds-color-canvas, #ffffff);
-  border: none;
-  padding: 12px 24px;
-  font-family: var(--ds-font-sans, 'Jost', sans-serif);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  border-radius: 0;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.cart-drawer-empty .explore-btn:hover {
-  background-color: var(--ds-color-brand-hover, #1E1D19);
 }
 
 .cart-drawer-item {
@@ -266,44 +227,6 @@
   font-size: var(--ds-text-xs, 12px);
   color: var(--ds-color-text-muted, #667085);
   margin: 0;
-}
-
-.checkout-btn {
-  background-color: var(--ds-color-brand, #0F0E0C);
-  color: var(--ds-color-canvas, #ffffff);
-  border: none;
-  padding: 16px;
-  font-family: var(--ds-font-sans, 'Jost', sans-serif);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  border-radius: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: none;
-  transition:
-    background-color var(--ds-duration-fast) var(--ds-ease-standard),
-    transform var(--ds-duration-fast) var(--ds-ease-standard);
-}
-
-.checkout-btn:hover {
-  background-color: var(--ds-color-brand-hover, #1E1D19);
-  box-shadow: none;
-  transform: none;
-}
-
-.checkout-btn:focus-visible {
-  outline: 2px solid var(--ds-color-accent, #a47551);
-  outline-offset: 2px;
-}
-
-.cart-drawer-close:focus-visible {
-  outline: 2px solid var(--ds-color-accent, #a47551);
-  outline-offset: 2px;
 }
 
 .item-remove:focus-visible {

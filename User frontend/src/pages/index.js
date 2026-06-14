@@ -13,5 +13,4 @@ export { default as ProfilePage } from "./user/ProfilePage";
 export { default as CheckoutPage } from "./user/CheckoutPage";
 
 // Other Pages
-export { default as Blog } from "./Blog";
 export { default as NotFound } from "./NotFound";

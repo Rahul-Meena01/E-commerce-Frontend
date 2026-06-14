@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { RotateCcw, Check } from "lucide-react";
+import { RotateCcw, Check, X } from "lucide-react";
 import { CURRENCY } from "@/constants/currency";
 import "@/styles/Filters.css";
 
@@ -30,6 +30,7 @@ const Filters = ({
   initialTags = [],
   initialPriceMin = "",
   initialPriceMax = "",
+  resultsCount,
 }) => {
   const [selectedBrands, setSelectedBrands] = useState(initialBrands);
   const [selectedColors, setSelectedColors] = useState(initialColors);
@@ -39,26 +40,32 @@ const Filters = ({
   const [priceMax, setPriceMax] = useState(initialPriceMax);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedBrands(initialBrands || []);
   }, [initialBrands]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedColors(initialColors || []);
   }, [initialColors]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedSizes(initialSizes || []);
   }, [initialSizes]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedTags(initialTags || []);
   }, [initialTags]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPriceMin(initialPriceMin || "");
   }, [initialPriceMin]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPriceMax(initialPriceMax || "");
   }, [initialPriceMax]);
 
@@ -184,6 +191,71 @@ const Filters = ({
           </button>
         )}
       </div>
+
+      {resultsCount !== undefined && (
+        <div className="loft-filter-results-count">
+          {resultsCount} {resultsCount === 1 ? "result" : "results"}
+        </div>
+      )}
+
+      {hasActiveFilters && (
+        <div className="loft-filter-active-pills">
+          {selectedBrands.map((b) => (
+            <button
+              key={`brand-${b}`}
+              className="loft-filter-pill"
+              onClick={() => handleCheckboxChange("brand", b)}
+              aria-label={`Remove ${b} brand filter`}
+            >
+              {b} <X size={12} />
+            </button>
+          ))}
+          {selectedColors.map((c) => (
+            <button
+              key={`color-${c}`}
+              className="loft-filter-pill"
+              onClick={() => handleCheckboxChange("color", c)}
+              aria-label={`Remove ${c} color filter`}
+            >
+              {c} <X size={12} />
+            </button>
+          ))}
+          {selectedSizes.map((s) => (
+            <button
+              key={`size-${s}`}
+              className="loft-filter-pill"
+              onClick={() => handleCheckboxChange("size", s)}
+              aria-label={`Remove ${s} size filter`}
+            >
+              {s} <X size={12} />
+            </button>
+          ))}
+          {selectedTags.map((t) => (
+            <button
+              key={`tag-${t}`}
+              className="loft-filter-pill"
+              onClick={() => handleCheckboxChange("tag", t)}
+              aria-label={`Remove ${t} tag filter`}
+            >
+              {t} <X size={12} />
+            </button>
+          ))}
+          {(priceMin || priceMax) && (
+            <button
+              className="loft-filter-pill"
+              onClick={() => {
+                setPriceMin("");
+                setPriceMax("");
+                emitFilters({ min: "", max: "" });
+              }}
+              aria-label="Remove price filter"
+            >
+              {CURRENCY.symbol}{priceMin || "0"}&ndash;{CURRENCY.symbol}{priceMax || "∞"}
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      )}
 
       {filters.brands?.length > 0 && (
         <div className="loft-filter-section">

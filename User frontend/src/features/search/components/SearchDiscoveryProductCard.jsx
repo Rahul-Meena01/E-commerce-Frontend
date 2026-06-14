@@ -20,8 +20,6 @@ export default function SearchDiscoveryProductCard({
   if (!productId) return null;
 
   const price = Number(product?.price) || 0;
-  const categoryLabel =
-    product?.categoryName || product?.category || "Featured";
   return (
     <Link
       to={`/product/${productId}`}

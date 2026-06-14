@@ -37,6 +37,7 @@ const OrderSuccessPage = () => {
     };
 
     if (!orderId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }

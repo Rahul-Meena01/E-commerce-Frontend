@@ -52,6 +52,43 @@
   background: var(--ds-color-surface-warm, #fdfaf4);
 }
 
+/* Active filter pills */
+.loft-filter-active-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -0.5rem;
+}
+
+.loft-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ds-color-surface-warm, #fdfaf4);
+  border: 1px solid var(--ds-color-accent, #c4a163);
+  color: var(--ds-color-accent, #c4a163);
+  padding: 4px 10px;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loft-filter-pill:hover {
+  background: var(--ds-color-accent, #c4a163);
+  color: #fff;
+}
+
+.loft-filter-results-count {
+  font-size: 13px;
+  color: var(--ds-color-text-subtle, #9ca3af);
+  font-weight: 400;
+  margin-top: -0.5rem;
+}
+
 /* Section */
 .loft-filter-section {
   display: flex;

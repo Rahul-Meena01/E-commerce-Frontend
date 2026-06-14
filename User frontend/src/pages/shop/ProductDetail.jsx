@@ -7,8 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ShoppingBag,
-  ChevronDown,
-  ChevronUp,
   FileText,
   Sliders,
   Shirt,
@@ -20,11 +18,10 @@ import { useCart } from "@/features/cart/hooks/useCart";
 import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
 import { useToast } from "../../context/ToastContext";
 import ProductCard from "@/features/products/components/ProductCard";
-import { IMAGE_FALLBACK } from "../../constants/images";
 import "../../styles/ProductDetail.css";
 import ProductGallery from "@/features/products/components/ProductGallery";
 import LightboxModal from "@/features/products/components/LightboxModal";
-import { API_BASE_URL, buildApiUrl, resolveProductImage } from "@/shared/utils/api";
+import { resolveProductImage } from "@/shared/utils/api";
 import authFetch from "@/shared/utils/http";
 import logger from "@/shared/utils/logger";
 import { recordRecentlyViewedProduct } from "../../features/search/hooks/useRecentlyViewedProducts";
@@ -411,10 +408,6 @@ const ProductDetail = () => {
     setSelectedColor("");
   };
 
-  const handleSizeChange = (val) => {
-    setSelectedSize(val);
-  };
-
   const handleColorChange = (val) => {
     setSelectedColor(val);
   };
@@ -422,17 +415,6 @@ const ProductDetail = () => {
   const isProductInStock = useMemo(() => {
     if (!activeProduct) return false;
     return typeof activeProduct.stock === "number" ? activeProduct.stock > 0 : activeProduct.inStock !== false;
-  }, [activeProduct]);
-
-  const stockStatus = useMemo(() => {
-    const stock = activeProduct?.stock ?? 0;
-    if (stock <= 0) {
-      return { label: "Out of Stock", class: "out" };
-    }
-    if (stock <= 5) {
-      return { label: "Low Stock", class: "low" };
-    }
-    return { label: "In Stock", class: "in" };
   }, [activeProduct]);
 
   const isDiscounted = useMemo(() => {
@@ -545,32 +527,6 @@ const ProductDetail = () => {
     setAddedToCart(true);
     setQuantity(1);
     setTimeout(() => setAddedToCart(false), 2500);
-  };
-
-  const handleBuyNow = () => {
-    if (availableSizes.length > 0 && !selectedSize) {
-      setSizeError("Please select a size to continue");
-      sizeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    setSizeError("");
-
-    const qtyToSubmit = Math.max(1, parseInt(quantity, 10) || 1);
-    addToCart({
-      product: {
-        productId: product._id,
-        id: product._id,
-        name: activeProduct.name,
-        price: payPrice,
-        image: activeProduct.image,
-        brand: activeProduct.brand,
-      },
-      size: selectedSize,
-      color: selectedColor,
-      quantity: qtyToSubmit,
-    });
-    toast.success(`${activeProduct.name} added to bag!`);
-    navigate("/checkout");
   };
 
   if (loading) {

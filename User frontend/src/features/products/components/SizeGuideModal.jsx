@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import PropTypes from "prop-types";
 import { X } from "lucide-react";
+import { Button } from "@/shared/ui";
 import { siteContent } from "@/config/siteContent";
 import "./SizeGuideModal.css";
 
@@ -41,14 +42,13 @@ const SizeGuideModal = ({ isOpen, onClose }) => {
       aria-labelledby="sgm-title"
     >
       <div className="sgm-container">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          icon={<X size={20} />}
           className="sgm-close-btn"
           onClick={onClose}
           aria-label="Close size guide"
-        >
-          <X size={20} />
-        </button>
+        />
 
         <div className="sgm-header">
           <h2 id="sgm-title" className="sgm-title">
