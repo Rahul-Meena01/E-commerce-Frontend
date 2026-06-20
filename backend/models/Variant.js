@@ -62,6 +62,11 @@ const VariantSchema = new mongoose.Schema(
       type: Number,
     },
 
+    size: { type: String },
+    color: { type: String },
+    colorHex: { type: String },
+    stock: { type: Number, default: 0 },
+
     status: {
       type: String,
       enum: ["Active", "Inactive"],

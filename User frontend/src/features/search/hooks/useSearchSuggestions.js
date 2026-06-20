@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "../../../shared/constants/queryKeys";
 import { searchProducts } from "../../products/services/products.service";
 import { useDebouncedValue } from "./useDebouncedValue";
 
@@ -118,13 +117,13 @@ export function useSearchSuggestions(searchTerm) {
   const normalizedInput = normalize(searchTerm);
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 220);
   const query = normalize(debouncedSearchTerm);
-  const hasMinimumCharacters = normalizedInput.length >= MIN_QUERY_LENGTH;
-  const isDebouncing = hasMinimumCharacters && normalizedInput !== query;
+  const hasMinimumCharacters = query.length >= MIN_QUERY_LENGTH;
+  const isDebouncing = normalizedInput.length >= MIN_QUERY_LENGTH && normalizedInput !== query;
 
   const searchQuery = useQuery({
-    queryKey: queryKeys.products.search(query),
-    queryFn: async () => {
-      const response = await searchProducts(query, SUGGESTION_LIMIT);
+    queryKey: ["products", "search-suggestions", query],
+    queryFn: async ({ signal }) => {
+      const response = await searchProducts(query, SUGGESTION_LIMIT, { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch search suggestions");
       }
@@ -139,7 +138,7 @@ export function useSearchSuggestions(searchTerm) {
         return payload.data.products;
       return [];
     },
-    enabled: hasMinimumCharacters,
+    enabled: query.length >= MIN_QUERY_LENGTH,
     staleTime: 30_000,
   });
 

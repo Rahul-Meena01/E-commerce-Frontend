@@ -21,6 +21,8 @@ export default function SearchInput({
 
       <input
         ref={inputRef}
+        id="search-input-field"
+        name="search"
         className="search-input__field"
         type="search"
         value={value}

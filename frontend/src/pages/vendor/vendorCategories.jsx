@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import API from "../../utils/api";
 import Modal from "../../components/Modal";
+import ImageUploader from "../../components/ImageUploader";
 import "../../styles/vendor.css";
 
 /* ─── Sub-components ───────────────────────────────────────────────────────── */
@@ -469,15 +470,18 @@ function VendorCategories() {
           </div>
 
           <div className="form-group">
-            <label>Image URL <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Optional)</span></label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={handleFieldChange("image")}
-              placeholder="https://example.com/image.jpg"
-              disabled={submitting}
-            />
-            <span className="text-muted text-sm"><Link2 size={12} style={{ display: "inline", marginRight: "4px" }}/>Paste a direct link to an image (JPG, PNG, WebP recommended)</span>
+            <label style={{ display: "block", marginBottom: "8px" }}>
+              Category Image <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Optional)</span>
+            </label>
+            <div style={{ height: "160px" }}>
+              <ImageUploader
+                initialUrl={formData.image}
+                onUploadSuccess={(url) => setFormData(f => ({ ...f, image: url }))}
+                onRemove={() => setFormData(f => ({ ...f, image: "" }))}
+                aspectRatio="16/9"
+                label="Category thumbnail"
+              />
+            </div>
           </div>
 
           <div className="form-actions">

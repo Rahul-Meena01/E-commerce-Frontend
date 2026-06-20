@@ -3,6 +3,7 @@
  * Manages coupon forms, product targeting search, usage-history filters, status toggles, and CRUD calls to /api/coupon.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSocket } from "../../context/SocketContext";
 
 const API = {
   coupons: "/api/coupon",
@@ -274,7 +275,15 @@ export default function Coupon() {
   });
   const [usageFilters, setUsageFilters] = useState({ status: "", page: 1 });
 
-  const token = localStorage.getItem("token");
+  const token = (() => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+      return userInfo?.token || localStorage.getItem("token") || "";
+    } catch {
+      return localStorage.getItem("token") || "";
+    }
+  })();
+  const { socket } = useSocket();
 
   useEffect(() => {
     fetchCoupons();
@@ -285,6 +294,22 @@ export default function Coupon() {
       fetchUsageHistory();
     }
   }, [activeTab, usageFilters]);
+
+  useEffect(() => {
+    if (!socket || activeTab !== "usage") return;
+
+    const handleOrderEvent = () => {
+      fetchUsageHistory();
+    };
+
+    socket.on("newOrder", handleOrderEvent);
+    socket.on("orderUpdated", handleOrderEvent);
+
+    return () => {
+      socket.off("newOrder", handleOrderEvent);
+      socket.off("orderUpdated", handleOrderEvent);
+    };
+  }, [socket, activeTab, usageFilters.page, usageFilters.status]);
 
   // ─── Products fetch (FIX: hits /api/coupon/products/search) ────────────────
   const fetchProducts = useCallback(

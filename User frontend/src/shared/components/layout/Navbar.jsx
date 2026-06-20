@@ -154,6 +154,34 @@ const Navbar = () => {
     document.querySelector(".footer")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  useEffect(() => {
+    const handleCartItemAdded = () => {
+      setCartDrawerOpen(true);
+    };
+    window.addEventListener("cart-item-added", handleCartItemAdded);
+    return () => {
+      window.removeEventListener("cart-item-added", handleCartItemAdded);
+    };
+  }, []);
+
+  const handleDropdownKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setShopMenuOpen(false);
+      e.currentTarget.querySelector(".shop-link")?.focus();
+    }
+  };
+
+  const handleShopLinkKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      openShopMenu(activeShopItem?.key || (shopMenuItems[0] && shopMenuItems[0].key));
+      setTimeout(() => {
+        const firstBtn = document.querySelector(".mega-menu-category");
+        if (firstBtn) firstBtn.focus();
+      }, 50);
+    }
+  };
+
   return (
     <>
       <div className="announcement-bar">
@@ -176,6 +204,7 @@ const Navbar = () => {
             onMouseLeave={closeShopMenu}
             onFocusCapture={() => openShopMenu(activeShopItem?.key)}
             onBlurCapture={closeShopMenu}
+            onKeyDown={handleDropdownKeyDown}
           >
             <button
               className="shop-link"
@@ -184,6 +213,7 @@ const Navbar = () => {
               aria-label="Shop categories"
               onMouseEnter={() => openShopMenu(activeShopItem?.key)}
               onFocus={() => openShopMenu(activeShopItem?.key)}
+              onKeyDown={handleShopLinkKeyDown}
             >
               Shop <ChevronDown size={15} strokeWidth={2} />
             </button>

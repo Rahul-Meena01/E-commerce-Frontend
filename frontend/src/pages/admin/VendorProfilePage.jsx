@@ -39,6 +39,8 @@ const formatDate = (iso) => {
   });
 };
 
+const formatMoney = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
 const STATUS_STYLES = {
@@ -120,6 +122,14 @@ const VendorProfilePage = () => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("ANALISE");
   const [updating, setUpdating] = useState(false);
+  const [vendorOrders, setVendorOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState("");
+  const [vendorStats, setVendorStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    averageOrderValue: 0,
+  });
 
   // ── Update vendor status ───────────────────────────────────────────────────
   const updateStatus = async (newStatus) => {
@@ -177,6 +187,57 @@ const VendorProfilePage = () => {
 
     fetchVendor();
   }, [id]);
+
+  useEffect(() => {
+    const fetchVendorOrders = async () => {
+      setOrdersLoading(true);
+      setOrdersError("");
+
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`/api/admin/vendors/${id}/orders`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          setOrdersError(data.message || "Failed to load vendor order data.");
+          setVendorOrders([]);
+          setVendorStats({
+            totalOrders: 0,
+            totalRevenue: 0,
+            averageOrderValue: 0,
+          });
+          return;
+        }
+
+        const totalOrders = data.totalOrders || 0;
+        const totalRevenue = data.totalRevenue || 0;
+
+        setVendorOrders(data.data || []);
+        setVendorStats({
+          totalOrders,
+          totalRevenue,
+          averageOrderValue: totalOrders ? totalRevenue / totalOrders : 0,
+        });
+      } catch (err) {
+        setOrdersError("Network error. Please try again.");
+        setVendorOrders([]);
+        setVendorStats({
+          totalOrders: 0,
+          totalRevenue: 0,
+          averageOrderValue: 0,
+        });
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    if (activeTab === "ANALISE" || activeTab === "ORDERS") {
+      fetchVendorOrders();
+    }
+  }, [id, activeTab]);
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
@@ -512,19 +573,31 @@ const VendorProfilePage = () => {
             overflowY: "auto",
           }}
         >
-          {/* ANALISE — placeholder (no analytics API yet) */}
           {activeTab === "ANALISE" && (
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                 gap: 24,
               }}
             >
               {[
-                { label: "Total Revenue", value: "—" },
-                { label: "Total Orders", value: "—" },
-                { label: "Average Rating", value: "—" },
+                {
+                  label: "Total Revenue",
+                  value: ordersLoading
+                    ? "Loading..."
+                    : formatMoney(vendorStats.totalRevenue),
+                },
+                {
+                  label: "Total Orders",
+                  value: ordersLoading ? "Loading..." : vendorStats.totalOrders,
+                },
+                {
+                  label: "Average Order Value",
+                  value: ordersLoading
+                    ? "Loading..."
+                    : formatMoney(vendorStats.averageOrderValue),
+                },
               ].map((stat) => (
                 <div
                   key={stat.label}
@@ -550,24 +623,39 @@ const VendorProfilePage = () => {
                       margin: 0,
                       fontSize: 28,
                       fontWeight: "bold",
-                      color: "#94a3b8",
+                      color: "#0f172a",
                     }}
                   >
                     {stat.value}
                   </p>
                 </div>
               ))}
-              <p
-                style={{
-                  gridColumn: "1/-1",
-                  color: "#94a3b8",
-                  fontSize: 13,
-                  margin: 0,
-                }}
-              >
-                Analytics coming soon — wire up an analytics API endpoint to
-                populate this tab.
-              </p>
+              {ordersError ? (
+                <div
+                  style={{
+                    gridColumn: "1/-1",
+                    padding: 20,
+                    borderRadius: 16,
+                    backgroundColor: "#fff1f0",
+                    border: "1px solid #ffa39e",
+                    color: "#cf1322",
+                  }}
+                >
+                  {ordersError}
+                </div>
+              ) : (
+                <p
+                  style={{
+                    gridColumn: "1/-1",
+                    color: "#94a3b8",
+                    fontSize: 13,
+                    margin: 0,
+                  }}
+                >
+                  Real-time vendor revenue and order history are loaded from the
+                  admin vendor orders API.
+                </p>
+              )}
             </div>
           )}
 
@@ -733,9 +821,111 @@ const VendorProfilePage = () => {
             </div>
           )}
 
-          {/* ORDERS — placeholder */}
+          {/* ORDERS — real vendor order history */}
           {activeTab === "ORDERS" && (
-            <PlaceholderTab message="Connect to the vendor orders API endpoint to show orders here." />
+            <div>
+              {ordersLoading ? (
+                <div
+                  style={{
+                    padding: 32,
+                    textAlign: "center",
+                    color: "#64748b",
+                  }}
+                >
+                  Loading vendor orders...
+                </div>
+              ) : ordersError ? (
+                <div
+                  style={{
+                    padding: 24,
+                    borderRadius: 16,
+                    backgroundColor: "#fff1f0",
+                    border: "1px solid #ffa39e",
+                    color: "#cf1322",
+                  }}
+                >
+                  {ordersError}
+                </div>
+              ) : vendorOrders.length === 0 ? (
+                <PlaceholderTab message="No vendor orders found yet." />
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: 14,
+                    }}
+                  >
+                    <thead>
+                      <tr
+                        style={{
+                          background: "#f8fafc",
+                          textAlign: "left",
+                          color: "#64748b",
+                          textTransform: "uppercase",
+                          fontSize: 12,
+                        }}
+                      >
+                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>
+                          Order ID
+                        </th>
+                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>
+                          Customer
+                        </th>
+                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>
+                          Date
+                        </th>
+                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>
+                          Status
+                        </th>
+                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>
+                          Vendor Revenue
+                        </th>
+                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>
+                          Items
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendorOrders.map((order) => (
+                        <tr key={order._id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "12px 16px", fontFamily: "monospace", color: "#0f172a" }}>
+                            {order._id.slice(-8)}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            {order.user?.name || order.user?.email || "Customer"}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            {formatDate(order.createdAt)}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <span
+                              style={{
+                                color: "#0f172a",
+                                background: "#e2e8f0",
+                                padding: "4px 10px",
+                                borderRadius: 999,
+                                fontSize: 12,
+                                fontWeight: 700,
+                              }}
+                            >
+                              {order.orderStatus}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px", fontWeight: 700 }}>
+                            {formatMoney(order.vendorTotal)}
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "#475569" }}>
+                            {order.vendorItems.map((item) => `${item.name} x${item.qty}`).join(", ")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
 
           {/* DETAILS — real data: timestamps and commission */}

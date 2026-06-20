@@ -280,7 +280,7 @@ export default function CheckoutOrderSummary({
           )}
           {giftCardDiscount > 0 && (
             <div className="checkout-total-row">
-              <span>Gift Card Discount</span>
+              <span>Gift Card</span>
               <span style={{ color: "var(--ds-color-success, #047857)" }}>
                 -{formatPrice(giftCardDiscount)}
               </span>

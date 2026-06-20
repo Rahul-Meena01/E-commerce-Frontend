@@ -17,7 +17,10 @@ import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import VendorProduct from "../models/vendor/vendorProduct.js";
-import { protect, requireAuth } from '../middleware/authMiddleware.js';
+import CouponUsage from "../models/CouponUsages.js";
+import Coupon from "../models/Coupon.js";
+import GiftCard from "../models/GiftCard.js";
+import { protect, requireAuth } from "../middleware/authMiddleware.js";
 import { getIO } from "../socket.js";
 
 const router = express.Router();
@@ -85,7 +88,9 @@ router.post("/", protect, async (req, res) => {
     // ── Fetch authoritative product data — NEVER trust client-sent prices ───
     const productIds = orderItems.map((i) => i.product);
     const dbProducts = await Product.find({ _id: { $in: productIds } });
-    const vendorProducts = await VendorProduct.find({ _id: { $in: productIds } });
+    const vendorProducts = await VendorProduct.find({
+      _id: { $in: productIds },
+    });
 
     const allProducts = [...dbProducts, ...vendorProducts];
 
@@ -95,11 +100,19 @@ router.post("/", protect, async (req, res) => {
         .json({ message: "One or more products not found" });
     }
 
-    const cart = await mongoose.model("Cart").findOne({ user: req.user._id }).populate("coupon");
+    const cart = await mongoose
+      .model("Cart")
+      .findOne({ user: req.user._id })
+      .populate("coupon giftCard");
     let couponData = null;
-    
+    let giftCardData = null;
+
     if (cart?.coupon && cart.coupon.isValidCoupon()) {
       couponData = cart.coupon;
+    }
+
+    if (cart?.giftCard && cart.giftCard.isValidGiftCard()) {
+      giftCardData = cart.giftCard;
     }
 
     // Build a mock cart object to feed into calculateCartTotals
@@ -110,13 +123,13 @@ router.post("/", protect, async (req, res) => {
       const dbProduct = allProducts.find(
         (p) => p._id.toString() === clientItem.product,
       );
-      const isVendor = vendorProducts.some(vp => vp._id.toString() === clientItem.product);
-      
-      // Fix pricing logic to perfectly match cart.js
-      const salePrice =
-        isVendor
-          ? dbProduct.salePrice || 0
-          : dbProduct.discountPrice || 0;
+      const isVendor = vendorProducts.some(
+        (vp) => vp._id.toString() === clientItem.product,
+      );
+
+      const salePrice = isVendor
+        ? dbProduct.salePrice || 0
+        : dbProduct.discountPrice || 0;
       const actualPrice = salePrice > 0 ? salePrice : dbProduct.price;
 
       mockCart.items.push({
@@ -126,7 +139,8 @@ router.post("/", protect, async (req, res) => {
 
       return {
         name: dbProduct.name,
-        image: dbProduct.image || (dbProduct.images && dbProduct.images[0]) || "",
+        image:
+          dbProduct.image || (dbProduct.images && dbProduct.images[0]) || "",
         product: dbProduct._id,
         productModel: isVendor ? "VendorProduct" : "Product",
         qty: clientItem.qty,
@@ -135,14 +149,18 @@ router.post("/", protect, async (req, res) => {
     });
 
     // ── Price totals (using shared logic) ───────────────────────────────────
-    const { default: calculateCartTotals } = await import("../utils/calculateCartTotal.js");
-    
+    const { default: calculateCartTotals } =
+      await import("../utils/calculateCartTotal.js");
+
     // Step 1: Calculate raw totals to check coupon validity
-    let totals = calculateCartTotals(mockCart, null);
+    let totals = calculateCartTotals(mockCart, null, null);
 
     // Step 2: Validate coupon minimum order amount and products
     if (couponData) {
-      if (couponData.minimumOrderAmount && totals.subtotal < couponData.minimumOrderAmount) {
+      if (
+        couponData.minimumOrderAmount &&
+        totals.subtotal < couponData.minimumOrderAmount
+      ) {
         couponData = null;
       } else if (couponData.type === "product") {
         const hasEligibleProduct = dbOrderItems.some((item) =>
@@ -156,8 +174,8 @@ router.post("/", protect, async (req, res) => {
       }
     }
 
-    // Step 3: Final calculation with validated coupon
-    totals = calculateCartTotals(mockCart, couponData);
+    // Step 3: Final calculation with validated coupon and gift card
+    totals = calculateCartTotals(mockCart, couponData, giftCardData);
 
     const itemsPrice = totals.subtotal;
     const taxPrice = totals.tax;
@@ -165,7 +183,6 @@ router.post("/", protect, async (req, res) => {
     const totalPrice = totals.grandTotal;
 
     // ── Mongo Transaction: save order + deduct stock atomically ─────────────
-    // Requires a MongoDB Replica Set (Atlas supports this out of the box).
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -181,15 +198,19 @@ router.post("/", protect, async (req, res) => {
             taxPrice,
             shippingPrice,
             totalPrice,
+            coupon: couponData ? couponData._id : undefined,
+            couponDiscount: totals.discount || 0,
+            giftCard: giftCardData ? giftCardData._id : undefined,
+            giftCardDiscount: totals.giftCardDiscount || 0,
           },
         ],
         { session },
       );
 
-      // Atomic stock deduction — the $gte guard prevents overselling
+      // Atomic stock deduction
       const bulkOpsProduct = [];
       const bulkOpsVendorProduct = [];
-      
+
       dbOrderItems.forEach((item) => {
         const op = {
           updateOne: {
@@ -208,25 +229,105 @@ router.post("/", protect, async (req, res) => {
         const bulkResult = await Product.bulkWrite(bulkOpsProduct, { session });
         if (bulkResult.modifiedCount !== bulkOpsProduct.length) {
           throw Object.assign(
-            new Error("Insufficient stock for one or more items. Please review your cart."),
-            { statusCode: 400 }
+            new Error(
+              "Insufficient stock for one or more items. Please review your cart.",
+            ),
+            { statusCode: 400 },
           );
         }
       }
 
       if (bulkOpsVendorProduct.length > 0) {
-        const bulkResultVendor = await VendorProduct.bulkWrite(bulkOpsVendorProduct, { session });
+        const bulkResultVendor = await VendorProduct.bulkWrite(
+          bulkOpsVendorProduct,
+          { session },
+        );
         if (bulkResultVendor.modifiedCount !== bulkOpsVendorProduct.length) {
           throw Object.assign(
-            new Error("Insufficient stock for one or more items. Please review your cart."),
-            { statusCode: 400 }
+            new Error(
+              "Insufficient stock for one or more items. Please review your cart.",
+            ),
+            { statusCode: 400 },
           );
         }
       }
 
       await session.commitTransaction();
-      
+
       await createdOrder.populate("user", "id name email phone");
+
+      // Clear the user's cart on COD or when fully paid by gift card (totalPrice === 0)
+      if (paymentMethod === "COD" || totalPrice === 0) {
+        try {
+          await mongoose
+            .model("Cart")
+            .findOneAndUpdate(
+              { user: req.user._id },
+              { $set: { items: [], coupon: null, couponCode: null, giftCard: null, giftCardCode: null } }
+            );
+        } catch (cartErr) {
+          console.error("Failed to clear cart after COD order placement:", cartErr);
+        }
+      }
+
+      // ── Confirm coupon usage ─────────────────────────────────────────────
+      // FIX: Use findOneAndUpdate to safely handle all existing status cases.
+      // The old code only updated records with status="applied" and created a new
+      // one otherwise — but with the unique index removed, we must always upsert.
+      // We also no longer touch usedCount here: it was already incremented when
+      // the coupon was applied in cart.js, and confirmed status is just a state
+      // transition.
+      if (couponData) {
+        try {
+          await CouponUsage.findOneAndUpdate(
+            { coupon: couponData._id, user: req.user._id },
+            {
+              $set: {
+                status: "confirmed",
+                order: createdOrder._id,
+                // Refresh snapshots in case cart recalculated a different amount
+                discountAmount: totals.discount ?? 0,
+                cartTotal: totals.subtotal,
+              },
+              // Only set these fields if this is a brand-new insert (should not
+              // happen in normal flow, but guards against edge cases where the
+              // usage record was never written during apply)
+              $setOnInsert: {
+                couponCode: couponData.code,
+                discountType: couponData.discountType,
+                discountValue: couponData.discountValue,
+                product:
+                  couponData.type === "product"
+                    ? (couponData.applicableProducts[0] ?? null)
+                    : null,
+              },
+            },
+            { upsert: true, new: true },
+          );
+        } catch (usageError) {
+          // Non-fatal: order is already committed; just log
+          console.error("Coupon usage confirmation failed:", usageError);
+        }
+      }
+
+      // ── Deduct Gift Card Balance (COD only immediately) ───────────────────
+      // If payment is online (Razorpay), deduction happens in payment.js on success.
+      if (giftCardData && paymentMethod === "COD" && totals.giftCardDiscount > 0) {
+        try {
+          const discountAmt = totals.giftCardDiscount;
+          const gc = await GiftCard.findById(giftCardData._id).session(session);
+          if (gc) {
+            gc.balance -= discountAmt;
+            if (gc.balance <= 0) {
+              gc.balance = 0;
+              gc.status = "inactive";
+            }
+            await gc.save({ session });
+          }
+        } catch (gcError) {
+          console.error("Gift card deduction failed on COD:", gcError);
+        }
+      }
 
       try {
         const io = getIO();
@@ -261,6 +362,7 @@ router.get("/myorders", protect, async (req, res) => {
     const count = await Order.countDocuments(filter);
 
     const orders = await Order.find(filter)
+      .populate("giftCard")
       .sort({ createdAt: -1 })
       .limit(pageSize)
       .skip(pageSize * (page - 1));
@@ -279,12 +381,11 @@ router.get("/myorders", protect, async (req, res) => {
 // ─── GET /api/orders ──────────────────────────────────────────────────────────
 // @desc    Get ALL orders — admin — with pagination + optional ?status= filter
 // @access  Private/Admin
-router.get("/", protect, requireAuth('admin'), async (req, res) => {
+router.get("/", protect, requireAuth("admin"), async (req, res) => {
   try {
     const filter = {};
     if (req.query.status) filter.orderStatus = req.query.status;
 
-    // Optional date range: ?from=2026-01-01&to=2026-05-31
     if (req.query.from || req.query.to) {
       filter.createdAt = {};
       if (req.query.from) filter.createdAt.$gte = new Date(req.query.from);
@@ -295,7 +396,7 @@ router.get("/", protect, requireAuth('admin'), async (req, res) => {
     const count = await Order.countDocuments(filter);
 
     let query = Order.find(filter)
-      .populate("user", "id name email phone") // phone added for UI display
+      .populate("user", "id name email phone")
       .sort({ createdAt: -1 });
 
     const isAll = req.query.limit === "all";
@@ -328,10 +429,9 @@ router.get("/:id", protect, async (req, res) => {
       return res.status(400).json({ message: "Invalid order ID format" });
     }
 
-    const order = await Order.findById(req.params.id).populate(
-      "user",
-      "name email phone",
-    );
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email phone")
+      .populate("giftCard");
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -432,7 +532,6 @@ router.put("/:id/cancel", protect, async (req, res) => {
       });
     }
 
-    // ── Transaction: cancel order + restore stock atomically ─────────────
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -444,7 +543,7 @@ router.put("/:id/cancel", protect, async (req, res) => {
 
       const restoreOpsProduct = [];
       const restoreOpsVendorProduct = [];
-      
+
       order.orderItems.forEach((item) => {
         const op = {
           updateOne: {
@@ -470,6 +569,43 @@ router.put("/:id/cancel", protect, async (req, res) => {
 
       await order.populate("user", "id name email phone");
 
+      // Mark coupon usage as cancelled and decrement usedCount
+      try {
+        const usage = await CouponUsage.findOne({
+          order: order._id,
+          user: order.user._id,
+          status: "confirmed",
+        });
+
+        if (usage) {
+          usage.status = "cancelled";
+          await usage.save();
+
+          await Coupon.findByIdAndUpdate(usage.coupon, {
+            $inc: { usedCount: -1 },
+          });
+        }
+      } catch (usageError) {
+        console.error("Coupon usage cancellation failed:", usageError);
+      }
+
+      // Restore gift card balance
+      if (order.giftCard && order.giftCardDiscount > 0) {
+        try {
+          const gc = await GiftCard.findById(order.giftCard);
+          if (gc) {
+            gc.balance += order.giftCardDiscount;
+            // Reactivate if it was inactive
+            if (gc.status === "inactive" && gc.balance > 0 && new Date() < gc.expiryDate) {
+              gc.status = "active";
+            }
+            await gc.save();
+          }
+        } catch (gcError) {
+          console.error("Gift card restore failed:", gcError);
+        }
+      }
+
       try {
         const io = getIO();
         io.emit("orderUpdated", formatOrder(order));
@@ -493,7 +629,7 @@ router.put("/:id/cancel", protect, async (req, res) => {
 // @desc    Admin updates order status
 //          Side-effects: delivered flag, COD auto-pay, cancelled stock restore
 // @access  Private/Admin
-router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
+router.put("/:id/status", protect, requireAuth("admin"), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid order ID format" });
@@ -515,7 +651,6 @@ router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Terminal orders cannot be changed
     const terminalStatuses = ["Delivered", "Cancelled"];
     if (terminalStatuses.includes(order.orderStatus)) {
       return res.status(400).json({
@@ -525,7 +660,6 @@ router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
 
     const newStatus = req.body.status;
 
-    // ── Transaction: status + side-effects atomically ────────────────────
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -535,7 +669,6 @@ router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
       if (newStatus === "Delivered") {
         order.isDelivered = true;
         order.deliveredAt = Date.now();
-        // Auto-mark COD as paid on delivery
         if (order.paymentMethod === "COD" && !order.isPaid) {
           order.isPaid = true;
           order.paidAt = Date.now();
@@ -547,10 +680,9 @@ router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
         order.cancelledAt = Date.now();
         order.cancellationNote = req.body.note || "";
 
-        // Restore stock for all items
         const restoreOpsProduct = [];
         const restoreOpsVendorProduct = [];
-        
+
         order.orderItems.forEach((item) => {
           const op = {
             updateOne: {
@@ -564,6 +696,7 @@ router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
             restoreOpsProduct.push(op);
           }
         });
+
         if (restoreOpsProduct.length > 0) {
           await Product.bulkWrite(restoreOpsProduct, { session });
         }
@@ -574,8 +707,45 @@ router.put("/:id/status", protect, requireAuth('admin'), async (req, res) => {
 
       const updatedOrder = await order.save({ session });
       await session.commitTransaction();
-      
+
       await updatedOrder.populate("user", "id name email phone");
+
+      // Mark coupon usage as cancelled if admin cancels the order
+      if (newStatus === "Cancelled") {
+        try {
+          const usage = await CouponUsage.findOne({
+            order: updatedOrder._id,
+            status: "confirmed",
+          });
+
+          if (usage) {
+            usage.status = "cancelled";
+            await usage.save();
+
+            await Coupon.findByIdAndUpdate(usage.coupon, {
+              $inc: { usedCount: -1 },
+            });
+          }
+        } catch (usageError) {
+          console.error("Coupon usage cancellation failed:", usageError);
+        }
+
+        // Restore gift card balance
+        if (updatedOrder.giftCard && updatedOrder.giftCardDiscount > 0) {
+          try {
+            const gc = await GiftCard.findById(updatedOrder.giftCard).session(session);
+            if (gc) {
+              gc.balance += updatedOrder.giftCardDiscount;
+              if (gc.status === "inactive" && gc.balance > 0 && new Date() < gc.expiryDate) {
+                gc.status = "active";
+              }
+              await gc.save({ session });
+            }
+          } catch (gcError) {
+            console.error("Gift card restore failed on admin cancel:", gcError);
+          }
+        }
+      }
 
       try {
         const io = getIO();

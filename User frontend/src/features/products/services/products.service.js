@@ -23,7 +23,7 @@ export const fetchCategories = () => wrapAxios(api.fetchCategories());
 
 export const fetchSubCategories = (categoryId) => wrapAxios(api.fetchSubCategories(categoryId));
 
-export const searchProducts = (query, limit = 6) => wrapAxios(api.searchProducts(query, limit));
+export const searchProducts = (query, limit = 6, options = {}) => wrapAxios(api.searchProducts(query, limit, options));
 
 export const fetchProduct = (productId) => wrapAxios(api.fetchProduct(productId));
 

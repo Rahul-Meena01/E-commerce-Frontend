@@ -14,6 +14,7 @@ import express from "express";
 import SubCategory from "../models/SubCategory.js";
 import Product from "../models/Product.js";
 import VendorProduct from "../models/vendor/vendorProduct.js";
+import Variant from "../models/Variant.js";
 import upload from "../middleware/upload.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -59,6 +60,11 @@ router.post("/create", protect, cpUpload, async (req, res) => {
       stock,
       slug,
       status,
+      image,
+      image1,
+      image2,
+      image3,
+      image4,
     } = req.body;
 
     // ------------------------------
@@ -125,11 +131,11 @@ router.post("/create", protect, cpUpload, async (req, res) => {
       stock,
       slug,
       
-      image: getImagePath(req.files, "image"),
-      image1: getImagePath(req.files, "image1"),
-      image2: getImagePath(req.files, "image2"),
-      image3: getImagePath(req.files, "image3"),
-      image4: getImagePath(req.files, "image4"),
+      image: getImagePath(req.files, "image") || image,
+      image1: getImagePath(req.files, "image1") || image1,
+      image2: getImagePath(req.files, "image2") || image2,
+      image3: getImagePath(req.files, "image3") || image3,
+      image4: getImagePath(req.files, "image4") || image4,
     });
 
     await product.save();
@@ -155,7 +161,7 @@ router.post("/create", protect, cpUpload, async (req, res) => {
 
 router.get("/all", protect, async (req, res) => {
   try {
-    const { search, limit, page, status, subCategory } = req.query;
+    const { search, limit, page, status, subCategory, category } = req.query;
 
     const query = {};
 
@@ -169,6 +175,9 @@ router.get("/all", protect, async (req, res) => {
 
     if (subCategory) {
       query.subCategory = subCategory;
+    } else if (category) {
+      const categorySubcategories = await SubCategory.find({ parentCategory: category }).select("_id");
+      query.subCategory = { $in: categorySubcategories.map((sub) => sub._id) };
     }
 
     // ------------------------------
@@ -372,6 +381,13 @@ router.get("/public/:id", async (req, res) => {
         message: "Product not found",
       });
     }
+
+    const variants = await Variant.find({
+      parentProduct: product._id,
+      status: "Active",
+    }).lean();
+
+    product.variants = variants || [];
 
     return res.status(200).json({
       success: true,

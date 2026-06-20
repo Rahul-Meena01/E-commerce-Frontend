@@ -132,11 +132,13 @@ export const createSubCategory = async (req, res) => {
 
     // ── Create the sub-category ───────────────────────────────────────────────
     // vendor is always from req.vendorId (from token), never from request body.
+    const { image } = req.body;
     const subCategory = await VendorSubCategory.create({
       vendor: req.vendorId,
       category: parentCategory._id,
       name: name.trim(),
       slug,
+      image: image || "",
     });
 
     return res.status(201).json({
@@ -220,6 +222,10 @@ export const updateSubCategory = async (req, res) => {
 
     // ── Update isActive if provided ───────────────────────────────────────────
     if (isActive !== undefined) subCategory.isActive = isActive;
+
+    // ── Update image if provided ──────────────────────────────────────────────
+    const { image } = req.body;
+    if (image !== undefined) subCategory.image = image;
 
     const updated = await subCategory.save();
 

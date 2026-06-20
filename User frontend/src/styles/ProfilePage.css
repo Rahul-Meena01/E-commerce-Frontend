@@ -1768,3 +1768,199 @@
     left: 20px;
   }
 }
+
+/* ── Luxury Gift Card Styles for Profile Page ── */
+.giftcard-history-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+  margin-bottom: 24px;
+}
+
+.giftcard-tab-btn {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 400;
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted, #6C6861);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.giftcard-tab-btn:hover {
+  color: var(--ds-color-text, #0F0E0C);
+}
+
+.giftcard-tab-btn.active {
+  font-weight: 700;
+  color: var(--ds-color-text, #0F0E0C);
+  border-bottom-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card {
+  border: 1px solid var(--ds-color-accent, #C9A96E);
+  border-radius: 0;
+  background-color: var(--ds-color-surface-warm, #FAF8F5);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  transition: border-color 0.25s ease;
+}
+
+.giftcard-card:hover:not(.expired) {
+  border-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card-recommended-badge {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-success, #1B4332);
+  background-color: var(--ds-color-success-soft, #EBF2EE);
+  padding: 2px 8px;
+  border: 1px solid rgba(27, 67, 50, 0.2);
+}
+
+.giftcard-card-brand {
+  font-family: var(--ds-font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card-title {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text, #0F0E0C);
+  margin: 0;
+}
+
+.giftcard-card-balance {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ds-color-brand, #0F0E0C);
+  margin-top: -8px;
+}
+
+.giftcard-card-code {
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.giftcard-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  border-top: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-top: 12px;
+}
+
+.giftcard-card-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.giftcard-card-info-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text-subtle, #A39E96);
+}
+
+.giftcard-card-info-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-color-text, #0F0E0C);
+}
+
+.giftcard-card-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-success, #1B4332);
+}
+
+.giftcard-card-status.expired {
+  color: var(--ds-color-danger, #8B3A3A);
+}
+
+.giftcard-card-status.used {
+  color: var(--ds-color-text-muted, #6C6861);
+}
+
+.giftcard-card-action {
+  width: 100%;
+  background-color: var(--ds-color-brand, #0F0E0C);
+  color: var(--ds-color-surface, #F7F5F0);
+  border: 1px solid var(--ds-color-brand, #0F0E0C);
+  padding: 12px;
+  font-family: var(--ds-font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.22s var(--ds-ease-standard);
+  text-align: center;
+  margin-top: auto;
+}
+
+.giftcard-card-action:hover:not(:disabled) {
+  background-color: transparent;
+  color: var(--ds-color-brand, #0F0E0C);
+}
+
+.giftcard-card-action:disabled {
+  background-color: var(--ds-color-surface-muted, #EFECE6);
+  border-color: var(--ds-color-border, #E8E5DE);
+  color: var(--ds-color-text-subtle, #A39E96);
+  cursor: not-allowed;
+}
+
+.giftcard-card.expired {
+  border-color: var(--ds-color-border, #E8E5DE);
+  opacity: 0.65;
+}
+
+.giftcard-card.expired::after {
+  background-color: var(--ds-color-text-subtle, #A39E96);
+}
+
+.giftcard-loading {
+  font-size: 13px;
+  color: var(--ds-color-text-muted);
+  text-align: center;
+  padding: 40px 0;
+  width: 100%;
+}
+

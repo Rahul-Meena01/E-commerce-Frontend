@@ -238,6 +238,23 @@ export default function SignupPage() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {password && (
+                  <div
+                    className={`signup-inline-notify ${password.length >= 8 ? "success" : "error"}`}
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      marginTop: "6px",
+                      fontSize: "0.85em",
+                      color: password.length >= 8 ? "#2f855a" : "#c53030",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    {password.length >= 8 ? "✓ At least 8 characters" : "✗ Must be at least 8 characters"}
+                  </div>
+                )}
               </div>
 
               <div className="login-field-group signup-field-group-full">
@@ -255,6 +272,23 @@ export default function SignupPage() {
                     autoComplete="new-password"
                   />
                 </div>
+                {password && confirmPassword && (
+                  <div
+                    className={`signup-inline-notify ${password === confirmPassword ? "success" : "error"}`}
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      marginTop: "6px",
+                      fontSize: "0.85em",
+                      color: password === confirmPassword ? "#2f855a" : "#c53030",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    {password === confirmPassword ? "✓ Passwords match" : "✗ Passwords do not match"}
+                  </div>
+                )}
               </div>
             </div>
 

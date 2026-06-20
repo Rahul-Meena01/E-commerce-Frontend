@@ -62,6 +62,13 @@ const cartItemSchema = new mongoose.Schema(
       type: String,
     },
 
+    size: { type: String },
+    color: { type: String },
+    variant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Variants",
+    },
+
     image: {
       type: String,
     },
@@ -123,6 +130,11 @@ const totalsSchema = new mongoose.Schema(
       default: 0,
     },
 
+    giftCardDiscount: {
+      type: Number,
+      default: 0,
+    },
+
     tax: {
       type: Number,
       default: 0,
@@ -164,6 +176,17 @@ const cartSchema = new mongoose.Schema(
     },
 
     couponCode: {
+      type: String,
+      default: null,
+    },
+
+    giftCard: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GiftCard",
+      default: null,
+    },
+
+    giftCardCode: {
       type: String,
       default: null,
     },

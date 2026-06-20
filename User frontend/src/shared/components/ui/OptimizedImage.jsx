@@ -8,6 +8,7 @@ export default function OptimizedImage({
   className = "",
   style = {},
   imgStyle = {},
+  loading = "lazy",
   ...props
 }) {
   const [loaded, setLoaded] = useState(false);
@@ -24,8 +25,14 @@ export default function OptimizedImage({
     }
   }, [src]);
 
-  const resolvedSrc = resolveProductImage(src) || IMAGE_FALLBACK;
+  const isBrokenSrc = !src ||
+    src === "null" ||
+    src === "undefined" ||
+    String(src).includes("undefined") ||
+    String(src).includes("null") ||
+    String(src).trim() === "";
 
+  const resolvedSrc = isBrokenSrc ? IMAGE_FALLBACK : (resolveProductImage(src) || IMAGE_FALLBACK);
 
   return (
     <div
@@ -37,6 +44,7 @@ export default function OptimizedImage({
         ref={imgRef}
         src={error ? IMAGE_FALLBACK : resolvedSrc}
         alt={alt}
+        loading={loading}
         onLoad={() => setLoaded(true)}
         onError={() => {
           setError(true);

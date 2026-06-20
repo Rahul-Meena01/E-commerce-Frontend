@@ -66,7 +66,7 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
           <p>Browse our collections and heart the items you love.</p>
           <button
             className="profile-cta-btn"
-            onClick={() => navigate("/shop/men")}
+            onClick={() => navigate("/shop")}
           >
             Start Shopping
           </button>

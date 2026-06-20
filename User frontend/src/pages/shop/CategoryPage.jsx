@@ -6,6 +6,7 @@ import { useSubCategories } from "@/features/products/hooks/useSubCategories";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { IMAGE_FALLBACK } from "../../constants/images";
 import { resolveProductImage } from "@/shared/utils/api";
+import ProductCardSkeleton from "@/features/products/components/ProductCardSkeleton";
 
 const resolveImage = (path) => {
   return resolveProductImage(path) || IMAGE_FALLBACK;
@@ -26,7 +27,7 @@ const CategoryPage = () => {
     categoryId: selectedCategory?._id,
   });
 
-  if (categoriesLoading) {
+  if (categoriesLoading || categories.length === 0) {
     return (
       <div className="category-page">
         <header className="cat-hero">
@@ -44,14 +45,7 @@ const CategoryPage = () => {
 
         <section className="cat-grid">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="ds-skeleton"
-              style={{
-                height: "260px",
-                borderRadius: "8px",
-              }}
-            />
+            <ProductCardSkeleton key={i} />
           ))}
         </section>
       </div>

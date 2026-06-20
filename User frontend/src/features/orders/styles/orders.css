@@ -1,0 +1,953 @@
+/* LOFT Premium Storefront — Order Cancellation & Return Stylesheet */
+
+/* ── Typography & Global Overrides ── */
+.loft-modal-title,
+.timeline-title,
+.refund-card-title,
+.order-details-title,
+.section-title {
+  font-family: var(--ds-font-serif, 'Cormorant Garamond', Georgia, serif);
+  font-weight: 600;
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.loft-modal-eyebrow,
+.loft-field-label,
+.timeline-step-title,
+.refund-detail-label,
+.order-card-num,
+.loft-btn {
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── Order Status Badges ── */
+.order-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0px !important;
+  border: 1px solid currentColor;
+}
+
+/* Status Colors mapped to LOFT Design Language */
+.status-pending {
+  color: #8D764E;
+  background-color: #FAF6EE;
+}
+.status-confirmed {
+  color: #4A463F;
+  background-color: #F3F1ED;
+}
+.status-packed {
+  color: #61594F;
+  background-color: #EFECE6;
+}
+.status-shipped {
+  color: #C9A96E;
+  background-color: #FAF8F5;
+}
+.status-out-for-delivery {
+  color: #A67C37;
+  background-color: #FAF5EB;
+}
+.status-delivered {
+  color: #1B4332;
+  background-color: #EBF2EE;
+}
+.status-cancelled {
+  color: #8B3A3A;
+  background-color: #F6EEEE;
+}
+.status-return-requested {
+  color: #8D764E;
+  background-color: #FAF6EE;
+}
+.status-return-approved {
+  color: #1B4332;
+  background-color: #EBF2EE;
+}
+.status-return-rejected {
+  color: #8B3A3A;
+  background-color: #F6EEEE;
+}
+.status-pickup-scheduled {
+  color: #C9A96E;
+  background-color: #FAF8F5;
+}
+.status-returned {
+  color: #1B4332;
+  background-color: #EBF2EE;
+}
+.status-refund-processing {
+  color: #31688C;
+  background-color: #EEF4F8;
+}
+.status-refund-processed {
+  color: #1B4332;
+  background-color: #EBF2EE;
+}
+
+/* ── Modals Structure & Accessibility ── */
+.loft-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(30, 26, 21, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.loft-modal {
+  background-color: #F7F3EE;
+  border: 1px solid var(--ds-color-border-strong, #CDC9C0);
+  border-radius: 0px !important;
+  box-shadow: none; /* Premium minimal shadow/flat look */
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loft-modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--ds-color-text, #1E1A15);
+  cursor: pointer;
+  padding: 8px;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loft-modal-close-btn:hover {
+  opacity: 0.6;
+}
+
+.loft-modal-close-btn:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: 2px;
+}
+
+.loft-modal-header {
+  padding: 40px 40px 20px;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+}
+
+.loft-modal-eyebrow {
+  display: block;
+  font-size: 10px;
+  color: var(--ds-color-text-subtle, #A39E96);
+  margin-bottom: 8px;
+}
+
+.loft-modal-title {
+  font-size: 28px;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.loft-modal-desc {
+  font-size: 13px;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.loft-modal-body {
+  padding: 30px 40px;
+  flex-grow: 1;
+}
+
+.loft-modal-footer {
+  padding: 20px 40px 40px;
+  border-top: 1px solid var(--ds-color-border, #E8E5DE);
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+/* ── Form Controls & Styling ── */
+.loft-form-group {
+  margin-bottom: 24px;
+}
+
+.loft-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ds-color-text, #1E1A15);
+  margin-bottom: 8px;
+}
+
+.loft-field-help {
+  font-size: 12px;
+  color: var(--ds-color-text-subtle, #A39E96);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.loft-select,
+.loft-textarea {
+  width: 100%;
+  background-color: var(--ds-color-canvas, #F7F5F0);
+  border: 1px solid var(--ds-color-border-strong, #CDC9C0);
+  border-radius: 0px !important;
+  color: var(--ds-color-text, #1E1A15);
+  padding: 12px 16px;
+  font-size: 13px;
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  transition: border-color 0.2s ease;
+}
+
+.loft-select:focus,
+.loft-textarea:focus {
+  outline: none;
+  border-color: var(--ds-color-accent, #C9A96E);
+}
+
+.loft-select:focus-visible,
+.loft-textarea:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: -1px;
+}
+
+.loft-textarea {
+  resize: vertical;
+}
+
+/* Radio Button Styling */
+.cancel-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.cancel-reason-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.loft-radio-input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--ds-color-border-strong, #CDC9C0);
+  border-radius: 0px !important; /* Sharp corners radio */
+  background-color: var(--ds-color-canvas, #F7F5F0);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.loft-radio-input:checked {
+  border-color: var(--ds-color-text, #1E1A15);
+  background-color: var(--ds-color-text, #1E1A15);
+}
+
+.loft-radio-input:checked::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background-color: #F7F3EE;
+}
+
+.loft-radio-input:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: 2px;
+}
+
+.loft-radio-label {
+  font-size: 13px;
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.custom-reason-container {
+  margin-top: 20px;
+  animation: expandFadeIn 300ms ease-out;
+}
+
+@keyframes expandFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Buttons */
+.loft-btn {
+  border: 1px solid transparent;
+  border-radius: 0px !important; /* Sharp corners */
+  padding: 14px 28px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loft-btn-sm {
+  padding: 8px 16px;
+  font-size: 10px;
+}
+
+.loft-btn-primary {
+  background-color: var(--ds-color-text, #1E1A15);
+  color: #F7F3EE;
+}
+
+.loft-btn-primary:hover {
+  background-color: #3E3832;
+}
+
+.loft-btn-primary:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: 2px;
+}
+
+.loft-btn-secondary {
+  background-color: transparent;
+  border-color: var(--ds-color-border-strong, #CDC9C0);
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.loft-btn-secondary:hover {
+  background-color: rgba(30, 26, 21, 0.04);
+}
+
+.loft-btn-secondary:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: 2px;
+}
+
+.loft-btn-danger {
+  background-color: var(--ds-color-danger, #8B3A3A);
+  color: #F7F3EE;
+}
+
+.loft-btn-danger:hover {
+  background-color: #6C2B2B;
+}
+
+.loft-btn-danger:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: 2px;
+}
+
+/* Image Upload Area */
+.loft-image-uploader-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.loft-image-preview-card {
+  position: relative;
+  aspect-ratio: 1;
+  background-color: var(--ds-color-canvas, #F7F5F0);
+  border: 1px solid var(--ds-color-border-strong, #CDC9C0);
+}
+
+.loft-image-preview-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.loft-image-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: rgba(139, 58, 58, 0.9);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 0px !important;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.loft-image-remove-btn:hover {
+  background-color: rgba(108, 43, 43, 1);
+}
+
+.loft-image-uploader-trigger {
+  aspect-ratio: 1;
+  border: 1px dashed var(--ds-color-border-strong, #CDC9C0);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--ds-color-text-muted, #6C6861);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loft-image-uploader-trigger:hover {
+  border-color: var(--ds-color-accent, #C9A96E);
+  color: var(--ds-color-accent, #C9A96E);
+  background-color: rgba(201, 169, 110, 0.03);
+}
+
+.loft-image-uploader-trigger:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: -2px;
+}
+
+/* ── Order Cards in Listing ── */
+.order-card-wrapper {
+  background-color: #FAF8F5;
+  border: 1px solid var(--ds-color-border, #E8E5DE);
+  padding: 24px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.order-card-wrapper:hover {
+  border-color: var(--ds-color-accent, #C9A96E);
+}
+
+.order-card-wrapper:focus-visible {
+  outline: 2px solid var(--ds-color-accent, #C9A96E);
+  outline-offset: 2px;
+}
+
+.order-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.order-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-card-num {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.order-card-date {
+  font-size: 12px;
+  color: var(--ds-color-text-muted, #6C6861);
+}
+
+.order-card-body {
+  padding-bottom: 16px;
+}
+
+.order-card-item-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.order-card-item-img-container {
+  width: 64px;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background-color: var(--ds-color-canvas, #F7F5F0);
+  border: 1px solid var(--ds-color-border, #E8E5DE);
+  flex-shrink: 0;
+}
+
+.order-card-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-card-item-info {
+  flex-grow: 1;
+}
+
+.order-card-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-color-text, #1E1A15);
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.item-count-label {
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin-left: 6px;
+}
+
+.order-card-item-meta {
+  font-size: 12px;
+  color: var(--ds-color-text-subtle, #A39E96);
+  margin: 0 0 8px;
+}
+
+.order-card-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-card-total-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text-muted, #6C6861);
+}
+
+.order-card-total-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.order-card-footer {
+  border-top: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.order-card-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.return-window-closed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--ds-color-warning-soft, #F4EFEA);
+  color: var(--ds-color-text-muted, #6C6861);
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--ds-color-border, #E8E5DE);
+}
+
+/* ── Vertical Luxury Timeline ── */
+.order-timeline-wrapper {
+  margin: 40px 0;
+}
+
+.timeline-title {
+  font-size: 22px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-bottom: 12px;
+}
+
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-left: 8px;
+}
+
+.timeline-step-row {
+  display: flex;
+  gap: 24px;
+  position: relative;
+  padding-bottom: 32px;
+}
+
+.timeline-step-row:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-node-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 20px;
+}
+
+.timeline-node {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ds-color-border-strong, #CDC9C0);
+  background-color: #F7F3EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.timeline-node.completed {
+  border-color: var(--ds-color-accent, #C9A96E);
+  background-color: var(--ds-color-accent, #C9A96E);
+  color: #F7F3EE;
+}
+
+.timeline-node.current {
+  border-color: var(--ds-color-accent, #C9A96E);
+  background-color: var(--ds-color-text, #1E1A15);
+  color: var(--ds-color-accent, #C9A96E);
+}
+
+.timeline-node.cancelled,
+.timeline-node.rejected {
+  border-color: var(--ds-color-danger, #8B3A3A);
+  background-color: var(--ds-color-danger, #8B3A3A);
+  color: #FFFFFF;
+}
+
+.timeline-check-icon {
+  stroke-width: 3px;
+  color: #F7F3EE;
+}
+
+.timeline-err-icon {
+  stroke-width: 3px;
+  color: #FFFFFF;
+}
+
+.timeline-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--ds-color-accent, #C9A96E);
+}
+
+.timeline-muted-dot {
+  width: 4px;
+  height: 4px;
+  background-color: var(--ds-color-text-subtle, #A39E96);
+}
+
+.timeline-line {
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--ds-color-border, #E8E5DE);
+  z-index: 1;
+  transform-origin: top;
+}
+
+.timeline-line.completed {
+  background-color: var(--ds-color-accent, #C9A96E);
+}
+
+.timeline-content-col {
+  flex-grow: 1;
+  padding-top: 2px;
+}
+
+.timeline-step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.timeline-step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-color-text, #1E1A15);
+  margin: 0;
+}
+
+.timeline-step-row.completed .timeline-step-title {
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.timeline-step-row.current .timeline-step-title {
+  color: var(--ds-color-text, #1E1A15);
+  font-weight: 700;
+}
+
+.timeline-step-row.future .timeline-step-title {
+  color: var(--ds-color-text-subtle, #A39E96);
+}
+
+.timeline-step-date {
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  font-size: 11px;
+  color: var(--ds-color-text-subtle, #A39E96);
+  white-space: nowrap;
+}
+
+.timeline-step-desc {
+  font-size: 12px;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.timeline-step-row.future .timeline-step-desc {
+  color: var(--ds-color-text-subtle, #A39E96);
+}
+
+/* ── Refund Status Cards ── */
+.refund-status-card {
+  border: 1px solid var(--ds-color-border, #E8E5DE);
+  padding: 24px;
+  margin: 30px 0;
+  background-color: #FAF8F5;
+}
+
+.refund-status-card.refund-processing {
+  border-left: 3px solid var(--ds-color-info, #2563eb);
+}
+
+.refund-status-card.refund-completed {
+  border-left: 3px solid var(--ds-color-success, #1B4332);
+}
+
+.refund-status-card.refund-rejected {
+  border-left: 3px solid var(--ds-color-danger, #8B3A3A);
+}
+
+.refund-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.refund-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.refund-card-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.refund-badge {
+  font-family: var(--ds-font-sans, 'Inter', sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 0px !important;
+}
+
+.badge-refund-processing {
+  background-color: var(--ds-color-info-soft, #eff6ff);
+  color: var(--ds-color-info, #2563eb);
+}
+
+.badge-refund-completed {
+  background-color: var(--ds-color-success-soft, #EBF2EE);
+  color: var(--ds-color-success, #1B4332);
+}
+
+.badge-refund-rejected {
+  background-color: var(--ds-color-danger-soft, #F6EEEE);
+  color: var(--ds-color-danger, #8B3A3A);
+}
+
+.refund-icon-processing {
+  color: var(--ds-color-info, #2563eb);
+}
+
+.refund-icon-completed {
+  color: var(--ds-color-success, #1B4332);
+}
+
+.refund-icon-rejected {
+  color: var(--ds-color-danger, #8B3A3A);
+}
+
+.refund-card-description {
+  font-size: 13px;
+  color: var(--ds-color-text-muted, #6C6861);
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.refund-card-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  border-top: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-top: 16px;
+}
+
+.refund-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.refund-detail-label {
+  font-size: 10px;
+  color: var(--ds-color-text-subtle, #A39E96);
+}
+
+.refund-detail-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-color-text, #1E1A15);
+}
+
+.refund-detail-value.font-highlight {
+  color: var(--ds-color-text, #1E1A15);
+  font-weight: 700;
+}
+
+/* ── Empty States & Loading States ── */
+.loft-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 40px;
+  background-color: #FAF8F5;
+  border: 1px dashed var(--ds-color-border-strong, #CDC9C0);
+}
+
+.loft-empty-state svg {
+  color: var(--ds-color-text-subtle, #A39E96);
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.loft-empty-state h3 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.loft-empty-state p {
+  font-size: 13px;
+  color: var(--ds-color-text-muted, #6C6861);
+  max-width: 380px;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+/* ── Responsive Styling ── */
+@media (max-width: 768px) {
+  /* Bottom-sheet modals for mobile */
+  .loft-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .loft-modal {
+    max-width: 100%;
+    max-height: 85vh;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    animation: bottomSheetSlideUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes bottomSheetSlideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .loft-modal-header {
+    padding: 30px 24px 16px;
+  }
+
+  .loft-modal-title {
+    font-size: 22px;
+  }
+
+  .loft-modal-body {
+    padding: 20px 24px;
+  }
+
+  .loft-modal-footer {
+    padding: 16px 24px 30px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .loft-modal-footer .loft-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Order details page grids collapse */
+  .refund-card-details-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .order-card-wrapper {
+    padding: 16px;
+  }
+
+  .order-card-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .order-card-actions .loft-btn,
+  .return-window-closed-badge {
+    width: 100%;
+    justify-content: center;
+  }
+}

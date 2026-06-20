@@ -4,6 +4,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import API from "../../utils/api";
+import ImageUploader from "../../components/ImageUploader";
 
 const initialForm = {
   name: "",
@@ -74,8 +75,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ type: "", message: "" });
-  const [previewImage, setPreviewImage] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [profileImage, setProfileImage] = useState("");
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "";
@@ -83,9 +83,9 @@ export default function Profile() {
   };
 
   const profileImageUrl = useMemo(() => {
-    if (previewImage) return previewImage;
+    if (profileImage) return profileImage;
     return profile?.profileImage ? getImageUrl(profile.profileImage) : "";
-  }, [profile, previewImage]);
+  }, [profile, profileImage]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -131,12 +131,7 @@ export default function Profile() {
     return nextErrors;
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    setImageFile(file);
-    setPreviewImage(URL.createObjectURL(file));
-  };
+
 
   const handleInputChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -157,7 +152,15 @@ export default function Profile() {
 
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = (() => {
+        try {
+          const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+          return userInfo?.token || localStorage.getItem("token") || "";
+        } catch {
+          return localStorage.getItem("token") || "";
+        }
+      })();
+
       const formData = new FormData();
       formData.append("name", form.name.trim());
       formData.append("email", form.email.trim());
@@ -165,9 +168,10 @@ export default function Profile() {
       if (form.currentPassword) formData.append("currentPassword", form.currentPassword);
       if (form.newPassword) formData.append("newPassword", form.newPassword);
       if (form.confirmPassword) formData.append("confirmPassword", form.confirmPassword);
-      if (imageFile) formData.append("profileImage", imageFile);
+      if (profileImage) formData.append("profileImage", profileImage);
 
-      const response = await fetch("/api/admin/profile", {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const response = await fetch(`${API_URL}/api/admin/profile`, {
         method: "PUT",
         body: formData,
         headers: {
@@ -184,8 +188,7 @@ export default function Profile() {
           newPassword: "",
           confirmPassword: "",
         }));
-        setImageFile(null);
-        setPreviewImage("");
+        setProfileImage("");
         setNotification({ type: "success", message: data.message || "Profile updated successfully." });
       } else {
         setNotification({ type: "error", message: data.message || "Unable to save profile." });
@@ -342,45 +345,15 @@ export default function Profile() {
             <div style={{ display: "grid", gap: "20px" }}>
               <Field label="Profile image">
                 <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-                  <label
-                    htmlFor="profileImage"
-                    style={{
-                      cursor: "pointer",
-                      padding: "12px 16px",
-                      borderRadius: "14px",
-                      background: "#f8fafc",
-                      color: "#334155",
-                      border: "1px dashed #cbd5e1",
-                      minWidth: "220px",
-                      textAlign: "center",
-                    }}
-                  >
-                    Upload image
-                    <input
-                      id="profileImage"
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg"
-                      onChange={handleFileChange}
-                      style={{ display: "none" }}
+                  <div style={{ width: "120px" }}>
+                    <ImageUploader 
+                      initialUrl={profileImageUrl}
+                      onUploadSuccess={(url) => setProfileImage(url)}
+                      onRemove={() => setProfileImage("")}
+                      aspectRatio="1/1"
+                      label=""
                     />
-                  </label>
-                  {profileImageUrl && (
-                    <div
-                      style={{
-                        width: "78px",
-                        height: "78px",
-                        borderRadius: "18px",
-                        overflow: "hidden",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      <img
-                        src={profileImageUrl}
-                        alt="Preview"
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    </div>
-                  )}
+                  </div>
                 </div>
               </Field>
 
@@ -459,8 +432,7 @@ export default function Profile() {
                 }));
                 setErrors({});
                 setNotification({ type: "", message: "" });
-                setImageFile(null);
-                setPreviewImage("");
+                setProfileImage("");
               }} style={secondaryButtonStyle}>
                 Reset
               </button>

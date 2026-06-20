@@ -400,3 +400,565 @@
   font-weight: 600;
 }
 
+/* ── Gift Card Selection Modal & Luxury Vouchers ── */
+
+.select-giftcard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-bottom: 16px;
+  margin-bottom: 6px;
+}
+
+.select-giftcard-trigger-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: transparent;
+  color: var(--ds-color-text, #0F0E0C);
+  border: 1px solid var(--ds-color-accent, #C9A96E);
+  font-family: var(--ds-font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.22s var(--ds-ease-standard);
+  text-align: center;
+}
+
+.select-giftcard-trigger-btn:hover {
+  background-color: var(--ds-color-brand, #0F0E0C);
+  color: var(--ds-color-surface, #F7F5F0);
+  border-color: var(--ds-color-brand, #0F0E0C);
+}
+
+.applied-giftcard-summary-card {
+  border: 1px solid var(--ds-color-accent, #C9A96E);
+  border-radius: 0;
+  background-color: var(--ds-color-surface-warm, #FAF8F5);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.applied-giftcard-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background-color: var(--ds-color-accent, #C9A96E);
+}
+
+.applied-giftcard-title {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ds-color-text, #0F0E0C);
+  margin-bottom: 4px;
+}
+
+.applied-giftcard-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.applied-giftcard-label {
+  color: var(--ds-color-text-muted, #6C6861);
+}
+
+.applied-giftcard-value {
+  font-weight: 600;
+  color: var(--ds-color-text, #0F0E0C);
+}
+
+.applied-giftcard-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--ds-color-danger, #8B3A3A);
+  font-family: var(--ds-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 4px 0 0;
+  align-self: flex-start;
+  transition: opacity 0.2s;
+}
+
+.applied-giftcard-remove-btn:hover {
+  text-decoration: underline;
+}
+
+/* Modal layout styling */
+.giftcard-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 14, 12, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1200; /* overlay above cart drawer */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.giftcard-modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.giftcard-modal-container {
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  background-color: var(--ds-color-surface, #F7F5F0);
+  border: 1px solid var(--ds-color-accent, #C9A96E);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--ds-color-text, #0F0E0C);
+  box-shadow: none;
+  transform: translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.giftcard-modal-backdrop.is-open .giftcard-modal-container {
+  transform: translateY(0);
+}
+
+.giftcard-modal-drag-handle {
+  display: none; /* Desktop hidden */
+}
+
+.giftcard-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+}
+
+.giftcard-modal-header h3 {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 22px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--ds-color-text, #0F0E0C);
+}
+
+.giftcard-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--ds-color-text, #0F0E0C);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.giftcard-modal-close:hover {
+  opacity: 0.7;
+}
+
+.giftcard-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.giftcard-loading {
+  font-size: 13px;
+  color: var(--ds-color-text-muted);
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* Gift Card list section */
+.giftcard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.giftcard-list-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin: 0;
+}
+
+.giftcard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Luxury voucher design */
+.giftcard-card {
+  border: 1px solid var(--ds-color-accent, #C9A96E);
+  border-radius: 0;
+  background-color: var(--ds-color-surface-warm, #FAF8F5);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  transition: border-color 0.25s ease;
+}
+
+.giftcard-card:hover:not(.expired) {
+  border-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card.recommended::after {
+  background-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card-recommended-badge {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-success, #1B4332);
+  background-color: var(--ds-color-success-soft, #EBF2EE);
+  padding: 2px 8px;
+  border: 1px solid rgba(27, 67, 50, 0.2);
+}
+
+.giftcard-card-brand {
+  font-family: var(--ds-font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-card-title {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text, #0F0E0C);
+  margin: 0;
+}
+
+.giftcard-card-balance {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ds-color-brand, #0F0E0C);
+  margin-top: -8px;
+}
+
+.giftcard-card-code {
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.giftcard-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  border-top: 1px solid var(--ds-color-border, #E8E5DE);
+  padding-top: 12px;
+}
+
+.giftcard-card-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.giftcard-card-info-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text-subtle, #A39E96);
+}
+
+.giftcard-card-info-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-color-text, #0F0E0C);
+}
+
+.giftcard-card-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-success, #1B4332);
+}
+
+.giftcard-card-status.expired {
+  color: var(--ds-color-danger, #8B3A3A);
+}
+
+.giftcard-card-status.used {
+  color: var(--ds-color-text-muted, #6C6861);
+}
+
+/* Savings Preview Block inside card */
+.giftcard-card-savings-preview {
+  border-top: 1px dashed var(--ds-color-border-strong, #CDC9C0);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.savings-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ds-color-text-muted, #6C6861);
+}
+
+.savings-row.font-bold {
+  font-weight: 700;
+  color: var(--ds-color-text, #0F0E0C);
+  font-size: 12px;
+}
+
+/* Premium Square CTA button */
+.giftcard-card-action {
+  width: 100%;
+  background-color: var(--ds-color-brand, #0F0E0C);
+  color: var(--ds-color-surface, #F7F5F0);
+  border: 1px solid var(--ds-color-brand, #0F0E0C);
+  padding: 12px;
+  font-family: var(--ds-font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.22s var(--ds-ease-standard);
+  text-align: center;
+  margin-top: 4px;
+}
+
+.giftcard-card-action:hover:not(:disabled) {
+  background-color: transparent;
+  color: var(--ds-color-brand, #0F0E0C);
+}
+
+.giftcard-card-action:disabled {
+  background-color: var(--ds-color-surface-muted, #EFECE6);
+  border-color: var(--ds-color-border, #E8E5DE);
+  color: var(--ds-color-text-subtle, #A39E96);
+  cursor: not-allowed;
+}
+
+.giftcard-card.expired {
+  border-color: var(--ds-color-border, #E8E5DE);
+  opacity: 0.65;
+}
+
+.giftcard-card.expired::after {
+  background-color: var(--ds-color-text-subtle, #A39E96);
+}
+
+/* Empty State */
+.giftcard-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  text-align: center;
+  gap: 12px;
+  background-color: var(--ds-color-surface-warm, #FAF8F5);
+  border: 1px dashed var(--ds-color-border-strong, #CDC9C0);
+}
+
+.giftcard-empty-icon {
+  font-size: 32px;
+  margin-bottom: 2px;
+}
+
+.giftcard-empty-title {
+  font-family: var(--ds-font-serif, serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ds-color-text, #0F0E0C);
+  margin: 0;
+}
+
+.giftcard-empty-text {
+  font-size: 13px;
+  color: var(--ds-color-text-muted, #6C6861);
+  margin: 0;
+}
+
+/* Divider OR */
+.giftcard-modal-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--ds-color-text-subtle, #A39E96);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 8px 0;
+}
+
+.giftcard-modal-divider::before,
+.giftcard-modal-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--ds-color-border, #E8E5DE);
+}
+
+.giftcard-modal-divider:not(:empty)::before {
+  margin-right: 16px;
+}
+
+.giftcard-modal-divider:not(:empty)::after {
+  margin-left: 16px;
+}
+
+/* Manual Entry Form */
+.giftcard-manual-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.giftcard-manual-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ds-color-text, #0F0E0C);
+  margin: 0;
+}
+
+.giftcard-manual-form {
+  display: flex;
+  gap: 8px;
+}
+
+.giftcard-manual-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--ds-color-border-strong, #CDC9C0);
+  border-radius: 0;
+  background-color: var(--ds-color-surface-warm, #FAF8F5);
+  color: var(--ds-color-text, #0F0E0C);
+  font-size: 13px;
+  outline: none;
+  font-family: var(--ds-font-sans);
+  transition: border-color 0.2s;
+}
+
+.giftcard-manual-input:focus {
+  border-color: var(--ds-color-accent, #C9A96E);
+}
+
+.giftcard-manual-btn {
+  background-color: var(--ds-color-brand, #0F0E0C);
+  color: var(--ds-color-surface, #F7F5F0);
+  border: 1px solid var(--ds-color-brand, #0F0E0C);
+  padding: 0 24px;
+  font-family: var(--ds-font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.22s var(--ds-ease-standard);
+}
+
+.giftcard-manual-btn:hover {
+  background-color: transparent;
+  color: var(--ds-color-brand, #0F0E0C);
+}
+
+/* Mobile responsive bottom sheet drawer */
+@media (max-width: 768px) {
+  .giftcard-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .giftcard-modal-container {
+    max-width: 100%;
+    max-height: 85vh;
+    height: auto;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  .giftcard-modal-backdrop.is-open .giftcard-modal-container {
+    transform: translateY(0);
+  }
+
+  .giftcard-modal-drag-handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+    cursor: grab;
+    border-bottom: 1px solid var(--ds-color-border-subtle, #F0EDE6);
+  }
+
+  .drag-handle-bar {
+    width: 40px;
+    height: 4px;
+    background-color: var(--ds-color-border-strong, #CDC9C0);
+    border-radius: 2px;
+  }
+
+  .giftcard-card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .giftcard-card-info-item:last-child {
+    grid-column: span 2;
+  }
+}
+

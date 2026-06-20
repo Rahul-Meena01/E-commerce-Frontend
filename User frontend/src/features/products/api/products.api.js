@@ -27,7 +27,7 @@ const parseParams = (params) => {
   return { category, subCategory, search, limit, page };
 };
 
-export const fetchProducts = (params) => {
+export const fetchProducts = (params, options = {}) => {
   const { category, subCategory, search, limit } = parseParams(params);
 
   let sortParam = null;
@@ -46,7 +46,7 @@ export const fetchProducts = (params) => {
     requestUrl = params.startsWith("/api") ? params.slice(4) : params;
   }
 
-  return client.get(requestUrl).then((res) => {
+  return client.get(requestUrl, options).then((res) => {
     let products = res.data?.data || [];
 
     // Filter by category slug or ID
@@ -136,5 +136,5 @@ export const fetchProduct = (productId) =>
   client.get(`/product/public/${productId}`);
 export const fetchCategories = () => client.get("/category/public/all");
 export const fetchSubCategories = () => client.get("/subCategory/public/all");
-export const searchProducts = (query, limit = 6) =>
-  fetchProducts({ search: query, limit });
+export const searchProducts = (query, limit = 6, options = {}) =>
+  fetchProducts({ search: query, limit }, options);

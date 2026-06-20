@@ -17,15 +17,17 @@ import {
   ToggleRight,
   Tag,
   FolderOpen,
+  ImageOff,
 } from "lucide-react";
 import API from "../../utils/api";
+import ImageUploader from "../../components/ImageUploader";
 import "../../styles/vendor.css";
 
 /* ─────────────────────────────────────────────────────────────
    CONSTANTS
 ───────────────────────────────────────────────────────────── */
 const PAGE_SIZE = 10;
-const EMPTY_FORM = { name: "", category: "", isActive: true };
+const EMPTY_FORM = { name: "", category: "", isActive: true, image: "" };
 
 /* ─────────────────────────────────────────────────────────────
    MODAL — Create / Edit subcategory
@@ -108,6 +110,21 @@ function SubCategoryModal({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="form-group">
+          <label style={{ display: "block", marginBottom: "8px" }}>
+            Sub-Category Image <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Optional)</span>
+          </label>
+          <div style={{ height: "160px" }}>
+            <ImageUploader
+              initialUrl={form.image}
+              onUploadSuccess={(url) => set("image", url)}
+              onRemove={() => set("image", "")}
+              aspectRatio="16/9"
+              label="Sub-category thumbnail"
+            />
+          </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
@@ -304,6 +321,7 @@ function VendorSubCategories() {
           body: JSON.stringify({
             name: form.name.trim(),
             category: form.category,
+            image: form.image,
           }),
         });
         showToast("success", `"${form.name}" created successfully!`);
@@ -328,6 +346,7 @@ function VendorSubCategories() {
             name: form.name.trim(),
             category: form.category,
             isActive: form.isActive,
+            image: form.image,
           }),
         });
         showToast("success", `"${form.name}" updated!`);
@@ -528,6 +547,7 @@ function VendorSubCategories() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Image</th>
                 <th>Parent Category</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -543,6 +563,15 @@ function VendorSubCategories() {
                     {sc.slug && (
                       <div style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "monospace" }}>
                         {sc.slug}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    {sc.image ? (
+                      <img src={sc.image} alt={sc.name} style={{ width: "42px", height: "42px", borderRadius: "10px", objectFit: "cover", border: "1px solid var(--border-color)" }} />
+                    ) : (
+                      <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "var(--tertiary-bg)", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
+                        <ImageOff size={16} />
                       </div>
                     )}
                   </td>
@@ -642,6 +671,7 @@ function VendorSubCategories() {
                   name: modal.data.name,
                   category: modal.data.category?._id || "",
                   isActive: modal.data.isActive,
+                  image: modal.data.image || "",
                 }
               : null
           }

@@ -16,6 +16,7 @@ const OrderSuccessPage = lazy(
   () => import("../../pages/user/OrderSuccessPage"),
 );
 const ProfilePage = lazy(() => import("../../pages/user/ProfilePage"));
+const OrderDetailsPage = lazy(() => import("../../features/orders/pages/OrderDetailsPage"));
 const NotFound = lazy(() => import("../../pages/NotFound"));
 const LoginPage = lazy(() => import("../../pages/auth/LoginPage"));
 const SignupPage = lazy(() => import("../../pages/auth/SignupPage"));
@@ -106,6 +107,16 @@ export const routes = [
       <ProtectedRoute>
         <WithLayout>
           <ProfilePage />
+        </WithLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/orders/:orderId",
+    element: (
+      <ProtectedRoute>
+        <WithLayout>
+          <OrderDetailsPage />
         </WithLayout>
       </ProtectedRoute>
     ),

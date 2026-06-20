@@ -89,6 +89,7 @@ import { fileURLToPath } from "url";
 import { initSocket } from "./socket.js";
 import connectDB    from "./config/db.js";
 import { protect }  from "./middleware/authMiddleware.js";
+import setupCronJobs from "./cron.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 3.  ROUTE IMPORTS
@@ -107,6 +108,7 @@ import wishlistRoutes    from "./routes/wishlist.js";
 import couponRoutes      from "./routes/coupon.js";
 import giftCardRoutes    from "./routes/giftCard.js";
 import profileRoutes     from "./routes/profile.js";
+import uploadRoutes      from "./routes/upload.js";
 
 // ── Order / User / Payment  (protect declared INSIDE each file) ───────────────
 import orderRoutes   from "./routes/order.js";
@@ -247,7 +249,7 @@ app.use("/api/giftCard",    protect, giftCardRoutes);     // gift card ops need 
 //         Now scoped to "/api/profile" which is the actual prefix these routes use.
 //         ⚠️ If your profile routes use a different prefix (e.g. /api/me),
 //            update this path to match.
-app.use("/api/profile",     protect, profileRoutes);
+app.use("/api/admin",       protect, profileRoutes);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 10. ORDER / USER / PAYMENT ROUTES
@@ -260,6 +262,7 @@ app.use("/api/profile",     protect, profileRoutes);
 app.use("/api/orders",  orderRoutes);
 app.use("/api/users",   userRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/upload",  uploadRoutes);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 11. ADMIN ROUTES
@@ -367,6 +370,8 @@ app.use((err, req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // 15. START SERVER
 // ─────────────────────────────────────────────────────────────────────────────
+setupCronJobs();
+
 server.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗

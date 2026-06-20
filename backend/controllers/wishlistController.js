@@ -103,3 +103,57 @@ export const clearWishlist = asyncHandler(async (req, res, next) => {
     data: wishlist,
   });
 });
+
+export const mergeWishlist = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id;
+  const rawItems = req.body.products || req.body.items || [];
+
+  if (!Array.isArray(rawItems)) {
+    return res.status(400).json({
+      success: false,
+      message: "An array of items or products is required for merging",
+    });
+  }
+
+  // Extract product IDs safely
+  const productIds = rawItems.map(item => {
+    if (!item) return null;
+    if (typeof item === "string") return item;
+    if (typeof item === "object") {
+      const prodVal = item.product || item.productId || item._id || item.id;
+      if (prodVal && typeof prodVal === "object") {
+        return prodVal._id || prodVal.id || null;
+      }
+      return prodVal || null;
+    }
+    return null;
+  }).filter(Boolean);
+
+  let wishlist = await Wishlist.findOne({ user: userId });
+
+  if (!wishlist) {
+    wishlist = await Wishlist.create({
+      user: userId,
+      products: productIds,
+    });
+  } else {
+    const existingProducts = wishlist.products.map((id) => id.toString());
+    productIds.forEach((prodId) => {
+      if (prodId && !existingProducts.includes(prodId.toString())) {
+        wishlist.products.push(prodId);
+      }
+    });
+    await wishlist.save();
+  }
+
+  const mergedWishlist = await Wishlist.findOne({ user: userId }).populate({
+    path: "products",
+    select: "name price image image1 image2 image3 image4 slug",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Wishlist merged successfully",
+    data: mergedWishlist || { products: [] },
+  });
+});

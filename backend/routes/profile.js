@@ -13,10 +13,11 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import upload from "../middleware/upload.js";
 import User from "../models/User.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get('/admin/profile', async (req, res) => {
+router.get('/profile', protect, async (req, res) => {
   try {
     const admin = await User.findById(req.user.id).select('-password');
 
@@ -39,7 +40,7 @@ router.get('/admin/profile', async (req, res) => {
   }
 });
 
-router.put('/admin/profile', upload.single('profileImage'), async (req, res) => {
+router.put('/profile', protect, upload.single('profileImage'), async (req, res) => {
   try {
     const admin = await User.findById(req.user.id);
 
@@ -57,6 +58,7 @@ router.put('/admin/profile', upload.single('profileImage'), async (req, res) => 
       currentPassword,
       newPassword,
       confirmPassword,
+      profileImage,
     } = req.body;
 
     if (!name?.trim()) {
@@ -115,6 +117,8 @@ router.put('/admin/profile', upload.single('profileImage'), async (req, res) => 
 
     if (req.file) {
       admin.profileImage = `/uploads/${req.file.filename}`;
+    } else if (profileImage !== undefined) {
+      admin.profileImage = profileImage;
     }
 
     await admin.save();

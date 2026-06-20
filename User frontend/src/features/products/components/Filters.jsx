@@ -394,6 +394,8 @@ const Filters = ({
               <span className="loft-price-currency">{CURRENCY.symbol}</span>
 
               <input
+                id="price-min"
+                name="priceMin"
                 type="number"
                 placeholder="Min"
                 value={priceMin}
@@ -408,6 +410,8 @@ const Filters = ({
               <span className="loft-price-currency">{CURRENCY.symbol}</span>
 
               <input
+                id="price-max"
+                name="priceMax"
                 type="number"
                 placeholder="Max"
                 value={priceMax}

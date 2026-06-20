@@ -17,9 +17,10 @@ export default function SearchDiscoveryProductCard({
     product?.images?.[0] ||
     "";
 
-  if (!productId) return null;
-
   const price = Number(product?.price) || 0;
+  const discountPrice = Number(product?.discountPrice || product?.salePrice) || 0;
+  const hasDiscount = discountPrice > 0 && discountPrice < price;
+
   return (
     <Link
       to={`/product/${productId}`}
@@ -42,12 +43,23 @@ export default function SearchDiscoveryProductCard({
         </h4>
         {/* <p className="search-discovery-product-card__meta">{categoryLabel}</p> */}
         <div className="search-discovery-product-card__footer">
-          <span className="search-discovery-product-card__price">
-            {formatPrice(price)}
-          </span>
-          {product?.discount ? (
-            <span className="search-discovery-product-card__discount">
-              -{product.discount}%
+          {hasDiscount ? (
+            <>
+              <span className="search-discovery-product-card__price sale">
+                {formatPrice(discountPrice)}
+              </span>
+              <span className="search-discovery-product-card__original-price struck" style={{ textDecoration: "line-through", opacity: 0.6, fontSize: "0.9em", marginLeft: "8px" }}>
+                {formatPrice(price)}
+              </span>
+            </>
+          ) : (
+            <span className="search-discovery-product-card__price">
+              {formatPrice(price)}
+            </span>
+          )}
+          {product?.discount || product?.discountPercent ? (
+            <span className="search-discovery-product-card__discount" style={{ color: "#d9534f", fontSize: "0.85em", marginLeft: "8px", fontWeight: "bold" }}>
+              -{product.discount || product.discountPercent}%
             </span>
           ) : null}
         </div>

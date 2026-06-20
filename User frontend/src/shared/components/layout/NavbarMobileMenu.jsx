@@ -14,7 +14,7 @@ const NavbarMobileMenu = ({
   logout,
 }) => {
   const drawerRef = useFocusTrap(mobileMenuOpen);
-  useEscapeKey(mobileMenuOpen, () => setMobileMenuOpen(false));
+  useEscapeKey(() => setMobileMenuOpen(false), mobileMenuOpen);
 
   if (!mobileMenuOpen) return null;
 
@@ -47,14 +47,17 @@ const NavbarMobileMenu = ({
           <div className="mobile-menu-group">
             <span className="mobile-menu-label">Shop</span>
             {categories && categories.length > 0 ? (
-              categories.map((cat) => (
-                <button
-                  key={cat._id}
-                  onClick={() => handleMobileNav(`/shop/${cat.slug}`)}
-                >
-                  {cat.name}
-                </button>
-              ))
+              categories.map((cat) => {
+                const slug = cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || cat._id;
+                return (
+                  <button
+                    key={cat._id}
+                    onClick={() => handleMobileNav(`/shop/${slug}`)}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })
             ) : (
               <button onClick={() => handleMobileNav("/shop")}>Shop All</button>
             )}

@@ -27,6 +27,7 @@ import { protect, requireAuth } from "../middleware/authMiddleware.js";
 import {
   getAllVendors,
   getVendorById,
+  getVendorOrders,
   updateVendorStatus,
   updateVendorCommission,
   deleteVendor,
@@ -48,6 +49,10 @@ router.get("/", adminAuth, getAllVendors);
 // GET /api/admin/vendors/:id
 // Get a single vendor's full details including their linked user info.
 router.get("/:id", adminAuth, getVendorById);
+
+// GET /api/admin/vendors/:id/orders
+// Get vendor-specific order history and revenue summary.
+router.get("/:id/orders", adminAuth, getVendorOrders);
 
 // PUT /api/admin/vendors/:id/status
 // Approve a pending vendor or suspend an active one.

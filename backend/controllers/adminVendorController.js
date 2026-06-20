@@ -15,6 +15,7 @@
 import mongoose from "mongoose";
 import Vendor from "../models/VendorSchema.js";
 import User from "../models/User.js";
+import Order from "../models/Order.js";
 import VendorProduct from "../models/vendor/vendorProduct.js";
 import VendorCategory from "../models/vendor/vendorCategory.js";
 import VendorSubCategory from "../models/vendor/vendorSubCategory.js";
@@ -113,6 +114,79 @@ export const getVendorById = async (req, res) => {
     });
   } catch (error) {
     console.error("getVendorById error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// @route   GET /api/admin/vendors/:id/orders
+// @desc    Get vendor-specific orders and revenue summary for the admin vendor profile
+// @access  Private (admin only)
+export const getVendorOrders = async (req, res) => {
+  try {
+    const vendorProducts = await VendorProduct.find({ vendor: req.params.id }, "_id");
+    const vendorProductIds = vendorProducts.map((product) => product._id);
+
+    if (vendorProductIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        totalOrders: 0,
+        totalRevenue: 0,
+        data: [],
+      });
+    }
+
+    const orders = await Order.find({
+      "orderItems.product": { $in: vendorProductIds },
+      "orderItems.productModel": "VendorProduct",
+    })
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
+    const mappedOrders = orders.map((order) => {
+      const orderObj = order.toObject();
+      const vendorItems = orderObj.orderItems.filter(
+        (item) =>
+          item.productModel === "VendorProduct" &&
+          vendorProductIds.some((id) => id.toString() === item.product.toString())
+      );
+
+      const vendorTotal = vendorItems.reduce(
+        (sum, item) => sum + item.price * item.qty,
+        0
+      );
+
+      return {
+        _id: orderObj._id,
+        user: orderObj.user,
+        createdAt: orderObj.createdAt,
+        orderStatus: orderObj.orderStatus,
+        paymentStatus: orderObj.paymentStatus,
+        isPaid: orderObj.isPaid,
+        isDelivered: orderObj.isDelivered,
+        shippingAddress: orderObj.shippingAddress,
+        vendorItems,
+        vendorTotal,
+        totalPrice: orderObj.totalPrice,
+      };
+    });
+
+    const totalRevenue = mappedOrders.reduce(
+      (sum, order) => sum + order.vendorTotal,
+      0
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: mappedOrders.length,
+      totalOrders: mappedOrders.length,
+      totalRevenue,
+      data: mappedOrders,
+    });
+  } catch (error) {
+    console.error("getVendorOrders error:", error);
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });

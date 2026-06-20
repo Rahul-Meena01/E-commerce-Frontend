@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -51,7 +51,7 @@ const ProductSlider = ({ title, fetchUrl, viewAllLink }) => {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const sliderRef = useRef(null);
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: rawProducts = [], isLoading } = useQuery({
     queryKey: ["products", "slider", fetchUrl],
     queryFn: async () => {
       const res = await productsApi.getProducts(fetchUrl);
@@ -61,6 +61,46 @@ const ProductSlider = ({ title, fetchUrl, viewAllLink }) => {
     },
     staleTime: 5 * 60 * 1000, // 5 min cache
   });
+
+  const products = useMemo(() => {
+    if (!rawProducts || rawProducts.length === 0) return [];
+    
+    // Parse URL params
+    let sortVal = "";
+    let limitVal = null;
+    try {
+      const url = new URL(fetchUrl, window.location.origin);
+      sortVal = url.searchParams.get("sort") || "";
+      const limitStr = url.searchParams.get("limit");
+      if (limitStr) {
+        limitVal = parseInt(limitStr, 10);
+      }
+    } catch {
+      // Fallback manual regex parse if URL creation fails
+      const sortMatch = fetchUrl.match(/[?&]sort=([^&]+)/);
+      if (sortMatch) sortVal = sortMatch[1];
+      const limitMatch = fetchUrl.match(/[?&]limit=([0-9]+)/);
+      if (limitMatch) limitVal = parseInt(limitMatch[1], 10);
+    }
+
+    let items = [...rawProducts];
+
+    // Apply client-side sorting
+    if (sortVal === "newest") {
+      items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    } else if (sortVal === "rating") {
+      items.sort((a, b) => (b.rating || b.averageRating || 0) - (a.rating || a.averageRating || 0));
+    } else if (sortVal === "popularity") {
+      items.sort((a, b) => (b.popularity || b.numReviews || b.salesCount || 0) - (a.popularity || a.numReviews || a.salesCount || 0));
+    }
+
+    // Apply client-side limit
+    if (limitVal && !isNaN(limitVal)) {
+      items = items.slice(0, limitVal);
+    }
+
+    return items;
+  }, [rawProducts, fetchUrl]);
 
   const updateScrollButtons = () => {
     if (sliderRef.current) {

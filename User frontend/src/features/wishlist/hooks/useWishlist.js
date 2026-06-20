@@ -1,7 +1,7 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { wishlistApi } from "../services/wishlist.service";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import logger from "@/shared/utils/logger";
 
 const STORAGE_KEY = "loft_wishlist";
 
@@ -50,23 +50,36 @@ const mapWishlistItem = (item) => {
 
 export const useWishlistQuery = () => {
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+
+  const mergeWishlistMutation = useMutation({
+    mutationKey: ["mergeWishlist"],
+    mutationFn: async (localItems) => {
+      const res = await wishlistApi.mergeWishlist(localItems);
+      if (!res.ok) throw new Error("Merge failed");
+      return res;
+    },
+    onSuccess: () => {
+      localStorage.removeItem(STORAGE_KEY);
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+    },
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const localItems = loadLocalWishlist();
+    if (localItems.length > 0) {
+      if (queryClient.isMutating({ mutationKey: ["mergeWishlist"] }) === 0) {
+        mergeWishlistMutation.mutate(localItems);
+      }
+    }
+  }, [isAuthenticated, queryClient]);
 
   return useQuery({
     queryKey: ["wishlist", isAuthenticated],
     queryFn: async () => {
       if (!isAuthenticated) {
         return loadLocalWishlist().map(mapWishlistItem).filter(Boolean);
-      }
-
-      // Attempt merge if local wishlist has items
-      const localItems = loadLocalWishlist();
-      if (localItems.length > 0) {
-        try {
-          await wishlistApi.mergeWishlist(localItems);
-          localStorage.removeItem(STORAGE_KEY);
-        } catch (err) {
-          logger.error("Wishlist merge failed", err);
-        }
       }
 
       const res = await wishlistApi.getWishlist();

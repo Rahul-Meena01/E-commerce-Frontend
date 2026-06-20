@@ -19,7 +19,7 @@ const router = express.Router();
 // Create SubCategory
 router.post("/create", protect, async(req,res) => {
     try{
-        const { parentCategory, name, slug, status } = req.body;
+        const { parentCategory, name, slug, status, image } = req.body;
         
         const parentExists = await Category.findById(parentCategory)
         if(!parentExists){
@@ -41,6 +41,7 @@ router.post("/create", protect, async(req,res) => {
             parentCategory,
             name,
             slug,
+            image: image || null,
             status: finalStatus,
         });
         await subCategory.save()
@@ -67,7 +68,7 @@ router.get("/all", protect, async(req,res) => {
         const total = await SubCategory.countDocuments();
         const active = await SubCategory.countDocuments({ status: "Active" });
         const inactive = await SubCategory.countDocuments({ status: "Inactive" });
-        const subCategories = await SubCategory.find().populate('parentCategory').skip(skip).limit(limit);
+        const subCategories = await SubCategory.find().populate('parentCategory').sort({ createdAt: -1 }).skip(skip).limit(limit);
     
         res.status(200).json({
           success: true,
@@ -104,7 +105,7 @@ router.get("/public/all", async (req, res) => {
   try {
     const subCategories = await SubCategory.find({ status: "Active" }).populate(
       "parentCategory",
-    );
+    ).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: subCategories });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -115,8 +116,13 @@ router.get("/public/all", async (req, res) => {
 router.put("/update/:id", protect, async(req,res) => {
     try{
             const ID = req.params.id
-            const updatedField = req.body;
+            const { image, ...updatedField } = req.body;
             const existingSubCategory = await SubCategory.findById(ID);
+            
+            // Update image if provided
+            if (image) {
+                updatedField.image = image;
+            }
             if (!existingSubCategory) {
                 return res.status(404).json({
                     success: false,

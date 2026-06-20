@@ -3,7 +3,6 @@
  * Coupon/cart routes write these records when a coupon is applied, released, or confirmed,
  * allowing per-user limits and admin usage history to be enforced and reviewed.
  */
-// const mongoose = require("mongoose");
 import mongoose from "mongoose";
 
 /**
@@ -13,6 +12,13 @@ import mongoose from "mongoose";
  * Used for:
  *   - Preventing duplicate usage per user
  *   - Admin analytics (who used which coupon, when, and on which product)
+ *
+ * NOTE ON UNIQUE INDEX:
+ *   The old schema had a unique compound index { coupon, user } which caused
+ *   E11000 duplicate key errors on the second application attempt (even after
+ *   cancellation), silently swallowing the save and leaving MongoDB empty.
+ *   That index has been REMOVED. De-duplication is now handled in application
+ *   logic via findOneAndUpdate (upsert) in cart.js.
  */
 const couponUsageSchema = new mongoose.Schema(
   {
@@ -74,7 +80,7 @@ const couponUsageSchema = new mongoose.Schema(
     },
 
     // Current status of this usage record
-    // "applied"  -> coupon applied at checkout, order not yet placed
+    // "applied"   -> coupon applied at checkout, order not yet placed
     // "confirmed" -> order placed successfully
     // "cancelled" -> order was cancelled / coupon released
     status: {
@@ -96,9 +102,10 @@ const couponUsageSchema = new mongoose.Schema(
 
 //
 // INDEXES
+// NOTE: { coupon, user } unique index intentionally removed — it caused silent
+//       E11000 failures on re-application after cancellation.
+//       Upsert logic in cart.js handles de-duplication safely.
 //
-// Fast lookup: did this user already use this coupon?
-couponUsageSchema.index({ coupon: 1, user: 1 }, { unique: true });
 
 // Admin queries: all usages for a coupon
 couponUsageSchema.index({ coupon: 1 });
@@ -108,6 +115,9 @@ couponUsageSchema.index({ user: 1 });
 
 // Filter by status
 couponUsageSchema.index({ status: 1 });
+
+// Fast lookup for cart.js upsert & order.js confirmation
+couponUsageSchema.index({ coupon: 1, user: 1, status: 1 });
 
 const CouponUsage = mongoose.model("CouponUsage", couponUsageSchema);
 export default CouponUsage;

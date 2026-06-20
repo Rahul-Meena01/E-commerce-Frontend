@@ -4,6 +4,7 @@ import { AuthProvider } from "@/features/auth/context/AuthContext";
 import { ConfirmDialogProvider } from "../../context/ConfirmDialogContext.jsx";
 import { queryClient } from "./queryClient.js";
 import { GiftCardProvider } from "../../context/GiftCardContext.jsx";
+import { OrderActionsProvider } from "@/features/orders/context/OrderActionsContext";
 
 export default function AppProviders({ children }) {
   return (
@@ -11,7 +12,11 @@ export default function AppProviders({ children }) {
       <ToastProvider>
         <ConfirmDialogProvider>
           <AuthProvider>
-            <GiftCardProvider>{children}</GiftCardProvider>
+            <GiftCardProvider>
+              <OrderActionsProvider>
+                {children}
+              </OrderActionsProvider>
+            </GiftCardProvider>
           </AuthProvider>
         </ConfirmDialogProvider>
       </ToastProvider>

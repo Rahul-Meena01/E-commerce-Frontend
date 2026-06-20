@@ -91,11 +91,14 @@ const Footer = () => {
             <li>
               <Link to="/shop">Shop All</Link>
             </li>
-            {categories && categories.slice(0, 4).map((cat) => (
-              <li key={cat._id}>
-                <Link to={`/shop/${cat.slug}`}>{cat.name}</Link>
-              </li>
-            ))}
+            {categories && categories.slice(0, 4).map((cat) => {
+              const slug = cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || cat._id;
+              return (
+                <li key={cat._id}>
+                  <Link to={`/shop/${slug}`}>{cat.name}</Link>
+                </li>
+              );
+            })}
             <li>
               <Link to="/shop?sort=newest">New Arrivals</Link>
             </li>

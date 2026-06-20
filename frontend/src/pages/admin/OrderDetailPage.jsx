@@ -429,7 +429,21 @@ function DetailPanel({ order, onClose, onStatusUpdate, updating }) {
           {/* Price breakdown */}
           <SectionCard icon="🧾" title="Price Breakdown">
             <InfoRow label="Items subtotal" value={fmt(order.itemsPrice)} />
-            <InfoRow label="GST (15%)" value={fmt(order.taxPrice)} />
+            {order.couponApplied && order.discountAmount > 0 && (
+              <InfoRow 
+                label={`Coupon (${order.couponApplied})`} 
+                value={`-${fmt(order.discountAmount)}`} 
+                valueStyle={{ color: '#0F6E56' }} 
+              />
+            )}
+            {order.giftCardApplied && order.giftCardDiscountAmount > 0 && (
+              <InfoRow 
+                label={`Gift Card (${order.giftCardApplied})`} 
+                value={`-${fmt(order.giftCardDiscountAmount)}`} 
+                valueStyle={{ color: '#0F6E56' }} 
+              />
+            )}
+            <InfoRow label="GST" value={fmt(order.taxPrice)} />
             <InfoRow
               label="Shipping"
               value={

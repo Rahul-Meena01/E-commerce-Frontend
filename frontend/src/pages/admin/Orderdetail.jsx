@@ -134,18 +134,40 @@ const generateInvoicePDF = (order) => {
   doc.setFontSize(11);
   doc.setTextColor(100);
   doc.text(`Subtotal:`, 130, finalY + 10);
-  doc.text(`Tax:`, 130, finalY + 16);
-  doc.text(`Shipping:`, 130, finalY + 22);
+  
+  let currentY = finalY + 16;
+
+  if (order.couponApplied && order.discountAmount > 0) {
+    doc.text(`Coupon (${order.couponApplied}):`, 130, currentY);
+    doc.setTextColor(15, 110, 86); // Greenish
+    doc.text(`-${fmtPlain(order.discountAmount)}`, 160, currentY);
+    doc.setTextColor(100); // Reset
+    currentY += 6;
+  }
+
+  if (order.giftCardApplied && order.giftCardDiscountAmount > 0) {
+    doc.text(`Gift Card (${order.giftCardApplied}):`, 130, currentY);
+    doc.setTextColor(15, 110, 86); // Greenish
+    doc.text(`-${fmtPlain(order.giftCardDiscountAmount)}`, 160, currentY);
+    doc.setTextColor(100); // Reset
+    currentY += 6;
+  }
+
+  doc.text(`Tax:`, 130, currentY);
+  doc.text(`${fmtPlain(order.taxPrice || 0)}`, 160, currentY);
+  currentY += 6;
+  
+  doc.text(`Shipping:`, 130, currentY);
+  doc.text(`${order.shippingPrice === 0 ? "Free" : fmtPlain(order.shippingPrice || 0)}`, 160, currentY);
+  currentY += 8;
 
   doc.setTextColor(0);
   doc.text(`${fmtPlain(order.itemsPrice || 0)}`, 160, finalY + 10);
-  doc.text(`${fmtPlain(order.taxPrice || 0)}`, 160, finalY + 16);
-  doc.text(`${order.shippingPrice === 0 ? "Free" : fmtPlain(order.shippingPrice || 0)}`, 160, finalY + 22);
 
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text(`Grand Total:`, 130, finalY + 30);
-  doc.text(`${fmtPlain(order.totalPrice || 0)}`, 160, finalY + 30);
+  doc.text(`Grand Total:`, 130, currentY);
+  doc.text(`${fmtPlain(order.totalPrice || 0)}`, 160, currentY);
 
   // Save the PDF
   doc.save(`Invoice_Order_${order.shortId || order._id?.slice(-6).toUpperCase() || order._id}.pdf`);
@@ -523,7 +545,21 @@ function DetailPanel({ order, onClose, onStatusUpdate, updating }) {
           {/* Price breakdown */}
           <SectionCard icon="🧾" title="Price Breakdown">
             <InfoRow label="Items subtotal" value={fmt(order.itemsPrice)} />
-            <InfoRow label="GST (15%)" value={fmt(order.taxPrice)} />
+            {order.couponApplied && order.discountAmount > 0 && (
+              <InfoRow 
+                label={`Coupon (${order.couponApplied})`} 
+                value={`-${fmt(order.discountAmount)}`} 
+                valueStyle={{ color: '#0F6E56' }} 
+              />
+            )}
+            {order.giftCardApplied && order.giftCardDiscountAmount > 0 && (
+              <InfoRow 
+                label={`Gift Card (${order.giftCardApplied})`} 
+                value={`-${fmt(order.giftCardDiscountAmount)}`} 
+                valueStyle={{ color: '#0F6E56' }} 
+              />
+            )}
+            <InfoRow label="GST" value={fmt(order.taxPrice)} />
             <InfoRow
               label="Shipping"
               value={
@@ -761,7 +797,7 @@ export default function Orderdetails() {
         setError("Admin token missing. Please login again.");
         return;
       }
-      const { data } = await axios.get(`${API_URL}/api/orders`, {
+      const { data } = await axios.get(`${API_URL}/api/orders?limit=all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOrders(data.orders || []);
@@ -798,18 +834,21 @@ export default function Orderdetails() {
           },
         },
       );
-      const patch = (o) =>
-        o._id !== id
-          ? o
-          : {
-            ...o,
-            orderStatus: status,
-            isDelivered: status === "Delivered" ? true : o.isDelivered,
-            deliveredAt:
-              status === "Delivered"
-                ? new Date().toISOString()
-                : o.deliveredAt,
-          };
+      const patch = (o) => {
+        if (o._id !== id) return o;
+        const isDeliveredNow = status === "Delivered";
+        return {
+          ...o,
+          orderStatus: status,
+          isDelivered: isDeliveredNow ? true : o.isDelivered,
+          deliveredAt: isDeliveredNow ? new Date().toISOString() : o.deliveredAt,
+          // COD orders are auto-marked paid on delivery (matches backend logic)
+          isPaid: isDeliveredNow && o.paymentMethod === "COD" ? true : o.isPaid,
+          paidAt: isDeliveredNow && o.paymentMethod === "COD" && !o.isPaid
+            ? new Date().toISOString()
+            : o.paidAt,
+        };
+      };
       setOrders((prev) => prev.map(patch));
       setDetailOrder((prev) => (prev ? patch(prev) : prev));
 

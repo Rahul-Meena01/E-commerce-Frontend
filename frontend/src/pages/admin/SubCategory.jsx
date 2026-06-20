@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useMemo, useCallback } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
+import ImageUploader from "../../components/ImageUploader";
 
 const EditIcon = () => (
   <svg
@@ -117,6 +118,7 @@ export default function SubCategory() {
     name: "",
     slug: "",
     status: "Active",
+    image: "",
   });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -191,7 +193,7 @@ export default function SubCategory() {
 
   const openCreateModal = () => {
     setEditingId(null);
-    setForm({ parentCategory: "", name: "", slug: "", status: "Active" });
+    setForm({ parentCategory: "", name: "", slug: "", status: "Active", image: "" });
     setShowModal(true);
   };
 
@@ -202,6 +204,7 @@ export default function SubCategory() {
       name: sub.name || "",
       slug: sub.slug || "",
       status: sub.status || "Active",
+      image: sub.image || "",
     });
     setShowModal(true);
   };
@@ -215,7 +218,7 @@ export default function SubCategory() {
   };
 
   const resetForm = () => {
-    setForm({ parentCategory: "", name: "", slug: "", status: "Active" });
+    setForm({ parentCategory: "", name: "", slug: "", status: "Active", image: "" });
     setEditingId(null);
   };
 
@@ -242,6 +245,7 @@ export default function SubCategory() {
       name: form.name,
       slug: form.slug,
       status: category?.status === "Inactive" ? "Inactive" : form.status,
+      image: form.image,
     };
 
     const url = editingId
@@ -352,6 +356,7 @@ export default function SubCategory() {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "780px" }}>
           <thead>
             <tr style={{ background: "#f8fafc" }}>
+              <th style={headerCellStyle}>Image</th>
               <th style={headerCellStyle}>Parent Category</th>
               <th style={headerCellStyle}>Subcategory</th>
               <th style={headerCellStyle}>Slug</th>
@@ -362,6 +367,19 @@ export default function SubCategory() {
           <tbody>
             {filteredSubCategories.map((subCategory) => (
               <tr key={subCategory._id} style={{ borderTop: "1px solid #e2e8f0" }}>
+                <td style={{ ...bodyCellStyle, width: "50px" }}>
+                  {subCategory.image ? (
+                    <img 
+                      src={subCategory.image.startsWith('http') ? subCategory.image : `${window.location.origin}${subCategory.image}`} 
+                      alt={subCategory.name}
+                      style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover", border: "1px solid #e2e8f0" }}
+                    />
+                  ) : (
+                    <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", border: "1px solid #e2e8f0" }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                  )}
+                </td>
                 <td style={bodyCellStyle}>{subCategory.parentCategory?.name || "—"}</td>
                 <td style={bodyCellStyle}>{subCategory.name}</td>
                 <td style={bodyCellStyle}>{subCategory.slug}</td>
@@ -456,6 +474,13 @@ export default function SubCategory() {
         <Modal title={editingId ? "Update Subcategory" : "Create Subcategory"} onClose={closeModal}>
           <form onSubmit={handleSubmit}>
             <div style={{ display: "grid", gap: "14px" }}>
+              <ImageUploader 
+                label="Subcategory Thumbnail" 
+                initialUrl={form.image} 
+                onUploadSuccess={(url) => handleChange("image", url)} 
+                onRemove={() => handleChange("image", "")} 
+                aspectRatio="1/1"
+              />
               <label style={labelStyle}>
                 Parent Category
                 <div style={{ marginTop: "8px" }}>

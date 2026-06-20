@@ -813,6 +813,7 @@
 import { useState, useEffect, useCallback } from "react";
 import "./Product.css";
 import SearchableDropdown from "../../components/SearchableDropdown";
+import ImageUploader from "../../components/ImageUploader";
 
 // ─────────────────────────────────────────────────────────────
 // ICONS
@@ -956,18 +957,6 @@ const calcFinalPrice = (price, pct) => {
   return Math.round(price - (price * pct) / 100);
 };
 
-const getPreviewUrl = (file, existing) => {
-  if (file instanceof File) {
-    return URL.createObjectURL(file);
-  }
-
-  if (existing) {
-    return `${API_URL}${existing}`;
-  }
-
-  return "";
-};
-
 // ─────────────────────────────────────────────────────────────
 // PRODUCT MODAL
 // ─────────────────────────────────────────────────────────────
@@ -1026,32 +1015,9 @@ function ProductModal({
     }
   }, [relationInactive]);
 
-  // FIXED IMAGE HANDLER
-  const handleImageChange = (field, e) => {
-    const file = e.target.files?.[0];
+  // Image handlers handled directly in renderUploadBox now
 
-    if (!file) return;
 
-    setImages((prev) => ({
-      ...prev,
-      [field]: {
-        file,
-        existing: "",
-      },
-    }));
-  };
-
-  const handleRemoveImage = (field, e) => {
-    e.preventDefault();
-
-    setImages((prev) => ({
-      ...prev,
-      [field]: {
-        file: null,
-        existing: "",
-      },
-    }));
-  };
 
   const handleSubmit = async () => {
     if (!slug.trim()) {
@@ -1115,42 +1081,26 @@ function ProductModal({
   const renderUploadBox = (field, isHero = false) => {
     const current = images[field];
 
-    const previewUrl = getPreviewUrl(current.file, current.existing);
-
     return (
-      <label
+      <ImageUploader
+        label={isHero ? "MAIN IMAGE" : ""}
+        initialUrl={current.existing}
+        onUploadSuccess={(url) => {
+          setImages((prev) => ({
+            ...prev,
+            [field]: { file: null, existing: url },
+          }));
+        }}
+        onRemove={() => {
+          setImages((prev) => ({
+            ...prev,
+            [field]: { file: null, existing: "" },
+          }));
+        }}
+        aspectRatio="1/1"
+        style={{ height: "100%", width: "100%" }}
         className={`pm-img-upload ${isHero ? "pm-img-hero" : "pm-img-carousel"}`}
-      >
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageChange(field, e)}
-        />
-
-        {previewUrl ? (
-          <>
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="pm-img-preview-full"
-            />
-
-            <button
-              type="button"
-              className="btn-remove-img"
-              onClick={(e) => handleRemoveImage(field, e)}
-            >
-              <CloseIcon />
-            </button>
-          </>
-        ) : (
-          <div className="pm-img-placeholder">
-            <ImagePlaceholderIcon />
-
-            {isHero && <span className="pm-img-upload-text">MAIN IMAGE</span>}
-          </div>
-        )}
-      </label>
+      />
     );
   };
 
@@ -1379,12 +1329,17 @@ function Product() {
         ...getHeaders(),
       };
 
-      const queryParams = new URLSearchParams({
+      const params = new URLSearchParams({
         page: pageNum,
         search: search,
-        status: filterStatus
-      }).toString();
+        status: filterStatus,
+      });
 
+      if (filterCategory) {
+        params.append("category", filterCategory);
+      }
+
+      const queryParams = params.toString();
       const prodRes = await fetch(`/api/product/all?${queryParams}`, { headers });
       const prodData = await prodRes.json();
 
@@ -1398,7 +1353,7 @@ function Product() {
     } catch (err) {
       console.log(err);
     }
-  }, [search, filterStatus]);
+  }, [search, filterStatus, filterCategory]);
 
   useEffect(() => {
     load(page);
@@ -1406,7 +1361,7 @@ function Product() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, filterStatus]);
+  }, [search, filterStatus, filterCategory]);
 
   const getEffectiveProductStatus = (product) => {
     const categoryInactive =

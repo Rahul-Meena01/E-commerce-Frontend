@@ -13,6 +13,7 @@ import {
   Lock,
 } from "lucide-react";
 import API from "../../utils/api";
+import ImageUploader from "../../components/ImageUploader";
 import "../../styles/vendor.css";
 
 function VendorProfile() {
@@ -130,49 +131,14 @@ function VendorProfile() {
           {/* Profile Header */}
           <div className="card" style={{ marginBottom: "24px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "12px",
-                  background: "var(--secondary-bg)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "var(--info)",
-                  fontSize: "32px",
-                  flex: "0 0 auto",
-                  position: "relative",
-                  overflow: "hidden",
-                  border: "1px solid var(--border-color)"
-                }}
-              >
-                {vendor?.logo ? (
-                  <img
-                    src={vendor.logo}
-                    alt={vendor.shopName}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <Store size={40} className="text-muted" />
-                )}
-                <button
-                  className="btn btn-primary"
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    borderRadius: "6px 0 12px 0",
-                    padding: "6px 8px",
-                  }}
-                  title="Change logo"
-                >
-                  <Upload size={14} />
-                </button>
+              <div style={{ width: "120px" }}>
+                <ImageUploader 
+                  initialUrl={formData.logo} 
+                  onUploadSuccess={(url) => setFormData(f => ({ ...f, logo: url }))} 
+                  onRemove={() => setFormData(f => ({ ...f, logo: "" }))} 
+                  label=""
+                  aspectRatio="1/1"
+                />
               </div>
 
               <div>

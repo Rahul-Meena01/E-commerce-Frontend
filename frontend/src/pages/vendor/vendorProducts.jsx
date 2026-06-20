@@ -4,6 +4,7 @@ import {
   Package, Plus, Edit2, Trash2, Search, AlertCircle, CheckCircle2, X, RefreshCw, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, ImageOff, Tag, Layers, IndianRupee, BarChart2, ShoppingBag, TrendingDown, Upload, Star, Images,
 } from "lucide-react";
 import API from "../../utils/api";
+import UnifiedImageUploader from "../../components/ImageUploader";
 import "../../styles/vendor.css";
 
 const PAGE_SIZE = 10;
@@ -43,63 +44,29 @@ const StatCard = ({ icon: Icon, value, label, variant }) => (
 
 // ── IMAGE UPLOADER COMPONENT ──
 function ImageUploader({ vendorSlug, slots, onChange }) {
-  const fileInputRefs = useRef([]);
-  const triggerPick = (idx) => fileInputRefs.current[idx]?.click();
-
-  const handleFilePick = async (idx, file) => {
-    if (!file) return;
-    const localUrl = URL.createObjectURL(file);
-    const next = slots.map((s, i) => i === idx ? { url: localUrl, uploading: true, _localBlob: file } : s);
+  const handleSlotChange = (idx, url) => {
+    const next = [...slots];
+    next[idx] = { url, uploading: false };
     onChange(next);
-
-    try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const res = await fetch(`/api/vendor/${vendorSlug}/products/upload-image`, {
-        method: "POST", credentials: "include", body: fd,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url: serverUrl } = await res.json();
-      onChange((prev) => prev.map((s, i) => i === idx ? { url: serverUrl, uploading: false, _localBlob: null } : s));
-      URL.revokeObjectURL(localUrl);
-    } catch (err) {
-      onChange((prev) => prev.map((s, i) => (i === idx ? { url: null, uploading: false } : s)));
-      URL.revokeObjectURL(localUrl);
-      alert(`Image upload failed: ${err.message}`);
-    }
   };
-
-  const handleRemove = (idx, e) => {
-    e.stopPropagation();
-    const s = slots[idx];
-    if (s?._localBlob && s?.url?.startsWith("blob:")) URL.revokeObjectURL(s.url);
-    onChange(slots.map((sl, i) => (i === idx ? { url: null, uploading: false } : sl)));
+  const handleRemove = (idx) => {
+    const next = [...slots];
+    next[idx] = { url: null, uploading: false };
+    onChange(next);
   };
 
   const renderSlot = (idx, style) => {
-    const slot = slots[idx] || { url: null, uploading: false };
-    const hasImg = !!slot.url;
+    const slot = slots[idx] || { url: null };
     return (
-      <div
-        key={idx}
-        className={`img-slot ${hasImg ? "has-img" : ""} ${slot.uploading ? "uploading" : ""}`}
-        style={style}
-        onClick={() => !slot.uploading && triggerPick(idx)}
-      >
-        <input ref={(el) => (fileInputRefs.current[idx] = el)} type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: "none" }} onChange={(e) => handleFilePick(idx, e.target.files?.[0])} onClick={(e) => (e.target.value = null)} />
-        {hasImg ? (
-          <>
-            <img src={slot.url} alt={`Product image ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
-            <button className="img-slot-remove" onClick={(e) => handleRemove(idx, e)}><X size={14} /></button>
-            <span className="img-slot-badge">{idx === 0 ? "Thumbnail" : `Carousel ${idx}`}</span>
-          </>
-        ) : (
-          <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "11px" }}>
-            {idx === 0 ? <Upload size={20} style={{ margin: "0 auto" }} /> : <Images size={16} style={{ margin: "0 auto" }} />}
-            <div style={{ marginTop: "4px" }}>{idx === 0 ? "Main thumbnail" : `Carousel ${idx}`}</div>
-          </div>
-        )}
-        {slot.uploading && <div className="img-slot-spinner"><RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} /></div>}
+      <div style={{ ...style, minHeight: "0" }}>
+        <UnifiedImageUploader
+          initialUrl={slot.url || ""}
+          onUploadSuccess={(url) => handleSlotChange(idx, url)}
+          onRemove={() => handleRemove(idx)}
+          label={idx === 0 ? "Main thumbnail" : `Carousel ${idx}`}
+          aspectRatio="1/1"
+          style={{ height: "100%", margin: 0 }}
+        />
       </div>
     );
   };
@@ -107,18 +74,18 @@ function ImageUploader({ vendorSlug, slots, onChange }) {
   return (
     <div>
       <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>Product Images</label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "130px 64px", gap: "8px", marginBottom: "6px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "6px" }}>
         {renderSlot(0, { gridRow: "1 / 3", gridColumn: "1 / 2" })}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           {renderSlot(1, { height: "100%" })}
           {renderSlot(2, { height: "100%" })}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           {renderSlot(3, { height: "100%" })}
           {renderSlot(4, { height: "100%" })}
         </div>
       </div>
-      <div className="text-muted" style={{ fontSize: "11px", display: "flex", gap: "4px" }}><Star size={12} className="text-warning"/> First slot is main thumbnail. Up to 5MB.</div>
+      <div className="text-muted" style={{ fontSize: "11px", display: "flex", gap: "4px", marginTop: "8px" }}><Star size={12} className="text-warning"/> First slot is main thumbnail. Up to 5MB.</div>
     </div>
   );
 }

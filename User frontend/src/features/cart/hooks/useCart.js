@@ -1,7 +1,7 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartApi } from "../services/cart.service";
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import logger from '@/shared/utils/logger';
 import { useGiftCard } from "@/context/GiftCardContext";
 
 const STORAGE_KEY = "loft_cart";
@@ -25,23 +25,36 @@ const saveLocalCart = (items) => {
 
 export const useCartQuery = () => {
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+
+  const mergeCartMutation = useMutation({
+    mutationKey: ["mergeCart"],
+    mutationFn: async (localItems) => {
+      const res = await cartApi.mergeCart(localItems);
+      if (!res.ok) throw new Error("Merge failed");
+      return res;
+    },
+    onSuccess: () => {
+      localStorage.removeItem(STORAGE_KEY);
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const localItems = loadLocalCart();
+    if (localItems.length > 0) {
+      if (queryClient.isMutating({ mutationKey: ["mergeCart"] }) === 0) {
+        mergeCartMutation.mutate(localItems);
+      }
+    }
+  }, [isAuthenticated, queryClient]);
   
   return useQuery({
     queryKey: ["cart", isAuthenticated],
     queryFn: async () => {
       if (!isAuthenticated) {
         return loadLocalCart();
-      }
-      
-      // Attempt merge if local cart has items
-      const localItems = loadLocalCart();
-      if (localItems.length > 0) {
-        try {
-          await cartApi.mergeCart(localItems);
-          localStorage.removeItem(STORAGE_KEY);
-        } catch (err) {
-          logger.error("Cart merge failed", err);
-        }
       }
       
       const res = await cartApi.getCart();
@@ -69,10 +82,14 @@ export const useCartMutations = () => {
 
   const addToCart = useMutation({
     mutationFn: async ({ product, size = "", color = "", quantity = 1 }) => {
+      const effectivePrice = (product.discountPrice && product.discountPrice < product.price)
+        ? product.discountPrice
+        : product.price;
+
       const itemPayload = {
         productId: product.productId || product.id,
         name: product.name,
-        price: product.discountPrice || product.price,
+        price: effectivePrice,
         quantity,
         size,
         color,
@@ -97,6 +114,7 @@ export const useCartMutations = () => {
       if (!res.ok) throw new Error("Failed to add item");
     },
     onSuccess: () => {
+      window.dispatchEvent(new CustomEvent("cart-item-added"));
       if (isAuthenticated) queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
@@ -230,16 +248,21 @@ export const useCartState = () => {
     totalItems: cartCount
   };
 
+  const isGuest = Array.isArray(cartData) || !cartData?.totals;
+
   const subtotal = Number(cartTotals.subtotal) || 0;
   const couponDiscount = Number(cartTotals.discount) || 0;
   const tax = Number(cartTotals.tax) || 0;
   const shipping = Number(cartTotals.shipping) || 0;
   const totalBeforeGiftCard = subtotal - couponDiscount + tax + shipping;
 
-  const giftCardDiscount = appliedGiftCard
-    ? Number(Math.min(appliedGiftCard.giftCardValue, totalBeforeGiftCard).toFixed(2))
-    : 0;
-  const grandTotal = Number(Math.max(0, totalBeforeGiftCard - giftCardDiscount).toFixed(2));
+  const giftCardDiscount = isGuest
+    ? (appliedGiftCard ? Number(Math.min(appliedGiftCard.giftCardValue, totalBeforeGiftCard).toFixed(2)) : 0)
+    : (Number(cartTotals.giftCardDiscount) || 0);
+
+  const grandTotal = isGuest
+    ? Number(Math.max(0, totalBeforeGiftCard - giftCardDiscount).toFixed(2))
+    : (Number(cartTotals.grandTotal) || 0);
 
   const finalTotals = {
     ...cartTotals,

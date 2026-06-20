@@ -5,7 +5,7 @@ import {
   useWishlistActions,
   useWishlistState,
 } from '@/features/wishlist/hooks/useWishlist';
-import { useCartActions } from '@/features/cart/hooks/useCart';
+import { useCart } from '@/features/cart/hooks/useCart';
 import {
   ArrowLeft,
   Pencil,
@@ -27,6 +27,7 @@ import {
 
 import { useAuthActions, useAuthState } from '@/features/auth/context/AuthContext';
 import { useToast } from "../../context/ToastContext";
+import { useGiftCard } from "@/context/GiftCardContext";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import authFetch from '@/shared/utils/http';
 import { saveAuthSession, getAuthToken } from '@/shared/utils/authStorage';
@@ -63,7 +64,8 @@ const ProfilePage = () => {
   const location = useLocation();
   const { wishlistItems, wishlistCount } = useWishlistState();
   const { removeFromWishlist } = useWishlistActions();
-  const { addToCart } = useCartActions();
+  const { addToCart, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
+  const { myGiftCards, fetchMyGiftCards, loadingMyCards } = useGiftCard();
   const { isAuthenticated, user } = useAuthState();
   const { logout, setUser } = useAuthActions();
   const uploadInputRef = useRef(null);
@@ -74,6 +76,14 @@ const ProfilePage = () => {
     const params = new URLSearchParams(location.search);
     return params.get("tab") || "Profile";
   });
+
+  const [gcTab, setGcTab] = useState("Active");
+
+  useEffect(() => {
+    if (activeTab === "Gift Cards" && isAuthenticated) {
+      fetchMyGiftCards();
+    }
+  }, [activeTab, isAuthenticated]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -124,6 +134,7 @@ const ProfilePage = () => {
     { label: "Orders", icon: ClipboardList },
     { label: "Wishlist", icon: Heart },
     { label: "Addresses", icon: MapPin },
+    { label: "Gift Cards", icon: Ticket },
     { label: "Settings", icon: Settings },
   ];
 
@@ -134,7 +145,7 @@ const ProfilePage = () => {
   }, [isAuthenticated, navigate]);
 
   const ordersQuery = useProfileOrdersQuery(
-    activeTab === "Orders" && isAuthenticated,
+    isAuthenticated,
   );
   const orders = ordersQuery.data || [];
   const ordersLoading = ordersQuery.isLoading;
@@ -481,6 +492,217 @@ const ProfilePage = () => {
         return (
           <ProfileSectionAddresses />
         );
+
+      case "Gift Cards": {
+        const activeList = myGiftCards.filter(
+          (card) =>
+            card.status === "active" &&
+            new Date(card.expiryDate) > new Date() &&
+            card.balance > 0
+        );
+
+        const usedList = myGiftCards.filter(
+          (card) => card.balance <= 0 || card.status === "inactive"
+        );
+
+        const expiredList = myGiftCards.filter(
+          (card) =>
+            (card.status === "expired" || new Date(card.expiryDate) <= new Date()) &&
+            card.balance > 0
+        );
+
+        const getTabList = () => {
+          if (gcTab === "Active") return activeList;
+          if (gcTab === "Used") return usedList;
+          return expiredList;
+        };
+
+        const currentList = getTabList();
+        
+        const maskCode = (code) => {
+          if (!code) return "";
+          if (code.length <= 6) return code;
+          return `${code.substring(0, 2)}-XXXX-${code.substring(code.length - 4)}`.replace(/--/g, "-");
+        };
+
+        return (
+          <div className="profile-section-giftcards" style={{ width: "100%" }}>
+            <div className="profile-section-header">
+              <h2 className="profile-section-title">Gift Cards & Vouchers</h2>
+              <p className="profile-section-subtitle">
+                Redeem and manage your active gift cards
+              </p>
+            </div>
+
+            {/* Redeem Gift Card Form */}
+            <div className="profile-cta-card" style={{ marginBottom: "30px", flexDirection: "column", alignItems: "flex-start", gap: "16px", background: "var(--ds-color-surface-warm)", padding: "24px", border: "1px solid var(--ds-color-border-strong)" }}>
+              <h3 className="profile-cta-heading" style={{ fontSize: "1.2rem", margin: "0", fontFamily: "var(--ds-font-serif)" }}>Redeem a Gift Card</h3>
+              <p className="profile-cta-description" style={{ fontSize: "0.9rem", margin: "0", color: "var(--ds-color-text-muted)" }}>
+                Enter your gift card code below to apply it to your account cart for your next checkout.
+              </p>
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const code = e.target.giftCardCode.value.trim();
+                  if (!code) return;
+                  try {
+                    await applyGiftCard(code);
+                    toast.success("Gift card applied successfully!");
+                    e.target.reset();
+                    fetchMyGiftCards();
+                  } catch (err) {
+                    toast.error(err.message || "Failed to apply gift card.");
+                  }
+                }}
+                style={{ display: "flex", gap: "12px", width: "100%", maxWidth: "500px" }}
+              >
+                <input
+                  type="text"
+                  name="giftCardCode"
+                  placeholder="e.g. LOFT-XXXXXX"
+                  required
+                  style={{
+                    flex: 1,
+                    padding: "12px 16px",
+                    border: "1px solid var(--ds-color-border-strong)",
+                    borderRadius: "0",
+                    fontSize: "0.95rem",
+                    textTransform: "uppercase",
+                    backgroundColor: "var(--ds-color-surface)"
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="profile-cta-btn"
+                  style={{ whiteSpace: "nowrap", padding: "12px 24px", borderRadius: "0", backgroundColor: "var(--ds-color-brand)", color: "var(--ds-color-surface)", border: "none", cursor: "pointer", fontFamily: "var(--ds-font-sans)", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase" }}
+                >
+                  REDEEM
+                </button>
+              </form>
+            </div>
+
+            {/* Gift Card History Tabs */}
+            <div className="giftcard-history-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--ds-color-border)', marginBottom: '24px' }}>
+              {["Active", "Used", "Expired"].map(tab => {
+                const count = tab === "Active" ? activeList.length : tab === "Used" ? usedList.length : expiredList.length;
+                return (
+                  <button
+                    key={tab}
+                    className={`giftcard-tab-btn ${gcTab === tab ? 'active' : ''}`}
+                    onClick={() => setGcTab(tab)}
+                    style={{
+                      padding: '12px 24px',
+                      background: 'none',
+                      border: 'none',
+                      borderBottom: gcTab === tab ? '2px solid var(--ds-color-accent, #C9A96E)' : 'none',
+                      color: gcTab === tab ? 'var(--ds-color-text)' : 'var(--ds-color-text-muted)',
+                      cursor: 'pointer',
+                      fontWeight: gcTab === tab ? '700' : '400',
+                      fontFamily: 'var(--ds-font-sans)',
+                      fontSize: '12px',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {tab} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab content list */}
+            {loadingMyCards ? (
+              <div className="giftcard-loading">Loading gift card history...</div>
+            ) : currentList.length > 0 ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
+                {currentList.map((card) => {
+                  const isCurrentlyApplied = appliedGiftCard && appliedGiftCard.code === card.code;
+                  return (
+                    <div key={card._id} className={`giftcard-card ${gcTab === "Active" ? "" : "expired"}`} style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "24px" }}>
+                      {isCurrentlyApplied && (
+                        <span className="giftcard-card-recommended-badge" style={{ right: "24px", top: "16px" }}>
+                          ✓ Applied to Cart
+                        </span>
+                      )}
+                      <div className="giftcard-card-brand">LOFT</div>
+                      <h4 className="giftcard-card-title">LOFT GIFT CARD</h4>
+                      <div className="giftcard-card-balance">₹{card.balance} Available</div>
+                      <p className="giftcard-card-code">Code: {maskCode(card.code)}</p>
+                      
+                      <div className="giftcard-card-grid">
+                        <div className="giftcard-card-info-item">
+                          <span className="giftcard-card-info-label">Original Value</span>
+                          <span className="giftcard-card-info-val">{formatPrice(card.giftCardValue)}</span>
+                        </div>
+                        <div className="giftcard-card-info-item">
+                          <span className="giftcard-card-info-label">Valid Until</span>
+                          <span className="giftcard-card-info-val">
+                            {new Date(card.expiryDate).toLocaleDateString("en-US", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric"
+                            })}
+                          </span>
+                        </div>
+                        <div className="giftcard-card-info-item">
+                          <span className="giftcard-card-info-label">Status</span>
+                          <span className={`giftcard-card-status ${gcTab === "Active" ? "active" : gcTab === "Expired" ? "expired" : "used"}`}>
+                            {card.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {gcTab === "Active" && (
+                        <div style={{ marginTop: "auto" }}>
+                          {isCurrentlyApplied ? (
+                            <button
+                              className="giftcard-card-action"
+                              style={{ backgroundColor: "transparent", color: "var(--ds-color-danger, #8B3A3A)", borderColor: "var(--ds-color-danger, #8B3A3A)" }}
+                              onClick={async () => {
+                                try {
+                                  await removeGiftCard();
+                                  toast.success("Gift card removed from cart.");
+                                } catch (err) {
+                                  console.error("Failed to remove gift card:", err);
+                                  toast.error("Failed to remove gift card.");
+                                }
+                              }}
+                            >
+                              Remove from Cart
+                            </button>
+                          ) : (
+                            <button
+                              className="giftcard-card-action"
+                              onClick={async () => {
+                                try {
+                                  await applyGiftCard(card.code);
+                                  toast.success("✓ Gift Card Applied Successfully");
+                                } catch (err) {
+                                  toast.error(err.message || "Failed to apply gift card.");
+                                }
+                              }}
+                            >
+                              Apply to Cart
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="profile-empty-state" style={{ padding: "40px", border: "1px dashed var(--ds-color-border-strong)", textAlign: "center", width: "100%", backgroundColor: "var(--ds-color-surface-warm)" }}>
+                <Ticket size={40} color="var(--ds-color-text-subtle)" style={{ marginBottom: "12px", opacity: 0.5 }} />
+                <h4 style={{ margin: "0 0 6px 0", color: "var(--ds-color-text)" }}>No {gcTab.toLowerCase()} gift cards</h4>
+                <p style={{ margin: "0", fontSize: "0.9rem", color: "var(--ds-color-text-muted)" }}>
+                  There are no {gcTab.toLowerCase()} gift cards linked to your account.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      }
 
       case "Settings":
         return (

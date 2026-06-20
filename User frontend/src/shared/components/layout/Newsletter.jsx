@@ -26,6 +26,8 @@ const Newsletter = () => {
         <form className="newsletter-form" onSubmit={handleSubscribe}>
           <div className="newsletter-input-wrap">
             <input
+              id="newsletter-email"
+              name="email"
               type="email"
               placeholder={newsletter.placeholder}
               value={email}

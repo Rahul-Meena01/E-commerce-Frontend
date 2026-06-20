@@ -1,6 +1,7 @@
 import { MapPin, Plus, Edit2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import authFetch from "@/shared/utils/http";
+import { useToast } from "@/context/ToastContext";
 
 const EMPTY_FORM = {
   title: "",
@@ -16,6 +17,7 @@ const ProfileSectionAddresses = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const toast = useToast();
 
   const loadAddresses = async () => {
     setLoading(true);
@@ -85,6 +87,13 @@ const ProfileSectionAddresses = () => {
             prev.map((addr) => (addr._id === editingId ? json.address : addr)),
           );
           window.dispatchEvent(new Event("addresses:updated"));
+          toast.success("Address updated successfully.");
+          setShowForm(false);
+          setEditingId(null);
+          setForm(EMPTY_FORM);
+        } else {
+          const errData = await res.json();
+          toast.error(errData?.message || "Unable to save address");
         }
       } else {
         const res = await authFetch("/api/addresses", {
@@ -96,14 +105,18 @@ const ProfileSectionAddresses = () => {
           const json = await res.json();
           setAddresses((prev) => [...prev, json.address]);
           window.dispatchEvent(new Event("addresses:updated"));
+          toast.success("Address added successfully.");
+          setShowForm(false);
+          setEditingId(null);
+          setForm(EMPTY_FORM);
+        } else {
+          const errData = await res.json();
+          toast.error(errData?.message || "Unable to save address");
         }
       }
     } catch (err) {
-      void err;
-    } finally {
-      setShowForm(false);
-      setEditingId(null);
-      setForm(EMPTY_FORM);
+      console.error("Address save error:", err);
+      toast.error("Network error. Please try again.");
     }
   };
 
@@ -136,52 +149,57 @@ const ProfileSectionAddresses = () => {
           <div className="address-modal">
             <h3>{editingId ? "Edit Address" : "Add Address"}</h3>
             <form onSubmit={handleSubmit}>
-              <label>
-                Title
+              <div className="form-group-accessible">
+                <label htmlFor="address-title">Title</label>
                 <input
+                  id="address-title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   required
                 />
-              </label>
-              <label>
-                Address
+              </div>
+              <div className="form-group-accessible">
+                <label htmlFor="address-detail">Address</label>
                 <input
+                  id="address-detail"
                   value={form.address}
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
                   }
                   required
                 />
-              </label>
-              <label>
-                City
+              </div>
+              <div className="form-group-accessible">
+                <label htmlFor="address-city">City</label>
                 <input
+                  id="address-city"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   required
                 />
-              </label>
-              <label>
-                Postal Code
+              </div>
+              <div className="form-group-accessible">
+                <label htmlFor="address-postalCode">Postal Code</label>
                 <input
+                  id="address-postalCode"
                   value={form.postalCode}
                   onChange={(e) =>
                     setForm({ ...form, postalCode: e.target.value })
                   }
                   required
                 />
-              </label>
-              <label>
-                Country
+              </div>
+              <div className="form-group-accessible">
+                <label htmlFor="address-country">Country</label>
                 <input
+                  id="address-country"
                   value={form.country}
                   onChange={(e) =>
                     setForm({ ...form, country: e.target.value })
                   }
                   required
                 />
-              </label>
+              </div>
               <div className="address-modal-actions">
                 <button
                   type="button"

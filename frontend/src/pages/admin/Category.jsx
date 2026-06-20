@@ -3,6 +3,7 @@
  * Fetches /api/category/all, creates/updates/deletes categories, and keeps the local table state synchronized after each action.
  */
 import { useState, useEffect } from "react";
+import ImageUploader from "../../components/ImageUploader";
 
 const S = { fontFamily: "'Outfit',sans-serif" };
 
@@ -117,7 +118,7 @@ export default function Category() {
   const [selected, setSelected] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [form, setForm] = useState({ name: "", slug: "", status: "Active" });
+  const [form, setForm] = useState({ name: "", slug: "", status: "Active", image: "" });
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -155,12 +156,12 @@ export default function Category() {
 
   const openAdd = () => {
     setEditData(null);
-    setForm({ name: "", slug: "", status: "Active" });
+    setForm({ name: "", slug: "", status: "Active", image: "" });
     setShowForm(true);
   };
   const openEdit = (cat) => {
     setEditData(cat);
-    setForm({ name: cat.name, slug: cat.slug, status: cat.status });
+    setForm({ name: cat.name, slug: cat.slug, status: cat.status, image: cat.image || "" });
     setShowForm(true);
   };
 
@@ -401,7 +402,7 @@ export default function Category() {
                     style={{ cursor: "pointer" }}
                   />
                 </th>
-                {["ID", "Name", "Slug", "Status", "Actions"].map((h) => (
+                {["Image", "ID", "Name", "Slug", "Status", "Actions"].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -450,6 +451,19 @@ export default function Category() {
                         onChange={() => toggleSelect(cat._id)}
                         style={{ cursor: "pointer" }}
                       />
+                    </td>
+                    <td style={{ padding: "12px 16px", width: "50px" }}>
+                      {cat.image ? (
+                        <img 
+                          src={cat.image.startsWith('http') ? cat.image : `${window.location.origin}${cat.image}`} 
+                          alt={cat.name}
+                          style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover", border: "1px solid #e2e8f0" }}
+                        />
+                      ) : (
+                        <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", border: "1px solid #e2e8f0" }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        </div>
+                      )}
                     </td>
                     <td
                       style={{
@@ -595,6 +609,13 @@ export default function Category() {
           <div
             style={{ display: "flex", flexDirection: "column", gap: "14px" }}
           >
+            <ImageUploader 
+              label="Category Thumbnail" 
+              initialUrl={form.image} 
+              onUploadSuccess={(url) => setForm((f) => ({ ...f, image: url }))} 
+              onRemove={() => setForm((f) => ({ ...f, image: "" }))} 
+              aspectRatio="1/1"
+            />
             <div>
               <label
                 style={{

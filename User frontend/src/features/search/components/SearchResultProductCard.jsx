@@ -17,6 +17,8 @@ export default function SearchResultProductCard({ product, onSelect }) {
   const discountPrice =
     product?.discountPrice != null && Number(product.discountPrice) < fullPrice
       ? Number(product.discountPrice)
+      : product?.salePrice != null && Number(product.salePrice) < fullPrice
+      ? Number(product.salePrice)
       : null;
 
   const displayPrice = discountPrice ?? fullPrice;

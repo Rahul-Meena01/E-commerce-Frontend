@@ -379,7 +379,7 @@ router.get("/usage-history", async (req, res) => {
       .populate("user", "name email phone")
       .populate("coupon", "code discountType discountValue type")
       .populate("product", "name price image")
-      .populate("order", "orderNumber totalAmount")
+      .populate("order", "totalPrice")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit));

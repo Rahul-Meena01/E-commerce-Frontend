@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/ui";
 import { useFocusTrap, useEscapeKey } from "@/shared/hooks";
@@ -6,6 +6,9 @@ import { useCart } from "@/features/cart/hooks/useCart";
 import { useNavigate, Link } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
 import { formatPrice } from "@/utils/pricing";
+import { useAuthState } from "@/features/auth/context/AuthContext";
+import { useGiftCard } from "@/context/GiftCardContext";
+import { useToast } from "@/context/ToastContext";
 import "../../../styles/CartDrawer.css";
 
 const CartDrawer = ({ isOpen, onClose }) => {
@@ -27,14 +30,18 @@ const CartDrawer = ({ isOpen, onClose }) => {
   } = useCart();
   const navigate = useNavigate();
   const drawerRef = useFocusTrap(isOpen);
+  const { isAuthenticated } = useAuthState();
+  const { myGiftCards, loadingMyCards, fetchMyGiftCards } = useGiftCard();
+  const toast = useToast();
 
   useEscapeKey(() => { if (isOpen) onClose(); }, isOpen);
 
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState({ type: "", text: "" });
-  const [giftCardInput, setGiftCardInput] = useState("");
-  const [giftCardMsg, setGiftCardMsg] = useState({ type: "", text: "" });
-  const [validatingGiftCard, setValidatingGiftCard] = useState(false);
+  const [isGiftCardModalOpen, setIsGiftCardModalOpen] = useState(false);
+  const [touchDragY, setTouchDragY] = useState(0);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const touchStartY = useRef(0);
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -59,28 +66,19 @@ const CartDrawer = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleApplyGiftCard = async (e) => {
-    e.preventDefault();
-    if (!giftCardInput.trim()) return;
-    setGiftCardMsg({ type: "", text: "" });
-    setValidatingGiftCard(true);
+  const handleApplyGiftCardCode = async (code) => {
     try {
-      const card = await applyGiftCard(giftCardInput.trim());
-      setGiftCardMsg({
-        type: "success",
-        text: `Gift card applied! Value: ${formatPrice(card.giftCardValue)}`,
-      });
-      setGiftCardInput("");
+      await applyGiftCard(code.trim());
+      toast.success("✓ Gift Card Applied Successfully");
+      setIsGiftCardModalOpen(false);
     } catch (err) {
-      setGiftCardMsg({ type: "error", text: err.message || "Invalid gift card." });
-    } finally {
-      setValidatingGiftCard(false);
+      toast.error(err.message || "Invalid gift card.");
     }
   };
 
   const handleRemoveGiftCard = () => {
     removeGiftCard();
-    setGiftCardMsg({ type: "success", text: "Gift card removed." });
+    toast.success("Gift card removed.");
   };
 
   useEffect(() => {
@@ -92,10 +90,71 @@ const CartDrawer = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isGiftCardModalOpen && isAuthenticated) {
+      fetchMyGiftCards();
+    }
+  }, [isGiftCardModalOpen, isAuthenticated]);
+
   const handleCheckoutRedirect = () => {
     onClose();
     navigate("/checkout");
   };
+
+  const maskCode = (code) => {
+    if (!code) return "";
+    if (code.length <= 6) return code;
+    return `${code.substring(0, 2)}-XXXX-${code.substring(code.length - 4)}`.replace(/--/g, "-");
+  };
+
+  // Drag-to-close logic for mobile bottom sheet
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+    setIsTouchDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isTouchDragging) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY > 0) {
+      setTouchDragY(deltaY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouchDragging(false);
+    if (touchDragY > 100) {
+      setIsGiftCardModalOpen(false);
+    }
+    setTouchDragY(0);
+  };
+
+  // Recommendation and filter logic for active gift cards
+  const activeCards = myGiftCards.filter(
+    (card) => card.status === "active" && new Date(card.expiryDate) > new Date() && card.balance > 0
+  );
+
+  const sortedActiveCards = [...activeCards].sort((a, b) => {
+    const dateA = new Date(a.expiryDate);
+    const dateB = new Date(b.expiryDate);
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateA - dateB; // Nearest expiry first
+    }
+    return b.balance - a.balance; // Highest balance first
+  });
+
+  const recommendedCardId = sortedActiveCards[0]?._id;
+
+  const expiredOrUsedCards = myGiftCards.filter(
+    (card) => card.status === "inactive" || card.status === "expired" || new Date(card.expiryDate) <= new Date() || card.balance <= 0
+  );
+
+  const subtotal = Number(cartTotals.subtotal) || 0;
+  const couponDiscount = Number(cartTotals.discount) || 0;
+  const tax = Number(cartTotals.tax) || 0;
+  const shipping = Number(cartTotals.shipping) || 0;
+  const totalBeforeGiftCard = subtotal - couponDiscount + tax + shipping;
 
   if (!isOpen) return null;
 
@@ -248,51 +307,53 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Gift Card Form */}
-              <div className="cart-drawer-promo-section">
-                <p className="cart-drawer-promo-title">Have a Gift Card?</p>
-                {appliedGiftCard ? (
-                  <div className="cart-drawer-promo-applied">
-                    <span className="cart-drawer-promo-badge">
-                      {appliedGiftCard.code} ({formatPrice(appliedGiftCard.giftCardValue)})
-                    </span>
-                    <button
-                      type="button"
-                      className="cart-drawer-promo-remove"
-                      onClick={handleRemoveGiftCard}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleApplyGiftCard} className="cart-drawer-promo-form">
-                    <input
-                      type="text"
-                      placeholder="Enter Gift Card Code"
-                      value={giftCardInput}
-                      onChange={(e) => setGiftCardInput(e.target.value.toUpperCase())}
-                      className="cart-drawer-promo-input"
-                      disabled={validatingGiftCard}
-                    />
-                    <button
-                      type="submit"
-                      className="cart-drawer-promo-btn"
-                      disabled={validatingGiftCard || !giftCardInput.trim()}
-                    >
-                      {validatingGiftCard ? "..." : "Apply"}
-                    </button>
-                  </form>
-                )}
-                {giftCardMsg.text && (
-                  <p className={`cart-drawer-promo-msg ${giftCardMsg.type}`}>{giftCardMsg.text}</p>
-                )}
-              </div>
+              {/* Select Gift Card Selector (Trigger) */}
+              {!appliedGiftCard && (
+                <div className="cart-drawer-promo-section select-giftcard-section">
+                  <p className="cart-drawer-promo-title">Have a Gift Card?</p>
+                  <button
+                    type="button"
+                    className="select-giftcard-trigger-btn"
+                    onClick={() => setIsGiftCardModalOpen(true)}
+                  >
+                    Select Gift Card
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {cartItems.length > 0 && (
           <div className="cart-drawer-footer">
+            {/* Applied Gift Card summary details block */}
+            {appliedGiftCard && (
+              <div className="applied-giftcard-summary-card">
+                <div className="applied-giftcard-title">Gift Card Applied</div>
+                <div className="applied-giftcard-row">
+                  <span className="applied-giftcard-label">Code:</span>
+                  <span className="applied-giftcard-value">{maskCode(appliedGiftCard.code)}</span>
+                </div>
+                <div className="applied-giftcard-row">
+                  <span className="applied-giftcard-label">Discount Applied:</span>
+                  <span className="applied-giftcard-value">-{formatPrice(giftCardDiscount)}</span>
+                </div>
+                <div className="applied-giftcard-row">
+                  <span className="applied-giftcard-label">Remaining Balance After Purchase:</span>
+                  <span className="applied-giftcard-value">
+                    {formatPrice(Math.max(0, appliedGiftCard.balance - giftCardDiscount))}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="applied-giftcard-remove-btn"
+                  onClick={handleRemoveGiftCard}
+                >
+                  [ Remove ]
+                </button>
+              </div>
+            )}
+
             {/* Price breakdown */}
             <div className="totals-row">
               <span>Subtotal</span>
@@ -308,7 +369,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
             {giftCardDiscount > 0 && (
               <div className="totals-row discount">
-                <span>Gift Card Discount</span>
+                <span>Gift Card</span>
                 <span>-{formatPrice(giftCardDiscount)}</span>
               </div>
             )}
@@ -342,6 +403,214 @@ const CartDrawer = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
+
+      {/* Gift Card Selection Modal / Drawer */}
+      {isGiftCardModalOpen && (
+        <div className={`giftcard-modal-backdrop ${isGiftCardModalOpen ? "is-open" : ""}`} onClick={() => setIsGiftCardModalOpen(false)}>
+          <div
+            className="giftcard-modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={
+              isTouchDragging
+                ? { transform: `translateY(${touchDragY}px)`, transition: 'none' }
+                : {}
+            }
+          >
+            {/* Handle bar for mobile swipe close */}
+            <div
+              className="giftcard-modal-drag-handle"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="drag-handle-bar"></div>
+            </div>
+
+            <div className="giftcard-modal-header">
+              <h3>Select Gift Card</h3>
+              <button className="giftcard-modal-close" onClick={() => setIsGiftCardModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="giftcard-modal-body">
+              {loadingMyCards ? (
+                <div className="giftcard-loading">Loading available gift cards...</div>
+              ) : (
+                <>
+                  {/* Active Gift Cards Section */}
+                  {sortedActiveCards.length > 0 && (
+                    <div className="giftcard-section">
+                      <p className="giftcard-list-title">Your Active Gift Cards</p>
+                      <div className="giftcard-list">
+                        {sortedActiveCards.map((card) => {
+                          const isRec = card._id === recommendedCardId;
+                          
+                          // Savings Preview calculation
+                          const isGuest = !isAuthenticated;
+                          let saveAmt;
+                          let estTotal;
+                          if (isGuest) {
+                            saveAmt = Math.min(card.balance, totalBeforeGiftCard);
+                            estTotal = Math.max(0, totalBeforeGiftCard - saveAmt);
+                          } else {
+                            const base = subtotal - couponDiscount;
+                            const gcDisc = Math.min(card.balance, base);
+                            const newTax = ((base - gcDisc) * 18) / 100;
+                            estTotal = Math.max(0, (base - gcDisc) + newTax + shipping);
+                            saveAmt = Math.max(0, (subtotal - couponDiscount + tax + shipping) - estTotal);
+                          }
+
+                          return (
+                            <div key={card._id} className={`giftcard-card ${isRec ? "recommended" : ""}`}>
+                              {isRec && (
+                                <span className="giftcard-card-recommended-badge">
+                                  ✓ Recommended Gift Card
+                                </span>
+                              )}
+                              <div className="giftcard-card-brand">LOFT</div>
+                              <h4 className="giftcard-card-title">LOFT GIFT CARD</h4>
+                              <div className="giftcard-card-balance">₹{card.balance} Available</div>
+                              <p className="giftcard-card-code">Code: {maskCode(card.code)}</p>
+                              
+                              <div className="giftcard-card-grid">
+                                <div className="giftcard-card-info-item">
+                                  <span className="giftcard-card-info-label">Original Value</span>
+                                  <span className="giftcard-card-info-val">{formatPrice(card.giftCardValue)}</span>
+                                </div>
+                                <div className="giftcard-card-info-item">
+                                  <span className="giftcard-card-info-label">Valid Until</span>
+                                  <span className="giftcard-card-info-val">
+                                    {new Date(card.expiryDate).toLocaleDateString("en-US", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric"
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="giftcard-card-info-item">
+                                  <span className="giftcard-card-info-label">Status</span>
+                                  <span className="giftcard-card-status">Active</span>
+                                </div>
+                              </div>
+
+                              {/* Savings Preview */}
+                              <div className="giftcard-card-savings-preview">
+                                <div className="savings-row">
+                                  <span>Gift Card Balance:</span>
+                                  <span>{formatPrice(card.balance)}</span>
+                                </div>
+                                <div className="savings-row">
+                                  <span>You Will Save:</span>
+                                  <span>{formatPrice(saveAmt)}</span>
+                                </div>
+                                <div className="savings-row font-bold">
+                                  <span>New Estimated Total:</span>
+                                  <span>{formatPrice(estTotal)}</span>
+                                </div>
+                              </div>
+
+                              <button
+                                className="giftcard-card-action"
+                                onClick={() => handleApplyGiftCardCode(card.code)}
+                              >
+                                Apply Gift Card
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expired/Used Cards Section */}
+                  {expiredOrUsedCards.length > 0 && (
+                    <div className="giftcard-section expired-section">
+                      <p className="giftcard-list-title">Expired & Used Gift Cards</p>
+                      <div className="giftcard-list">
+                        {expiredOrUsedCards.map((card) => {
+                          const isExpired = card.status === "expired" || new Date(card.expiryDate) <= new Date();
+                          return (
+                            <div key={card._id} className="giftcard-card expired">
+                              <div className="giftcard-card-brand">LOFT</div>
+                              <h4 className="giftcard-card-title">LOFT GIFT CARD</h4>
+                              <div className="giftcard-card-balance">₹{card.balance} Available</div>
+                              <p className="giftcard-card-code">Code: {maskCode(card.code)}</p>
+                              
+                              <div className="giftcard-card-grid">
+                                <div className="giftcard-card-info-item">
+                                  <span className="giftcard-card-info-label">Expiry Date</span>
+                                  <span className="giftcard-card-info-val">
+                                    {new Date(card.expiryDate).toLocaleDateString("en-US", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric"
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="giftcard-card-info-item">
+                                  <span className="giftcard-card-info-label">Status</span>
+                                  <span className={`giftcard-card-status ${isExpired ? "expired" : "used"}`}>
+                                    {isExpired ? "Expired" : "Used"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <button className="giftcard-card-action" disabled>
+                                {isExpired ? "Expired" : "Used"}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {activeCards.length === 0 && (
+                    <div className="giftcard-empty-state">
+                      <span className="giftcard-empty-icon">🎁</span>
+                      <h4 className="giftcard-empty-title">No Gift Cards Available</h4>
+                      <p className="giftcard-empty-text">
+                        You currently don't have any active gift cards.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Manual Entry Form - Secondary Option */}
+                  <div className="giftcard-modal-divider">OR</div>
+
+                  <div className="giftcard-manual-section">
+                    <p className="giftcard-manual-title">Enter Gift Card Code</p>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const code = e.target.manualCode.value.trim();
+                        if (!code) return;
+                        await handleApplyGiftCardCode(code);
+                        e.target.reset();
+                      }}
+                      className="giftcard-manual-form"
+                    >
+                      <input
+                        type="text"
+                        name="manualCode"
+                        placeholder="Enter gift card code"
+                        className="giftcard-manual-input"
+                        required
+                        style={{ textTransform: "uppercase" }}
+                      />
+                      <button type="submit" className="giftcard-manual-btn">
+                        Apply
+                      </button>
+                    </form>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

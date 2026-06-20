@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logger from "@/shared/utils/logger";
 import { Shield, ArrowLeft } from "lucide-react";
@@ -38,6 +38,8 @@ const CheckoutPage = () => {
   const [, setIsPaying] = useState(false);
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
+  const [createdOrderId, setCreatedOrderId] = useState(null);
+  const isOrderCompletedRef = useRef(false);
 
   const {
     cartItems,
@@ -71,6 +73,17 @@ const CheckoutPage = () => {
     state: "",
     postalCode: "",
   });
+
+  useEffect(() => {
+    return () => {
+      // If we have a created order but payment wasn't completed when unmounting (navigating away), cancel it to release inventory
+      if (createdOrderId && !isOrderCompletedRef.current) {
+        api.put(`/orders/${createdOrderId}/cancel`, { note: "Checkout abandoned by user." }).catch((err) => {
+          console.error("Failed to cancel order on unmount:", err);
+        });
+      }
+    };
+  }, [createdOrderId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,11 +139,6 @@ const CheckoutPage = () => {
 
   const redeemGiftCard = async () => {
     if (appliedGiftCard) {
-      try {
-        await api.put(`/giftCard/update/${appliedGiftCard._id}`, { status: "inactive" });
-      } catch (err) {
-        logger.error("Failed to redeem gift card:", err);
-      }
       removeGiftCard();
     }
   };
@@ -145,44 +153,49 @@ const CheckoutPage = () => {
     setIsPaying(true);
     setIsPreparingPayment(true);
     const startTime = Date.now();
+    let orderId = createdOrderId;
 
     try {
-      const orderItemsPayload = cartItems.map((item) => ({
-        product: item.product,
-        name: item.name,
-        price: item.price,
-        qty: item.quantity,
-        size: item.size,
-        color: item.color,
-        image: item.image,
-      }));
-
-      // Create DB order first
-      // Force paymentMethod to "COD" if total is 0 (fully paid by gift card)
-      const orderPayload = {
-        orderItems: orderItemsPayload,
-        shippingAddress: {
-          address: [formData.street, formData.apartment]
-            .filter(Boolean)
-            .join(", "),
-          city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
-        },
-        paymentMethod: total === 0 ? "COD" : paymentMethod,
-      };
-
-      const dbOrder = await checkoutMutation.mutateAsync(orderPayload);
-      const orderId = dbOrder._id || dbOrder.id;
-
       if (!orderId) {
-        throw new Error("Failed to create order in database");
+        const orderItemsPayload = cartItems.map((item) => ({
+          product: item.product,
+          name: item.name,
+          price: item.price,
+          qty: item.quantity,
+          size: item.size,
+          color: item.color,
+          image: item.image,
+        }));
+
+        // Create DB order first
+        // Force paymentMethod to "COD" if total is 0 (fully paid by gift card)
+        const orderPayload = {
+          orderItems: orderItemsPayload,
+          shippingAddress: {
+            address: [formData.street, formData.apartment]
+              .filter(Boolean)
+              .join(", "),
+            city: formData.city,
+            postalCode: formData.postalCode,
+            country: formData.country,
+          },
+          paymentMethod: total === 0 ? "COD" : paymentMethod,
+        };
+
+        const dbOrder = await checkoutMutation.mutateAsync(orderPayload);
+        orderId = dbOrder._id || dbOrder.id;
+
+        if (!orderId) {
+          throw new Error("Failed to create order in database");
+        }
+        setCreatedOrderId(orderId);
       }
 
       // If fully paid by gift card or COD
       if (total === 0 || paymentMethod === "COD") {
         await redeemGiftCard();
         clearCart();
+        isOrderCompletedRef.current = true;
         navigate(`/order-success/${orderId}`);
         setIsPaying(false);
         setIsPreparingPayment(false);
@@ -248,6 +261,7 @@ const CheckoutPage = () => {
             if (verificationResult?.success && verificationResult?.orderId) {
               await redeemGiftCard();
               clearCart();
+              isOrderCompletedRef.current = true;
               navigate(`/order-success/${verificationResult.orderId}`);
             } else {
               throw new Error(
@@ -256,16 +270,28 @@ const CheckoutPage = () => {
             }
           } catch (verifyErr) {
             setOrderError(verifyErr?.message || "Payment verification failed");
+            try {
+              await api.put(`/orders/${orderId}/cancel`, { note: "Payment verification failed." });
+            } catch (cancelErr) {
+              console.error("Failed to cancel order on verification failure:", cancelErr);
+            }
+            setCreatedOrderId(null);
           } finally {
             setIsPaying(false);
             setIsPreparingPayment(false);
           }
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: async function () {
             setOrderError("Payment cancelled by user.");
             setIsPaying(false);
             setIsPreparingPayment(false);
+            try {
+              await api.put(`/orders/${orderId}/cancel`, { note: "Payment cancelled by user at checkout." });
+            } catch (cancelErr) {
+              console.error("Failed to cancel order on payment dismissal:", cancelErr);
+            }
+            setCreatedOrderId(null);
           },
         },
       };
@@ -282,8 +308,15 @@ const CheckoutPage = () => {
       setOrderError(err?.message || "Something went wrong. Please try again.");
       setIsPaying(false);
       setIsPreparingPayment(false);
+      if (orderId) {
+        try {
+          await api.put(`/orders/${orderId}/cancel`, { note: "Payment flow initialization failed." });
+        } catch (cancelErr) {
+          console.error("Failed to cancel order on error:", cancelErr);
+        }
+        setCreatedOrderId(null);
+      }
     }
-
   };
 
   const steps = [
