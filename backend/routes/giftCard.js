@@ -5,61 +5,10 @@
 import express from "express";
 import GiftCard from "../models/GiftCard.js";
 
-import { protect, admin } from "../middleware/authMiddleware.js";
-
 const router = express.Router();
 
-// VERIFY GIFT CARD (Public verification)
-router.post("/verify", async (req, res) => {
-  try {
-    const { code } = req.body;
-
-    if (!code) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Gift Card code is required" });
-    }
-
-    const giftCard = await GiftCard.findOne({ code: code.toUpperCase() });
-
-    if (!giftCard) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Gift card code not found or invalid." });
-    }
-
-    // Validate status
-    if (giftCard.status === "inactive" || giftCard.balance <= 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "This gift card has already been used." });
-    }
-
-    if (giftCard.status === "expired" || giftCard.expiryDate < new Date()) {
-      return res
-        .status(400)
-        .json({ success: false, message: "This gift card has expired." });
-    }
-
-    if (giftCard.status !== "active") {
-      return res
-        .status(400)
-        .json({ success: false, message: "This gift card is not active." });
-    }
-
-    res.status(200).json({
-      valid: true,
-      amount: giftCard.balance,
-      message: "Gift card applied successfully",
-    });
-  } catch (error) {
-    console.error("Error verifying gift card:", error);
-    res.status(500).json({ success: false, message: "Server error while verifying gift card" });
-  }
-});
-
 // CREATE GIFT CARD
-router.post("/create", protect, admin, async (req, res) => {
+router.post("/create", async (req, res) => {
   try {
     const {
       receiverName,
@@ -133,37 +82,8 @@ router.post("/create", protect, admin, async (req, res) => {
   }
 });
 
-// GET USER'S OWN ACTIVE GIFT CARDS
-router.get("/my", protect, async (req, res) => {
-  try {
-    const userName = req.user.name;
-    if (!userName) {
-      return res.status(400).json({
-        success: false,
-        message: "User profile name not set",
-      });
-    }
-
-    // Find all gift cards where receiverName matches user name (case-insensitive)
-    const giftCards = await GiftCard.find({
-      receiverName: { $regex: new RegExp(`^${userName.trim()}$`, "i") }
-    }).sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      data: giftCards,
-    });
-  } catch (error) {
-    console.error("Error fetching user's own active gift cards:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching your active gift cards",
-    });
-  }
-});
-
 // GET ALL GIFT CARDS
-router.get("/list", protect, admin, async (req, res) => {
+router.get("/list", async (req, res) => {
   try {
     // SEARCH
     const search = req.query.search || "";
@@ -236,7 +156,7 @@ router.get("/list", protect, admin, async (req, res) => {
 });
 
 // GET SINGLE GIFT CARD
-router.get("/single/:id", protect, admin, async (req, res) => {
+router.get("/single/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -264,7 +184,7 @@ router.get("/single/:id", protect, admin, async (req, res) => {
 });
 
 // UPDATE GIFT CARD
-router.put("/update/:id", protect, admin, async (req, res) => {
+router.put("/update/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -342,7 +262,7 @@ router.put("/update/:id", protect, admin, async (req, res) => {
 });
 
 // DELETE GIFT CARD
-router.delete("/delete/:id", protect, admin, async (req, res) => {
+router.delete("/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
 

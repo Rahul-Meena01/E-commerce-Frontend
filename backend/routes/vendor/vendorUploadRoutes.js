@@ -46,7 +46,7 @@
 import express from "express";
 
 import { protect, requireAuth } from "../../middleware/authMiddleware.js";
-import { vendorGuard } from "../../middleware/Vendor/vendorMiddleware.js";
+import { vendorGuard } from "../../middleware/vendor/vendorMiddleware.js";
 import upload from "../../middleware/upload.js";
 import { uploadVendorImage } from "../../controllers/vendor/vendorUploadController.js";
 

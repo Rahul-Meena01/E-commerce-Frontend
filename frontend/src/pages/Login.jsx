@@ -57,6 +57,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../styles/Login.css";
 
 // ── Backend origin ────────────────────────────────────────────────────────────
 // FIX 1: Was `?? "3000"` — a bare number is not a valid URL base.
@@ -273,206 +274,172 @@ function Login() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f0f2f5",
-        padding: "24px",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "36px",
-          borderRadius: "12px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          width: "100%",
-          maxWidth: "430px",
-        }}
-      >
-        <h1 style={{ marginBottom: "8px", color: "#1a1a2e" }}>{title}</h1>
-        <p style={{ marginBottom: "22px", color: "#64748b", fontSize: "14px" }}>
-          Sign in or register with the account type you need.
-        </p>
+    <div className="loft-login-container">
+      {/* Background shape */}
+      <div className="loft-bg-right"></div>
+      
+      <div className="loft-content-wrapper">
+        {/* Left Panel - Form */}
+        <div className="loft-login-left">
+        <div className="loft-logo-badge">L.</div>
 
+        <div className="loft-glass-card">
+          <h1 className="loft-card-title">{title}</h1>
+          <p className="loft-card-subtitle">
+            Sign in or register with the account type you need.
+          </p>
 
-
-        {/* ── Message banner ── */}
-        {message.text && (
-          <div
-            style={{
-              background: message.type === "error" ? "#ffe0e0" : "#dcfce7",
-              color: message.type === "error" ? "#e94560" : "#166534",
-              padding: "10px",
-              borderRadius: "8px",
-              marginBottom: "16px",
-              fontSize: "14px",
-            }}
-          >
-            {message.text}
-          </div>
-        )}
-
-        {/* ── Form ── */}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-            padding: 0,
-            margin: 0,
-          }}
-        >
-          {/* Register-only fields */}
-          {isRegister && (
-            <>
-              <input
-                type="text"
-                placeholder="Full name"
-                value={form.name}
-                onChange={(e) => updateForm("name", e.target.value)}
-                style={inputStyle}
-              />
-              <input
-                type="tel"
-                placeholder="Phone number"
-                value={form.phone}
-                onChange={(e) => updateForm("phone", e.target.value)}
-                style={inputStyle}
-              />
-              {isVendor && (
-                <input
-                  type="text"
-                  placeholder="Shop name (e.g. Nike Store)"
-                  value={form.shopName}
-                  onChange={(e) => updateForm("shopName", e.target.value)}
-                  style={inputStyle}
-                />
-              )}
-            </>
+          {/* ── Message banner ── */}
+          {message.text && (
+            <div className={`loft-message ${message.type === "error" ? "error" : "success"}`}>
+              {message.text}
+            </div>
           )}
 
-          <input
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => updateForm("email", e.target.value)}
-            style={inputStyle}
-          />
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-            }}
-          >
-            <input
-              type={makeItVisible ? "text" : "password"}
-              id="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={(e) => updateForm("password", e.target.value)}
-              style={{
-                ...inputStyle,
-                paddingRight: "60px",
-              }}
-            />
-
-            <span
-              onClick={() => setMakeItVisible(!makeItVisible)}
-              style={{
-                position: "absolute",
-                right: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                fontSize: "13px",
-                color: "#64748b",
-                cursor: "pointer",
-                userSelect: "none",
-                fontWeight: 500,
-              }}
-            >
-              {makeItVisible ? "Hide" : "Show"}
-            </span>
-          </div>
-
-
-          {isRegister && (
-            <>
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={form.confirmPassword}
-                onChange={(e) => updateForm("confirmPassword", e.target.value)}
-                style={inputStyle}
-              />
-              {/* {isAdmin && (
-                <input
-                  type="password"
-                  placeholder="Admin secret key"
-                  value={form.secretKey}
-                  onChange={(e) => updateForm("secretKey", e.target.value)}
-                  style={inputStyle}
-                />
-              )} */}
-            </>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: "12px",
-              border: "none",
-              borderRadius: "10px",
-              cursor: loading ? "not-allowed" : "pointer",
-              fontWeight: "600",
-              fontSize: "14px",
-              color: "white",
-              background: loading
-                ? "#94a3b8"
-                : isVendor
-                  ? "linear-gradient(135deg, #667eea, #764ba2)"
-                  : "linear-gradient(135deg, #667eea, #764ba2)",
-            }}
-          >
-            {loading
-              ? "Please wait..."
-              : isRegister
-                ? `Create ${isVendor ? "Vendor" : "User"} Account`
-                : `Login`}
-          </button>
-
-          {/* Bottom Links */}
-          <div style={{ marginTop: "16px", textAlign: "center", fontSize: "14px", color: "#64748b", display: "flex", flexDirection: "column", gap: "10px" }}>
-            {isRegister ? (
+          {/* ── Form ── */}
+          <form onSubmit={handleSubmit} className="loft-form">
+            {/* Register-only fields */}
+            {isRegister && (
               <>
-                <div>
-                  {isVendor ? (
-                    <span>Want to buy? <a href="#" onClick={(e) => { e.preventDefault(); switchAccountType("user"); }} style={{ color: "#667eea", textDecoration: "none", fontWeight: 600 }}>Register as User</a></span>
-                  ) : (
-                    <span>Want to sell? <a href="#" onClick={(e) => { e.preventDefault(); switchAccountType("vendor"); }} style={{ color: "#667eea", textDecoration: "none", fontWeight: 600 }}>Register as Vendor</a></span>
-                  )}
+                <div className="loft-field-group">
+                  <label className="loft-label">Full Name</label>
+                  <div className="loft-input-wrapper">
+                    <input
+                      type="text"
+                      placeholder="Write your full name"
+                      value={form.name}
+                      onChange={(e) => updateForm("name", e.target.value)}
+                      className="loft-input"
+                    />
+                  </div>
                 </div>
-                <div>
-                  Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); switchMode("login"); }} style={{ color: "#667eea", textDecoration: "none", fontWeight: 600 }}>Login</a>
+                <div className="loft-field-group">
+                  <label className="loft-label">Phone Number</label>
+                  <div className="loft-input-wrapper">
+                    <input
+                      type="tel"
+                      placeholder="Write your phone number"
+                      value={form.phone}
+                      onChange={(e) => updateForm("phone", e.target.value)}
+                      className="loft-input"
+                    />
+                  </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); switchMode("register"); switchAccountType("user"); }} style={{ color: "#667eea", textDecoration: "none", fontWeight: 600 }}>Register as User</a>
-                </div>
-                <div>
-                  Want to sell? <a href="#" onClick={(e) => { e.preventDefault(); switchMode("register"); switchAccountType("vendor"); }} style={{ color: "#667eea", textDecoration: "none", fontWeight: 600 }}>Register as Vendor</a>
-                </div>
+                {isVendor && (
+                  <div className="loft-field-group">
+                    <label className="loft-label">Shop Name</label>
+                    <div className="loft-input-wrapper">
+                      <input
+                        type="text"
+                        placeholder="Write your shop name (e.g. Nike Store)"
+                        value={form.shopName}
+                        onChange={(e) => updateForm("shopName", e.target.value)}
+                        className="loft-input"
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
-          </div>
-        </form>
+
+            <div className="loft-field-group">
+              <label className="loft-label">Email Address</label>
+              <div className="loft-input-wrapper">
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={form.email}
+                  onChange={(e) => updateForm("email", e.target.value)}
+                  className="loft-input"
+                />
+              </div>
+            </div>
+
+            <div className="loft-field-group">
+              <label className="loft-label">Password</label>
+              <div className="loft-input-wrapper">
+                <input
+                  type={makeItVisible ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={(e) => updateForm("password", e.target.value)}
+                  className="loft-input"
+                  style={{ paddingRight: "60px" }}
+                />
+                <button
+                  type="button"
+                  className="loft-password-toggle"
+                  onClick={() => setMakeItVisible(!makeItVisible)}
+                >
+                  {makeItVisible ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            {isRegister && (
+              <div className="loft-field-group">
+                <label className="loft-label">Confirm Password</label>
+                <div className="loft-input-wrapper">
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={form.confirmPassword}
+                    onChange={(e) => updateForm("confirmPassword", e.target.value)}
+                    className="loft-input"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="loft-submit-btn"
+            >
+              {loading
+                ? "Please wait..."
+                : isRegister
+                  ? `Create ${isVendor ? "Vendor" : "User"} Account`
+                  : `Login`}
+            </button>
+
+            {/* Bottom Links */}
+            <div className="loft-bottom-links">
+              {isRegister ? (
+                <>
+                  <div>
+                    {isVendor ? (
+                      <span>Want to buy? <a href="#" onClick={(e) => { e.preventDefault(); switchAccountType("user"); }}>register user</a></span>
+                    ) : (
+                      <span>Sell your products? <a href="#" onClick={(e) => { e.preventDefault(); switchAccountType("vendor"); }}>register vendor</a></span>
+                    )}
+                  </div>
+                  <div>
+                    <span>Already have an account?</span> <a href="#" onClick={(e) => { e.preventDefault(); switchMode("login"); }}>Login</a>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <span>don't have account?</span> <a href="#" onClick={(e) => { e.preventDefault(); switchMode("register"); switchAccountType("user"); }}>register user</a>
+                  </div>
+                  <div>
+                    <span>Sell your products?</span> <a href="#" onClick={(e) => { e.preventDefault(); switchMode("register"); switchAccountType("vendor"); }}>register vendor</a>
+                  </div>
+                </>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Right Panel - Brand Identity */}
+        <div className="loft-login-right">
+          <h1 className="loft-brand-title">LOFT.</h1>
+          <p className="loft-brand-tagline">
+            Discover our curated collection of premium clothing pieces designed to bring sophistication and style to your wardrobe.
+          </p>
+        </div>
       </div>
     </div>
   );

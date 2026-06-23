@@ -256,20 +256,6 @@ router.post("/", protect, async (req, res) => {
 
       await createdOrder.populate("user", "id name email phone");
 
-      // Clear the user's cart on COD or when fully paid by gift card (totalPrice === 0)
-      if (paymentMethod === "COD" || totalPrice === 0) {
-        try {
-          await mongoose
-            .model("Cart")
-            .findOneAndUpdate(
-              { user: req.user._id },
-              { $set: { items: [], coupon: null, couponCode: null, giftCard: null, giftCardCode: null } }
-            );
-        } catch (cartErr) {
-          console.error("Failed to clear cart after COD order placement:", cartErr);
-        }
-      }
-
       // ── Confirm coupon usage ─────────────────────────────────────────────
       // FIX: Use findOneAndUpdate to safely handle all existing status cases.
       // The old code only updated records with status="applied" and created a new
@@ -362,7 +348,6 @@ router.get("/myorders", protect, async (req, res) => {
     const count = await Order.countDocuments(filter);
 
     const orders = await Order.find(filter)
-      .populate("giftCard")
       .sort({ createdAt: -1 })
       .limit(pageSize)
       .skip(pageSize * (page - 1));
@@ -429,9 +414,10 @@ router.get("/:id", protect, async (req, res) => {
       return res.status(400).json({ message: "Invalid order ID format" });
     }
 
-    const order = await Order.findById(req.params.id)
-      .populate("user", "name email phone")
-      .populate("giftCard");
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "name email phone",
+    );
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });

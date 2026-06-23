@@ -31,6 +31,9 @@ const VendorProductSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+
+
 VendorProductSchema.index({ vendor: 1, slug: 1 }, { unique: true });
 
 export default mongoose.models.VendorProduct || mongoose.model("VendorProduct", VendorProductSchema);
+// End Of Code

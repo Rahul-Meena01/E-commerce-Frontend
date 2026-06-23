@@ -37,6 +37,8 @@ import calculateCartTotals from "../utils/calculateCartTotal.js";
 
 const router = express.Router();
 
+
+
 // ─────────────────────────────────────────────
 // HELPER — fetch & validate coupon on a cart
 // Requires cart.totals.subtotal to already be fresh before calling

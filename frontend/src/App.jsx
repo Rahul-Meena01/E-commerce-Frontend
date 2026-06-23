@@ -47,37 +47,40 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // ── Shared / layout components ─────────────────────────────────────────────────
-import Sidebar       from "./components/Sidebar";
-import VendorSidebar from "./components/VendorSidebar";
+import Sidebar from "./components/Sidebar";
+import VendorSidebar from "./components/vendorSidebar"; //Case sensitive problem 
 import ProtectedRoute from "./components/ProtectedRoute";
 
+
 // ── Public pages ───────────────────────────────────────────────────────────────
-import Login    from "./pages/Login";
+import Login from "./pages/Login";
 import UserHome from "./pages/UserHome";
 
+
+
 // ── Admin pages ────────────────────────────────────────────────────────────────
-import Dashboard          from "./pages/admin/Dashboard";
-import OrderDetails       from "./pages/admin/Orderdetail";        // orders list
-import OrderDetailPage    from "./pages/admin/OrderDetailPage";     // single order
+import Dashboard from "./pages/admin/Dashboard";
+import OrderDetails from "./pages/admin/Orderdetail";        // orders list
+import OrderDetailPage from "./pages/admin/OrderDetailPage";     // single order
 import UserManagementPage from "./pages/admin/usermanagmentPage";   // users list
 import VendorManagementPage from "./pages/admin/VendorManagementPage"; // vendors list
-import VendorProfilePage  from "./pages/admin/VendorProfilePage";   // single vendor
-import Category           from "./pages/admin/Category";
-import SubCategory        from "./pages/admin/SubCategory";
-import Product            from "./pages/admin/Product";
-import VariantProducts    from "./pages/admin/VariantProducts";
-import Coupons            from "./pages/admin/Coupons";
-import GiftCards          from "./pages/admin/GiftCards";
-import Profile            from "./pages/admin/Profile";
+import VendorProfilePage from "./pages/admin/VendorProfilePage";   // single vendor
+import Category from "./pages/admin/Category";
+import SubCategory from "./pages/admin/SubCategory";
+import Product from "./pages/admin/Product";
+import VariantProducts from "./pages/admin/VariantProducts";
+import Coupons from "./pages/admin/Coupons";
+import GiftCards from "./pages/admin/GiftCards";
+import Profile from "./pages/admin/Profile";
 
 // ── Vendor pages ───────────────────────────────────────────────────────────────
-import VendorDashboard      from "./pages/vendor/VendorDashboard";
-import VendorCategories     from "./pages/vendor/VendorCategories";
-import VendorSubCategories  from "./pages/vendor/VendorSubCategories";
-import VendorProducts       from "./pages/vendor/VendorProducts";
-import VendorCoupons        from "./pages/vendor/VendorCoupons";
-import VendorOrders         from "./pages/vendor/VendorOrders";
-import VendorProfile        from "./pages/vendor/VendorProfile";
+import VendorDashboard from "./pages/vendor/vendorDashboard";
+import VendorCategories from "./pages/vendor/vendorCategories";
+import VendorSubCategories from "./pages/vendor/vendorSubCategories";
+import VendorProducts from "./pages/vendor/vendorProducts";
+import VendorCoupons from "./pages/vendor/vendorCoupons";
+import VendorOrders from "./pages/vendor/vendorOrders";
+import VendorProfile from "./pages/vendor/vendorProfile";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AdminLayout
