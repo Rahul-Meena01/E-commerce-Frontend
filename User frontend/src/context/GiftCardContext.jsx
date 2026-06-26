@@ -24,7 +24,7 @@ export const GiftCardProvider = ({ children }) => {
   const queryClient = useQueryClient();
   const toast = useToast();
 
-  const fetchMyGiftCards = async () => {
+  const fetchMyGiftCards = useCallback(async () => {
     if (!isAuthenticated) {
       setMyGiftCards([]);
       return [];
@@ -41,7 +41,7 @@ export const GiftCardProvider = ({ children }) => {
     } finally {
       setLoadingMyCards(false);
     }
-  };
+  }, [isAuthenticated]);
 
   const handleInvalidGiftCard = useCallback(async () => {
     setAppliedGiftCard(null);
@@ -56,12 +56,11 @@ export const GiftCardProvider = ({ children }) => {
       }
     }
     toast.info("The applied gift card has expired or is invalid and has been removed.");
-  }, [isAuthenticated, queryClient, toast]);
+  }, [isAuthenticated, queryClient, toast, fetchMyGiftCards]);
 
   // Sync gift card status with backend when auth status changes
   useEffect(() => {
     if (!isAuthenticated) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAppliedGiftCard(null);
       setMyGiftCards([]);
       localStorage.removeItem("loft_applied_gift_card");
@@ -118,7 +117,7 @@ export const GiftCardProvider = ({ children }) => {
     };
 
     syncBackendGiftCard();
-  }, [isAuthenticated, queryClient, handleInvalidGiftCard]);
+  }, [isAuthenticated, queryClient, handleInvalidGiftCard, fetchMyGiftCards]);
 
   const applyGiftCard = async (code) => {
     if (!code || !code.trim()) {

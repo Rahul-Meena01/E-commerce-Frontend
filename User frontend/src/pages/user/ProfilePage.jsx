@@ -83,7 +83,7 @@ const ProfilePage = () => {
     if (activeTab === "Gift Cards" && isAuthenticated) {
       fetchMyGiftCards();
     }
-  }, [activeTab, isAuthenticated]);
+  }, [activeTab, isAuthenticated, fetchMyGiftCards]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -108,7 +108,6 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       const data = buildProfileData(user);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfileData(data);
       setFormData(data);
       setAvatarPreview(data.image);
@@ -194,7 +193,6 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSavedAddresses();
     const handler = () => loadSavedAddresses();
     window.addEventListener('addresses:updated', handler);

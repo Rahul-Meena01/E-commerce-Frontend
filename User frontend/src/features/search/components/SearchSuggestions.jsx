@@ -1,3 +1,22 @@
+const highlightMatch = (text, query) => {
+  if (!query || !text) return text;
+
+  // Escape special regex characters
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(${escapedQuery})`, "gi");
+  const parts = text.split(regex);
+
+  return parts.map((part, index) =>
+    regex.test(part) ? (
+      <strong key={index} className="search-highlight">
+        {part}
+      </strong>
+    ) : (
+      part
+    ),
+  );
+};
+
 export default function SearchSuggestions({
   query,
   items,
@@ -62,7 +81,9 @@ export default function SearchSuggestions({
             >
               <span className="search-suggestion__group">{item.group}</span>
               <span className="search-suggestion__body">
-                <span className="search-suggestion__label">{item.label}</span>
+                <span className="search-suggestion__label">
+                  {highlightMatch(item.label, query)}
+                </span>
                 {item.meta ? (
                   <span className="search-suggestion__meta">{item.meta}</span>
                 ) : null}

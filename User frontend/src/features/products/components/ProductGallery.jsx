@@ -26,9 +26,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
 
   const imageCount = uniqueImages.length;
 
-  // Reset active index if images change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveIndex(0);
   }, [imageCount]);
 
@@ -236,6 +234,7 @@ const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, 
                     src={img.thumb || img.src}
                     alt={`${alt} thumbnail ${i + 1}`}
                     onError={handleImageError}
+                    loading="lazy"
                   />
                 </button>
               ))}

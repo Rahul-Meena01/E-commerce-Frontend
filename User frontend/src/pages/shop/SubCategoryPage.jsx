@@ -1,16 +1,18 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import Breadcrumb from "@/features/products/components/Breadcrumb";
-import Filters from "@/features/products/components/Filters";
 import ProductCard from "@/features/products/components/ProductCard";
 import ProductCardSkeleton from "@/features/products/components/ProductCardSkeleton";
 
 import "../../styles/SubCategory.css";
 
-import { productsApi } from "@/features/products/services/products.service";
-import logger from "@/shared/utils/logger";
+import { useProductsQuery } from "@/features/products/hooks/useProductsQuery";
+
+const Filters = lazy(() => import("@/features/products/components/Filters"));
+
+const ITEMS_PER_PAGE = 20;
 
 const SubCategoryPage = () => {
   const { category, subCategory } = useParams();
@@ -24,60 +26,33 @@ const SubCategoryPage = () => {
     tags: searchParams.getAll("tag"),
     priceMin: searchParams.get("priceMin") || "",
     priceMax: searchParams.get("priceMax") || "",
+    rating: searchParams.get("rating") || "",
+    stock: searchParams.get("stock") || "all",
+    sort: searchParams.get("sort") || "newest",
   });
 
   const [filters, setFilters] = useState(() => readFiltersFromURL());
-  const [allProducts, setAllProducts] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilters(readFiltersFromURL());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  const { data: queryData, isLoading } = useProductsQuery({
+    category,
+    subCategory,
+  });
+  const products = useMemo(() => queryData?.data || [], [queryData]);
+
   useEffect(() => {
-    let cancelled = false;
-
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-
-        const res = await productsApi.getProducts(
-          `/product/public/all?category=${category}&subCategory=${subCategory}`,
-        );
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
-        const data = await res.json();
-
-        if (!cancelled) {
-          setAllProducts(data?.data || []);
-        }
-      } catch (error) {
-        logger.error(error);
-
-        if (!cancelled) {
-          setAllProducts([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadProducts();
-
-    return () => {
-      cancelled = true;
-    };
+    setDisplayCount(ITEMS_PER_PAGE);
   }, [category, subCategory]);
 
-  const products = allProducts;
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => Math.min(prev + ITEMS_PER_PAGE, visible.length));
+  };
 
   const availableFilters = useMemo(() => {
     const brands = new Set();
@@ -115,6 +90,9 @@ const SubCategoryPage = () => {
 
     params.delete("priceMin");
     params.delete("priceMax");
+    params.delete("rating");
+    params.delete("stock");
+    params.delete("sort");
 
     newFilters.brands?.forEach((b) => params.append("brand", b));
 
@@ -132,11 +110,23 @@ const SubCategoryPage = () => {
       params.set("priceMax", newFilters.priceMax);
     }
 
+    if (newFilters.rating) {
+      params.set("rating", newFilters.rating);
+    }
+
+    if (newFilters.stock && newFilters.stock !== "all") {
+      params.set("stock", newFilters.stock);
+    }
+
+    if (newFilters.sort && newFilters.sort !== "newest") {
+      params.set("sort", newFilters.sort);
+    }
+
     setSearchParams(params, { replace: true });
   };
 
   const visible = useMemo(() => {
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       if (filters.brands?.length && !filters.brands.includes(p.brand)) {
         return false;
       }
@@ -174,8 +164,56 @@ const SubCategoryPage = () => {
         return false;
       }
 
+      if (filters.stock === "in") {
+        if ((p.stock ?? 0) <= 0) return false;
+      } else if (filters.stock === "out") {
+        if ((p.stock ?? 0) > 0) return false;
+      }
+
+      if (filters.rating) {
+        const threshold = Number(filters.rating);
+        const ratingVal = Number(p.averageRating ?? p.rating ?? 0);
+        if (ratingVal < threshold) return false;
+      }
+
       return true;
     });
+
+    const mapped = filtered.map((item, index) => ({ item, index }));
+
+    mapped.sort((a, b) => {
+      const sortVal = filters.sort || "newest";
+      let comparison;
+
+      if (sortVal === "price-asc") {
+        const priceA = a.item.discountPrice || a.item.salePrice || a.item.price || 0;
+        const priceB = b.item.discountPrice || b.item.salePrice || b.item.price || 0;
+        comparison = priceA - priceB;
+      } else if (sortVal === "price-desc") {
+        const priceA = a.item.discountPrice || a.item.salePrice || a.item.price || 0;
+        const priceB = b.item.discountPrice || b.item.salePrice || b.item.price || 0;
+        comparison = priceB - priceA;
+      } else if (sortVal === "rating") {
+        const ratingA = Number(a.item.averageRating ?? a.item.rating ?? 0);
+        const ratingB = Number(b.item.averageRating ?? b.item.rating ?? 0);
+        comparison = ratingB - ratingA;
+      } else if (sortVal === "popularity") {
+        const popA = Number(a.item.soldCount ?? a.item.sales ?? a.item.views ?? 0);
+        const popB = Number(b.item.soldCount ?? b.item.sales ?? b.item.views ?? 0);
+        comparison = popB - popA;
+      } else {
+        const dateA = new Date(a.item.createdAt || 0).getTime();
+        const dateB = new Date(b.item.createdAt || 0).getTime();
+        comparison = dateB - dateA;
+      }
+
+      if (comparison === 0) {
+        return a.index - b.index;
+      }
+      return comparison;
+    });
+
+    return mapped.map((x) => x.item);
   }, [products, filters]);
 
   const formatSlug = (slug = "") =>
@@ -236,17 +274,22 @@ const SubCategoryPage = () => {
             className="subcat-filters-scroll-wrap"
             onClick={(e) => e.stopPropagation()}
           >
-            <Filters
-              key={`${category}-${subCategory}`}
-              filters={availableFilters}
-              initialBrands={filters.brands}
-              initialColors={filters.colors}
-              initialSizes={filters.sizes}
-              initialTags={filters.tags}
-              initialPriceMin={filters.priceMin}
-              initialPriceMax={filters.priceMax}
-              onChange={handleFilterChange}
-            />
+            <Suspense fallback={<div className="loft-filter-sidebar" />}>
+              <Filters
+                key={`${category}-${subCategory}`}
+                filters={availableFilters}
+                initialBrands={filters.brands}
+                initialColors={filters.colors}
+                initialSizes={filters.sizes}
+                initialTags={filters.tags}
+                initialPriceMin={filters.priceMin}
+                initialPriceMax={filters.priceMax}
+                initialRating={filters.rating}
+                initialStock={filters.stock}
+                initialSort={filters.sort}
+                onChange={handleFilterChange}
+              />
+            </Suspense>
           </div>
         </aside>
 
@@ -260,20 +303,20 @@ const SubCategoryPage = () => {
         <section className="subcat-grid">
           <header className="subcat-header">
             <span className="subcat-count">
-              {loading ? "Loading..." : `${visible.length} items found`}
+              {isLoading ? "Loading..." : `${visible.length} items found`}
             </span>
           </header>
 
           <div className="subcat-products">
-            {loading &&
+            {isLoading &&
               [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)}
 
-            {!loading &&
-              visible.map((prod) => (
+            {!isLoading &&
+              visible.slice(0, displayCount).map((prod) => (
                 <ProductCard key={prod._id || prod.id} product={prod} />
               ))}
 
-            {!loading && visible.length === 0 && (
+            {!isLoading && visible.length === 0 && (
               <div
                 className="empty-search-state"
                 style={{
@@ -286,6 +329,18 @@ const SubCategoryPage = () => {
               </div>
             )}
           </div>
+
+          {!isLoading && displayCount < visible.length && (
+            <div className="subcat-load-more">
+              <button
+                className="loft-price-btn"
+                onClick={handleLoadMore}
+                type="button"
+              >
+                Load More ({visible.length - displayCount} remaining)
+              </button>
+            </div>
+          )}
         </section>
       </div>
     </div>

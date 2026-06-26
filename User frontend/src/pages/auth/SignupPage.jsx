@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { User, Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 import "../../styles/SignupPage.css";
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import authFetch from '@/shared/utils/http';
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
+import { validatePhone } from "@/shared/utils/addressValidation";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -14,6 +17,7 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,10 +34,20 @@ export default function SignupPage() {
     return { message: await response.text() };
   };
 
+  const handlePhoneChange = (value) => {
+    setPhone(value);
+    if (value && value !== "+" && !validatePhone(value)) {
+      setPhoneError("Invalid phone number format.");
+    } else {
+      setPhoneError("");
+    }
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setAccountExistsNotice("");
+    setPhoneError("");
     setLoading(true);
 
     const trimmedName = name.trim();
@@ -44,6 +58,19 @@ export default function SignupPage() {
 
     if (!trimmedName || !normalizedEmail || !trimmedPassword) {
       setError("Name, email, and password are required");
+      setLoading(false);
+      return;
+    }
+
+    if (!trimmedPhone || trimmedPhone === "+" || trimmedPhone.length < 5) {
+      setError("Phone number is required");
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePhone(trimmedPhone)) {
+      setPhoneError("Please enter a valid international phone number");
+      setError("Please enter a valid international phone number");
       setLoading(false);
       return;
     }
@@ -200,19 +227,36 @@ export default function SignupPage() {
 
               <div className="login-field-group">
                 <label htmlFor="phone" className="login-label">Phone Number</label>
-                <div className="login-input-wrap">
-                  <Phone size={18} className="login-input-icon" />
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    required
+                <div className="react-phone-input-container">
+                  <PhoneInput
+                    defaultCountry="in"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    autoComplete="tel"
+                    onChange={handlePhoneChange}
+                    inputProps={{
+                      id: "phone",
+                      autoComplete: "tel",
+                      inputMode: "tel",
+                    }}
                   />
                 </div>
+                {phoneError && (
+                  <div
+                    className="signup-inline-notify error"
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      marginTop: "6px",
+                      fontSize: "0.85em",
+                      color: "#c53030",
+                      borderColor: "#feb2b2",
+                      background: "#fff5f5",
+                      display: "flex",
+                      alignItems: "center"
+                    }}
+                  >
+                    {phoneError}
+                  </div>
+                )}
               </div>
 
               <div className="login-field-group">

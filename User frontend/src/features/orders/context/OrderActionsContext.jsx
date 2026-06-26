@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import { mockOrders } from "../data/mockOrders";
 import { useToast } from "../../../context/ToastContext";
@@ -54,14 +54,16 @@ export const OrderActionsProvider = ({ children }) => {
   });
 
   // Calculate the mock orders merged with overrides for general frontend-only navigation
-  // Derived directly during render to prevent synchronous cascading renders in effects
-  const orders = mockOrders.map((order) => {
-    const override = overrides[order._id || order.id];
-    if (override) {
-      return { ...order, ...override };
-    }
-    return order;
-  });
+  const orders = useMemo(
+    () => mockOrders.map((order) => {
+      const override = overrides[order._id || order.id];
+      if (override) {
+        return { ...order, ...override };
+      }
+      return order;
+    }),
+    [overrides],
+  );
 
   // Merge external backend orders with local overrides
   const getMergedOrders = (backendOrders) => {

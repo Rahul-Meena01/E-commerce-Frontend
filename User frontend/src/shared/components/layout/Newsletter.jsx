@@ -1,19 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { siteContent } from "@/config/siteContent";
+import { useToast } from "@/context/ToastContext";
 import "../../../styles/Newsletter.css";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const { newsletter } = siteContent;
+  const toast = useToast();
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
-    if (email) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return;
+
+    setLoading(true);
+    setStatusMessage("Subscribing...");
+
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false);
       setSubscribed(true);
       setEmail("");
-      setTimeout(() => setSubscribed(false), 3000);
-    }
+      setStatusMessage("Thank you for subscribing!");
+      toast.success("✓ Thank you for subscribing to our Luxury Edit!");
+
+      timeoutRef.current = setTimeout(() => {
+        setSubscribed(false);
+        setStatusMessage("");
+      }, 3000);
+    }, 800);
   };
 
   return (
@@ -23,7 +49,7 @@ const Newsletter = () => {
         <h2 className="newsletter-title">{newsletter.title}</h2>
         <p className="newsletter-description">{newsletter.description}</p>
 
-        <form className="newsletter-form" onSubmit={handleSubscribe}>
+        <form className="newsletter-form" onSubmit={handleSubscribe} aria-busy={loading}>
           <div className="newsletter-input-wrap">
             <input
               id="newsletter-email"
@@ -34,12 +60,16 @@ const Newsletter = () => {
               onChange={(e) => setEmail(e.target.value)}
               aria-label="Subscribe to newsletter"
               required
+              disabled={loading || subscribed}
             />
-            <button type="submit" className="newsletter-btn">
-              {subscribed ? newsletter.successMessage : newsletter.buttonLabel}
+            <button type="submit" className="newsletter-btn" disabled={loading || subscribed}>
+              {loading ? "SUBSCRIBING..." : subscribed ? newsletter.successMessage : newsletter.buttonLabel}
             </button>
           </div>
         </form>
+        <div className="sr-only" aria-live="polite" role="status">
+          {statusMessage}
+        </div>
         <p className="newsletter-privacy">{newsletter.privacyText}</p>
       </div>
     </section>

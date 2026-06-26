@@ -1964,3 +1964,55 @@
   width: 100%;
 }
 
+/* Custom select and phone input styling overrides for Profile Page address form */
+.address-modal .react-select-container {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.address-modal .react-phone-input-container {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.address-modal .react-international-phone-input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.address-modal .react-international-phone-country-selector-button {
+  background: #fff;
+  border: 1px solid #e8e0d6;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  height: 40px;
+  padding: 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.address-modal .react-international-phone-input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e8e0d6;
+  border-radius: 0 6px 6px 0;
+  height: 40px;
+  padding: 10px 12px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  color: var(--color-dark);
+  width: 100%;
+}
+
+.address-modal .react-international-phone-input-container:focus-within .react-international-phone-country-selector-button {
+  border-color: #c8b896;
+}
+
+.address-modal .react-international-phone-input-container:focus-within .react-international-phone-input {
+  border-color: #c8b896;
+}
+
+

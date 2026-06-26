@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 import {
   ChevronDown,
   ChevronUp,
@@ -135,12 +136,73 @@ export default function InfoPage() {
     return INFO_PAGES[normalized] ? normalized : "about";
   });
 
+  const toast = useToast();
+  const timeoutRef = useRef(null);
+  const [formState, setFormState] = useState({ name: "", email: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    const currentTimeout = timeoutRef.current;
+    return () => {
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+      }
+    };
+  }, []);
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    const { name, email, message } = formState;
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setSubmitError("Please fill out all fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    const formspreeId = import.meta.env.VITE_FORMSPREE_ID;
+
+    if (formspreeId) {
+      try {
+        const response = await fetch(`https://formspree.io/f/${formspreeId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, message }),
+        });
+
+        if (response.ok) {
+          setFormState({ name: "", email: "", message: "" });
+          toast.success("✓ Your message has been sent successfully!");
+        } else {
+          throw new Error("Failed to send message.");
+        }
+      } catch (err) {
+        console.error("Contact form submission error:", err);
+        setSubmitError("Failed to send message. Please try again later.");
+        toast.error("Failed to submit form.");
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      // client-side delivery fallback: mailto
+      setIsSubmitting(false);
+      setFormState({ name: "", email: "", message: "" });
+      toast.success("✓ Opening your mail client to send the message...");
+
+      const mailtoUrl = `mailto:concierge@loft.com?subject=LOFT Contact Form - ${encodeURIComponent(name)}&body=${encodeURIComponent(
+        `From: ${name} (${email})\n\nMessage:\n${message}`
+      )}`;
+      window.location.href = mailtoUrl;
+    }
+  };
+
   useEffect(() => {
     const pathParts = location.pathname.split("/");
     const pathSlug = pathParts[pathParts.length - 1];
     const normalized = SLUG_MAP[pathSlug] || pathSlug;
     if (INFO_PAGES[normalized]) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(normalized);
     }
   }, [location.pathname]);
@@ -228,21 +290,50 @@ export default function InfoPage() {
 
               <div className="contact-form-box">
                 <h4>Send Us a Message</h4>
-                <form onSubmit={(e) => { e.preventDefault(); alert("Message sent successfully!"); e.target.reset(); }}>
+                {submitError && (
+                  <div className="form-error-message" style={{ color: "#c53030", fontSize: "13px", marginBottom: "10px", fontWeight: "500" }}>
+                    {submitError}
+                  </div>
+                )}
+                <form onSubmit={handleContactSubmit} aria-busy={isSubmitting}>
                   <div className="form-group-info">
-                    <label>Full Name</label>
-                    <input type="text" placeholder="Your name" required />
+                    <label htmlFor="contact-name">Full Name</label>
+                    <input
+                      id="contact-name"
+                      type="text"
+                      placeholder="Your name"
+                      value={formState.name}
+                      onChange={(e) => setFormState(prev => ({ ...prev, name: e.target.value }))}
+                      required
+                      disabled={isSubmitting}
+                    />
                   </div>
                   <div className="form-group-info">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="Your email address" required />
+                    <label htmlFor="contact-email">Email Address</label>
+                    <input
+                      id="contact-email"
+                      type="email"
+                      placeholder="Your email address"
+                      value={formState.email}
+                      onChange={(e) => setFormState(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                      disabled={isSubmitting}
+                    />
                   </div>
                   <div className="form-group-info">
-                    <label>Message</label>
-                    <textarea rows="4" placeholder="How can we help you?" required></textarea>
+                    <label htmlFor="contact-message">Message</label>
+                    <textarea
+                      id="contact-message"
+                      rows="4"
+                      placeholder="How can we help you?"
+                      value={formState.message}
+                      onChange={(e) => setFormState(prev => ({ ...prev, message: e.target.value }))}
+                      required
+                      disabled={isSubmitting}
+                    ></textarea>
                   </div>
-                  <button type="submit" className="info-submit-btn">
-                    Submit Message
+                  <button type="submit" className="info-submit-btn" disabled={isSubmitting}>
+                    {isSubmitting ? "Sending..." : "Submit Message"}
                   </button>
                 </form>
               </div>

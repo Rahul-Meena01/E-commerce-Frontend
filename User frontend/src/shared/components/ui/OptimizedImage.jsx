@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { IMAGE_FALLBACK } from "@/constants/images";
 import { resolveProductImage } from "@/shared/utils/api";
 
@@ -13,17 +13,6 @@ export default function OptimizedImage({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const imgRef = useRef(null);
-
-  useEffect(() => {
-    // If image is already loaded from cache when src changes or component mounts
-    if (imgRef.current && imgRef.current.complete) {
-      setLoaded(true);
-    } else {
-      setLoaded(false);
-      setError(false);
-    }
-  }, [src]);
 
   const isBrokenSrc = !src ||
     src === "null" ||
@@ -41,7 +30,6 @@ export default function OptimizedImage({
     >
       {!loaded && <div className="opt-image-shimmer" />}
       <img
-        ref={imgRef}
         src={error ? IMAGE_FALLBACK : resolvedSrc}
         alt={alt}
         loading={loading}

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import "@/styles/ProductCard.css";
@@ -6,6 +7,7 @@ import { useCart } from "@/features/cart/hooks/useCart";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "@/utils/pricing";
 import { useToast } from "@/context/ToastContext";
+import { isOutOfStock, getProductStock } from "@/shared/utils/productUtils";
 
 const ProductCard = ({ product }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -50,9 +52,16 @@ const ProductCard = ({ product }) => {
     }
   };
 
+  const outOfStock = isOutOfStock(product);
+
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (outOfStock) {
+      toast.error(`${product.name} is currently out of stock.`);
+      return;
+    }
 
     addToCart({
       product: {
@@ -62,6 +71,7 @@ const ProductCard = ({ product }) => {
         price: effectivePrice,
         image: primaryImage,
         brand: product.brand,
+        stock: getProductStock(product),
       },
       size: "",
       color: "",
@@ -115,16 +125,17 @@ const ProductCard = ({ product }) => {
         </div>
 
         <button
-          className="pc-add"
+          className={`pc-add${outOfStock ? " pc-add--disabled" : ""}`}
           type="button"
           onClick={handleAddToCart}
-          aria-label={`Add ${product.name} to bag`}
+          aria-label={outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to bag`}
+          disabled={outOfStock}
         >
-          Add to bag
+          {outOfStock ? "Out of Stock" : "Add to bag"}
         </button>
       </div>
     </div>
   );
 };
 
-export default ProductCard;
+export default memo(ProductCard);

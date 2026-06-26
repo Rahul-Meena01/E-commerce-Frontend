@@ -32,7 +32,6 @@ const ResponsiveImage = ({
   useEffect(() => {
     if (inView) return;
     if (typeof window === "undefined") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInView(true);
       return;
     }

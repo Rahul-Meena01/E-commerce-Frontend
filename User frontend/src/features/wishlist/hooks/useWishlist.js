@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { wishlistApi } from "../services/wishlist.service";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getProductStock } from "../../../shared/utils/productUtils";
 
 const STORAGE_KEY = "loft_wishlist";
 
@@ -35,6 +36,7 @@ const mapWishlistItem = (item) => {
     ? (variant.discountPrice || variant.price)
     : (product.discountPrice || product.price || 0);
 
+  const stock = getProductStock(product);
   return {
     id: product._id || product.id || String(item._id),
     productId: product._id || product.id,
@@ -45,6 +47,7 @@ const mapWishlistItem = (item) => {
     brand: product.brand || variant.brand || "",
     price,
     image,
+    stock,
   };
 };
 
@@ -73,7 +76,7 @@ export const useWishlistQuery = () => {
         mergeWishlistMutation.mutate(localItems);
       }
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isAuthenticated, queryClient, mergeWishlistMutation]);
 
   return useQuery({
     queryKey: ["wishlist", isAuthenticated],

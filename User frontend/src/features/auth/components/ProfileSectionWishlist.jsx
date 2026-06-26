@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "../../../utils/pricing";
 import { useToast } from "@/context/ToastContext";
+import { isOutOfStock } from "../../../shared/utils/productUtils";
 
 const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishlist, addToCart, navigate }) => {
   const toast = useToast();
@@ -35,8 +36,13 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
                 </Link>
                 <p className="profile-wishlist-price">{formatPrice(item.price)}</p>
                 <button
-                  className="profile-wishlist-add-btn"
+                  className={`profile-wishlist-add-btn${isOutOfStock(item) ? " profile-wishlist-add-btn--disabled" : ""}`}
+                  disabled={isOutOfStock(item)}
                   onClick={() => {
+                    if (isOutOfStock(item)) {
+                      toast.error(`${item.name} is currently out of stock.`);
+                      return;
+                    }
                     addToCart({
                       product: {
                         productId: item.id,
@@ -45,6 +51,7 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
                         price: item.price,
                         image: item.image,
                         brand: item.brand,
+                        stock: item.stock,
                       },
                       size: "",
                       color: "",
@@ -53,7 +60,7 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
                     toast.success(`${item.name} added to bag!`);
                   }}
                 >
-                  Add to Bag
+                  {isOutOfStock(item) ? "Out of Stock" : "Add to Bag"}
                 </button>
               </div>
             </div>

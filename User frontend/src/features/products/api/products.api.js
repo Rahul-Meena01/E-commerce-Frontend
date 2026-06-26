@@ -27,6 +27,29 @@ const parseParams = (params) => {
   return { category, subCategory, search, limit, page };
 };
 
+const matchesSearch = (product, queryStr) => {
+  if (!queryStr) return true;
+  const normalizedQuery = queryStr.normalize("NFC").toLowerCase().trim().replace(/\s+/g, " ");
+  if (!normalizedQuery) return true;
+
+  const searchFields = [
+    product?.name,
+    product?.brand,
+    product?.description,
+    product?.category,
+    product?.subCategory?.name,
+    product?.subCategory?.parentCategory?.name,
+    product?.subCategory?.parentCategory?.slug,
+    product?.subCategory?.slug,
+  ]
+    .filter(Boolean)
+    .map((val) => val.toString().normalize("NFC").toLowerCase())
+    .join(" ");
+
+  const tokens = normalizedQuery.split(" ");
+  return tokens.every((token) => searchFields.includes(token));
+};
+
 export const fetchProducts = (params, options = {}) => {
   const { category, subCategory, search, limit } = parseParams(params);
 
@@ -48,6 +71,14 @@ export const fetchProducts = (params, options = {}) => {
 
   return client.get(requestUrl, options).then((res) => {
     let products = res.data?.data || [];
+
+    // Filter by search query if backend did not filter them
+    if (search) {
+      const needsClientFilter = products.some((p) => !matchesSearch(p, search));
+      if (needsClientFilter) {
+        products = products.filter((p) => matchesSearch(p, search));
+      }
+    }
 
     // Filter by category slug or ID
     if (category) {
@@ -73,21 +104,6 @@ export const fetchProducts = (params, options = {}) => {
           String(sub._id).toLowerCase() === subCatLower ||
           String(sub.slug || "").toLowerCase() === subCatLower ||
           String(sub.name || "").toLowerCase() === subCatLower
-        );
-      });
-    }
-
-    // Filter by search query
-    if (search) {
-      const searchLower = String(search).toLowerCase();
-      products = products.filter((p) => {
-        return (
-          String(p.name || "")
-            .toLowerCase()
-            .includes(searchLower) ||
-          String(p.brand || "")
-            .toLowerCase()
-            .includes(searchLower)
         );
       });
     }

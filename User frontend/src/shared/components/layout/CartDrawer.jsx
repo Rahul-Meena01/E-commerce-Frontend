@@ -9,6 +9,7 @@ import { formatPrice } from "@/utils/pricing";
 import { useAuthState } from "@/features/auth/context/AuthContext";
 import { useGiftCard } from "@/context/GiftCardContext";
 import { useToast } from "@/context/ToastContext";
+import { canAddQuantity, getProductStock } from "../../../shared/utils/productUtils";
 import "../../../styles/CartDrawer.css";
 
 const CartDrawer = ({ isOpen, onClose }) => {
@@ -94,7 +95,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
     if (isGiftCardModalOpen && isAuthenticated) {
       fetchMyGiftCards();
     }
-  }, [isGiftCardModalOpen, isAuthenticated]);
+  }, [isGiftCardModalOpen, isAuthenticated, fetchMyGiftCards]);
 
   const handleCheckoutRedirect = () => {
     onClose();
@@ -244,15 +245,21 @@ const CartDrawer = ({ isOpen, onClose }) => {
                         </button>
                         <span>{item.quantity}</span>
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            const next = item.quantity + 1;
+                            if (!canAddQuantity(item, next)) {
+                              const available = getProductStock(item);
+                              toast.warning(`Only ${available} units available${item.name ? ` for ${item.name}` : ""}.`);
+                              return;
+                            }
                             updateQuantity({
                               productId,
                               size: item.size,
                               color: item.color,
-                              quantity: item.quantity + 1,
+                              quantity: next,
                               itemId: item._id,
-                            })
-                          }
+                            });
+                          }}
                           aria-label="Increase quantity"
                         >
                           <Plus size={12} />

@@ -1564,3 +1564,53 @@
     transform: translateY(0);
   }
 }
+
+/* Custom checkout select and phone input styling */
+.checkout-step-form .react-phone-input-container {
+  width: 100%;
+}
+
+.checkout-step-form .react-international-phone-input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.checkout-step-form .react-international-phone-country-selector-button {
+  background: var(--ds-color-surface, #fff);
+  border: 1px solid var(--ds-color-border-strong, #D1D1D1);
+  border-right: none;
+  border-radius: var(--ds-radius-md, 4px) 0 0 var(--ds-radius-md, 4px);
+  height: 42px;
+  padding: 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-step-form .react-international-phone-input {
+  flex: 1;
+  background: var(--ds-color-surface, #fff);
+  border: 1px solid var(--ds-color-border-strong, #D1D1D1);
+  border-radius: 0 var(--ds-radius-md, 4px) var(--ds-radius-md, 4px) 0;
+  height: 42px;
+  padding: 10px 12px;
+  font-family: var(--ds-font-sans, 'Jost', sans-serif);
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-color-text, #1A1A1A);
+  width: 100%;
+}
+
+.checkout-step-form .react-international-phone-input-container:focus-within .react-international-phone-country-selector-button {
+  border-color: var(--ds-color-brand, #C9A96E);
+}
+
+.checkout-step-form .react-international-phone-input-container:focus-within .react-international-phone-input {
+  border-color: var(--ds-color-brand, #C9A96E);
+}
+
+.checkout-step-form .react-select-container {
+  width: 100%;
+}
+

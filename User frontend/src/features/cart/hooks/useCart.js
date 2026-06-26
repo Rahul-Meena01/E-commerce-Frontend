@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartApi } from "../services/cart.service";
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useGiftCard } from "@/context/GiftCardContext";
+import { useToast } from "@/context/ToastContext";
+import { productsApi } from "@/features/products/services/products.service";
+import { getProductStock, migrateGuestCart, getAvailableQuantity } from "@/shared/utils/productUtils";
 
 const STORAGE_KEY = "loft_cart";
 
@@ -26,6 +29,7 @@ const saveLocalCart = (items) => {
 export const useCartQuery = () => {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const mergeCartMutation = useMutation({
     mutationKey: ["mergeCart"],
@@ -48,13 +52,56 @@ export const useCartQuery = () => {
         mergeCartMutation.mutate(localItems);
       }
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isAuthenticated, queryClient, mergeCartMutation]);
   
   return useQuery({
     queryKey: ["cart", isAuthenticated],
     queryFn: async () => {
       if (!isAuthenticated) {
-        return loadLocalCart();
+        const localItems = loadLocalCart();
+        if (localItems.length === 0) return [];
+        try {
+          const uniqueProductIds = Array.from(
+            new Set(
+              localItems.map((item) => {
+                const pid = typeof item.product === "object" && item.product
+                  ? (item.product._id || item.product.id)
+                  : item.product;
+                return pid;
+              }).filter(Boolean)
+            )
+          );
+
+          const productsList = [];
+          await Promise.all(
+            uniqueProductIds.map(async (id) => {
+              try {
+                const res = await productsApi.fetchProduct(id);
+                if (res.ok) {
+                  const json = await res.json();
+                  const prod = json?.data || json;
+                  if (prod) productsList.push(prod);
+                }
+              } catch (err) {
+                console.warn(`Failed to fetch fresh stock for guest cart product ${id}:`, err);
+              }
+            })
+          );
+
+          const { migrated, changed, removedCount } = migrateGuestCart(localItems, productsList);
+          if (changed) {
+            if (removedCount > 0) {
+              toast.info(`${removedCount} item(s) in your cart are no longer available and were removed.`);
+            } else {
+              toast.info("Cart item stock counts have been updated with latest availability.");
+            }
+            saveLocalCart(migrated);
+          }
+          return migrated;
+        } catch (e) {
+          console.warn("Failed to fetch fresh stock database for guest cart migration:", e);
+        }
+        return localItems;
       }
       
       const res = await cartApi.getCart();
@@ -71,6 +118,7 @@ export const useCartQuery = () => {
 export const useCartMutations = () => {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
+  const toast = useToast();
 
   const handleGuestCartUpdate = (updateFn) => {
     const current = loadLocalCart();
@@ -96,16 +144,33 @@ export const useCartMutations = () => {
         image: product.image || "",
       };
 
+      const stock = getProductStock(product);
+
       if (!isAuthenticated) {
         handleGuestCartUpdate((prev) => {
           const existing = prev.findIndex(
             (item) => item.product === itemPayload.productId && item.size === size && item.color === color
           );
+          
+          const availableStock = getAvailableQuantity(product);
+
           if (existing >= 0) {
-            return prev.map((item, i) => i === existing ? { ...item, quantity: item.quantity + quantity } : item);
+            const nextQty = prev[existing].quantity + quantity;
+            if (nextQty > availableStock) {
+              const capped = Math.max(1, availableStock);
+              toast.warning(`Only ${availableStock} units available for ${itemPayload.name}. Capping cart quantity.`);
+              return prev.map((item, i) => i === existing ? { ...item, quantity: capped } : item);
+            }
+            return prev.map((item, i) => i === existing ? { ...item, quantity: nextQty } : item);
           }
+          
           const tempId = "guest_item_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-          return [...prev, { _id: tempId, product: itemPayload.productId, name: itemPayload.name, price: itemPayload.price, quantity, size, color, image: itemPayload.image }];
+          let initialQty = quantity;
+          if (quantity > availableStock) {
+            initialQty = Math.max(1, availableStock === Infinity ? 1 : availableStock);
+            toast.warning(`Only ${availableStock} units available for ${itemPayload.name}. Capping cart quantity.`);
+          }
+          return [...prev, { _id: tempId, product: itemPayload.productId, name: itemPayload.name, price: itemPayload.price, quantity: initialQty, size, color, image: itemPayload.image, stock }];
         });
         return;
       }
@@ -147,7 +212,24 @@ export const useCartMutations = () => {
 
       if (!isAuthenticated) {
         const cleanProductId = typeof productId === "object" && productId ? (productId._id || productId.id) : productId;
-        handleGuestCartUpdate((prev) => prev.map((i) => (i.product === cleanProductId && (i.size || "") === (size || "") && (i.color || "") === (color || "")) ? { ...i, quantity } : i));
+        handleGuestCartUpdate((prev) =>
+          prev.map((i) => {
+            if (
+              i.product === cleanProductId &&
+              (i.size || "") === (size || "") &&
+              (i.color || "") === (color || "")
+            ) {
+              const stockLimit = getAvailableQuantity(i);
+              if (quantity > stockLimit) {
+                const capped = Math.max(1, stockLimit);
+                toast.warning(`Only ${stockLimit} units available. Quantity adjusted in cart.`);
+                return { ...i, quantity: capped };
+              }
+              return { ...i, quantity };
+            }
+            return i;
+          })
+        );
         return;
       }
 

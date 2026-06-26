@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, startTransition, memo } from "react";
 import { RotateCcw, Check, X } from "lucide-react";
 import { CURRENCY } from "@/constants/currency";
 import "@/styles/Filters.css";
@@ -30,6 +30,9 @@ const Filters = ({
   initialTags = [],
   initialPriceMin = "",
   initialPriceMax = "",
+  initialRating = "",
+  initialStock = "all",
+  initialSort = "newest",
   resultsCount,
 }) => {
   const [selectedBrands, setSelectedBrands] = useState(initialBrands);
@@ -38,36 +41,33 @@ const Filters = ({
   const [selectedTags, setSelectedTags] = useState(initialTags);
   const [priceMin, setPriceMin] = useState(initialPriceMin);
   const [priceMax, setPriceMax] = useState(initialPriceMax);
+  const [rating, setRating] = useState(initialRating);
+  const [stock, setStock] = useState(initialStock);
+  const [sort, setSort] = useState(initialSort);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedBrands(initialBrands || []);
-  }, [initialBrands]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedColors(initialColors || []);
-  }, [initialColors]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedSizes(initialSizes || []);
-  }, [initialSizes]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedTags(initialTags || []);
-  }, [initialTags]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPriceMin(initialPriceMin || "");
-  }, [initialPriceMin]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPriceMax(initialPriceMax || "");
-  }, [initialPriceMax]);
+    startTransition(() => {
+      setSelectedBrands(initialBrands || []);
+      setSelectedColors(initialColors || []);
+      setSelectedSizes(initialSizes || []);
+      setSelectedTags(initialTags || []);
+      setPriceMin(initialPriceMin || "");
+      setPriceMax(initialPriceMax || "");
+      setRating(initialRating || "");
+      setStock(initialStock || "all");
+      setSort(initialSort || "newest");
+    });
+  }, [
+    initialBrands,
+    initialColors,
+    initialSizes,
+    initialTags,
+    initialPriceMin,
+    initialPriceMax,
+    initialRating,
+    initialStock,
+    initialSort,
+  ]);
 
   const hasActiveFilters = useMemo(() => {
     return (
@@ -76,7 +76,9 @@ const Filters = ({
       selectedSizes.length > 0 ||
       selectedTags.length > 0 ||
       priceMin !== "" ||
-      priceMax !== ""
+      priceMax !== "" ||
+      rating !== "" ||
+      stock !== "all"
     );
   }, [
     selectedBrands,
@@ -85,6 +87,8 @@ const Filters = ({
     selectedTags,
     priceMin,
     priceMax,
+    rating,
+    stock,
   ]);
 
   const emitFilters = ({
@@ -94,6 +98,9 @@ const Filters = ({
     tags = selectedTags,
     min = priceMin,
     max = priceMax,
+    r = rating,
+    st = stock,
+    so = sort,
   } = {}) => {
     onChange?.({
       brands,
@@ -102,6 +109,9 @@ const Filters = ({
       tags,
       priceMin: min,
       priceMax: max,
+      rating: r,
+      stock: st,
+      sort: so,
     });
   };
 
@@ -112,6 +122,8 @@ const Filters = ({
     setSelectedTags([]);
     setPriceMin("");
     setPriceMax("");
+    setRating("");
+    setStock("all");
 
     emitFilters({
       brands: [],
@@ -120,6 +132,9 @@ const Filters = ({
       tags: [],
       min: "",
       max: "",
+      r: "",
+      st: "all",
+      so: sort,
     });
   };
 
@@ -254,6 +269,30 @@ const Filters = ({
               <X size={12} />
             </button>
           )}
+          {rating && (
+            <button
+              className="loft-filter-pill"
+              onClick={() => {
+                setRating("");
+                emitFilters({ r: "" });
+              }}
+              aria-label="Remove rating filter"
+            >
+              {rating}★ & above <X size={12} />
+            </button>
+          )}
+          {stock !== "all" && (
+            <button
+              className="loft-filter-pill"
+              onClick={() => {
+                setStock("all");
+                emitFilters({ st: "all" });
+              }}
+              aria-label="Remove availability filter"
+            >
+              {stock === "in" ? "In Stock" : "Out of Stock"} <X size={12} />
+            </button>
+          )}
         </div>
       )}
 
@@ -386,6 +425,88 @@ const Filters = ({
       )}
 
       <div className="loft-filter-section">
+        <h4 className="loft-filter-section-title">Sort By</h4>
+        <div className="loft-filter-options">
+          <select
+            id="sort-select"
+            value={sort}
+            onChange={(e) => {
+              const nextSort = e.target.value;
+              setSort(nextSort);
+              emitFilters({ so: nextSort });
+            }}
+            className="loft-price-input"
+            style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}
+          >
+            <option value="newest">Newest Arrivals</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Customer Rating</option>
+            <option value="popularity">Popularity</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="loft-filter-section">
+        <h4 className="loft-filter-section-title">Availability</h4>
+        <div className="loft-filter-options" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {[
+            { label: "All Products", value: "all" },
+            { label: "In Stock", value: "in" },
+            { label: "Out of Stock", value: "out" },
+          ].map((item) => (
+            <label
+              key={item.value}
+              style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px" }}
+            >
+              <input
+                type="radio"
+                name="stock-availability"
+                value={item.value}
+                checked={stock === item.value}
+                onChange={() => {
+                  setStock(item.value);
+                  emitFilters({ st: item.value });
+                }}
+                style={{ cursor: "pointer" }}
+              />
+              <span>{item.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="loft-filter-section">
+        <h4 className="loft-filter-section-title">Customer Rating</h4>
+        <div className="loft-filter-options" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {[
+            { label: "All Ratings", value: "" },
+            { label: "4 Stars & Above", value: "4" },
+            { label: "3 Stars & Above", value: "3" },
+            { label: "2 Stars & Above", value: "2" },
+          ].map((item) => (
+            <label
+              key={item.value}
+              style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px" }}
+            >
+              <input
+                type="radio"
+                name="customer-rating"
+                value={item.value}
+                checked={rating === item.value}
+                onChange={() => {
+                  setRating(item.value);
+                  emitFilters({ r: item.value });
+                }}
+                style={{ cursor: "pointer" }}
+              />
+              <span>{item.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="loft-filter-section">
         <h4 className="loft-filter-section-title">Price Range</h4>
 
         <form className="loft-price-form" onSubmit={handlePriceSubmit}>
@@ -430,4 +551,4 @@ const Filters = ({
   );
 };
 
-export default Filters;
+export default memo(Filters);

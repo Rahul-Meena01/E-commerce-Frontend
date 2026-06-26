@@ -136,3 +136,49 @@
     font-size: 12px;
   }
 }
+
+/* Custom react-international-phone styling for LOFT design */
+.signup-page .react-phone-input-container {
+  width: 100%;
+}
+
+.signup-page .react-international-phone-input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.signup-page .react-international-phone-country-selector-button {
+  background: #fff;
+  border: 1px solid #e0dbd5;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  height: 46px;
+  padding: 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signup-page .react-international-phone-input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e0dbd5;
+  border-radius: 0 8px 8px 0;
+  height: 46px;
+  padding: 0 14px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  color: #111;
+  width: 100%;
+}
+
+.signup-page .react-international-phone-input-container:focus-within .react-international-phone-country-selector-button {
+  border-color: #c8b896;
+}
+
+.signup-page .react-international-phone-input-container:focus-within .react-international-phone-input {
+  border-color: #c8b896;
+}
+

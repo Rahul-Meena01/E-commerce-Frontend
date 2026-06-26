@@ -6,7 +6,13 @@ import { useDebouncedValue } from "./useDebouncedValue";
 const MIN_QUERY_LENGTH = 2;
 const SUGGESTION_LIMIT = 8;
 
-const normalize = (value = "") => value.toString().trim().toLowerCase();
+const normalize = (value = "") =>
+  value
+    .toString()
+    .normalize("NFC")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 
 const getProductCategory = (product) => {
   const parentCategory = product?.subCategory?.parentCategory;
@@ -30,7 +36,7 @@ const rankValue = (label, query) => {
   if (normalizedLabel === query) return 4;
   if (normalizedLabel.startsWith(query)) return 3;
   if (normalizedLabel.includes(query)) return 2;
-  return 1;
+  return 0;
 };
 
 const buildSuggestions = (products, query) => {
@@ -91,6 +97,7 @@ const buildSuggestions = (products, query) => {
       ...item,
       score: rankValue(item.label, query),
     }))
+    .filter((item) => item.score > 0)
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
       if (left.group !== right.group) {

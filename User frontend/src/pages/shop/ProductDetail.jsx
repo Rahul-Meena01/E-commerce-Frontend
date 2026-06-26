@@ -19,6 +19,7 @@ import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
 import { useToast } from "../../context/ToastContext";
 import ProductCard from "@/features/products/components/ProductCard";
 import "../../styles/ProductDetail.css";
+import { isOutOfStock, getProductStock, canAddQuantity, getAvailableQuantity } from "../../shared/utils/productUtils";
 import ProductGallery from "@/features/products/components/ProductGallery";
 import LightboxModal from "@/features/products/components/LightboxModal";
 import { resolveProductImage } from "@/shared/utils/api";
@@ -256,6 +257,7 @@ const ProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const activeProduct = selectedVariant || product;
   const [isMobileView, setIsMobileView] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 900 : false,
   );
@@ -297,14 +299,19 @@ const ProductDetail = () => {
     }
     const num = parseInt(cleanVal, 10);
     if (!isNaN(num)) {
-      setQuantity(Math.max(1, num));
+      const maxStock = getAvailableQuantity(activeProduct);
+      setQuantity(Math.max(1, Math.min(num, maxStock)));
     }
   };
 
   const handleQuantityBlur = () => {
-    if (quantity === "" || isNaN(quantity) || quantity < 1) {
-      setQuantity(1);
+    let qty = quantity === "" || isNaN(quantity) || quantity < 1 ? 1 : parseInt(quantity, 10);
+    const maxStock = getAvailableQuantity(activeProduct);
+    if (qty > maxStock) {
+      qty = maxStock === Infinity ? 1 : maxStock;
+      toast.info(`Only ${maxStock} units available.`);
     }
+    setQuantity(qty);
   };
 
   const updateScrollButtons = () => {
@@ -333,6 +340,19 @@ const ProductDetail = () => {
     }
   }, [similarProducts]);
 
+  useEffect(() => {
+    if (activeProduct) {
+      const maxStock = getAvailableQuantity(activeProduct);
+      setQuantity((prev) => {
+        const currentQty = Number(prev) || 1;
+        if (currentQty > maxStock) {
+          return Math.max(1, maxStock === Infinity ? 1 : maxStock);
+        }
+        return currentQty;
+      });
+    }
+  }, [activeProduct, selectedColor, selectedSize]);
+
   const urlSplit = useMemo(() => {
     const parts = (productId || "").split("_");
     return {
@@ -351,7 +371,7 @@ const ProductDetail = () => {
     }
   }, [product]);
 
-  const activeProduct = selectedVariant || product;
+
 
   const productVariants = useMemo(() => {
     return product?.variants || [];
@@ -414,7 +434,7 @@ const ProductDetail = () => {
 
   const isProductInStock = useMemo(() => {
     if (!activeProduct) return false;
-    return typeof activeProduct.stock === "number" ? activeProduct.stock > 0 : activeProduct.inStock !== false;
+    return !isOutOfStock(activeProduct);
   }, [activeProduct]);
 
   const isDiscounted = useMemo(() => {
@@ -502,6 +522,10 @@ const ProductDetail = () => {
   }, [loading]);
 
   const handleAddToCart = () => {
+    if (isOutOfStock(activeProduct)) {
+      toast.error("This product is currently out of stock.");
+      return;
+    }
     if (availableSizes.length > 0 && !selectedSize) {
       setSizeError("Please select a size to continue");
       sizeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -510,6 +534,10 @@ const ProductDetail = () => {
     setSizeError("");
 
     const qtyToSubmit = Math.max(1, parseInt(quantity, 10) || 1);
+    const maxStock = getAvailableQuantity(activeProduct);
+    if (qtyToSubmit > maxStock) {
+      toast.warning(`Only ${maxStock} units available. Quantity adjusted.`);
+    }
     addToCart({
       product: {
         productId: product._id,
@@ -518,6 +546,7 @@ const ProductDetail = () => {
         price: payPrice,
         image: activeProduct.image,
         brand: activeProduct.brand,
+        stock: getProductStock(activeProduct),
       },
       size: selectedSize,
       color: selectedColor,
@@ -691,8 +720,17 @@ const ProductDetail = () => {
               <button
                 type="button"
                 className="pd-qty-btn"
-                onClick={() => setQuantity((prev) => (Number(prev) || 1) + 1)}
+                onClick={() => {
+                  const next = (Number(quantity) || 1) + 1;
+                  const maxStock = getAvailableQuantity(activeProduct);
+                  if (next > maxStock) {
+                    toast.info(`Only ${maxStock} units available.`);
+                    return;
+                  }
+                  setQuantity(next);
+                }}
                 aria-label="Increase quantity"
+                disabled={!canAddQuantity(activeProduct, (Number(quantity) || 1) + 1)}
               >
                 +
               </button>

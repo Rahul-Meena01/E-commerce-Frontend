@@ -12,6 +12,7 @@ export function useSubCategoriesQuery(parentCategoryId = null) {
       const json = await res.json();
       return json.data || json;
     },
+    staleTime: 300_000,
   });
 
   const subcategories = useMemo(() => {

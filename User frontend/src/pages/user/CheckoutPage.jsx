@@ -18,6 +18,16 @@ import {
 } from "../../features/checkout/services/checkout.service";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/services/client";
+import { getProductStock, normalizeCartItem, getFreshStockForItem } from "../../shared/utils/productUtils";
+import {
+  validatePhone,
+  validatePostalCode,
+  validateAddress,
+  validateCountry,
+  validateState,
+  validateCity,
+  validateFullName,
+} from "@/shared/utils/addressValidation";
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -40,6 +50,7 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
   const [createdOrderId, setCreatedOrderId] = useState(null);
   const isOrderCompletedRef = useRef(false);
+  const isSubmittingRef = useRef(false);
 
   const {
     cartItems,
@@ -67,10 +78,12 @@ const CheckoutPage = () => {
     email: user?.email || "",
     phone: user?.phone || "",
     country: "",
+    countryCode: "",
     street: "",
     apartment: "",
     city: "",
     state: "",
+    stateCode: "",
     postalCode: "",
   });
 
@@ -95,20 +108,42 @@ const CheckoutPage = () => {
 
   const handleShippingSubmit = (e) => {
     e.preventDefault();
-    // Basic client-side validation
+    setOrderError("");
+
     const errors = {};
-    if (!formData.fullName.trim()) errors.fullName = "Full name is required";
+    if (!validateFullName(formData.fullName)) {
+      errors.fullName = "Full name must be between 2 and 70 characters (letters and spaces/hyphens/apostrophes only).";
+    }
     if (
       !formData.email.trim() ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    )
+    ) {
       errors.email = "Valid email is required";
-    if (!formData.country) errors.country = "Country is required";
-    if (!formData.street.trim()) errors.street = "Street address is required";
-    if (!formData.city.trim()) errors.city = "City is required";
-    if (!formData.state.trim()) errors.state = "State is required";
-    if (!formData.postalCode.trim())
-      errors.postalCode = "Postal code is required";
+    }
+
+    if (!formData.phone || !validatePhone(formData.phone, formData.countryCode)) {
+      errors.phone = "Valid international phone number is required";
+    }
+
+    if (!validateCountry(formData.country)) {
+      errors.country = "Country is required";
+    }
+
+    if (!validateState(formData.state)) {
+      errors.state = "State is required";
+    }
+
+    if (!validateCity(formData.city)) {
+      errors.city = "City is required";
+    }
+
+    if (!validateAddress(formData.street)) {
+      errors.street = "Street address must be between 5 and 120 characters without repeated punctuation.";
+    }
+
+    if (!validatePostalCode(formData.postalCode, formData.countryCode)) {
+      errors.postalCode = "Invalid postal code for the selected country.";
+    }
 
     if (Object.keys(errors).length > 0) {
       setOrderError(Object.values(errors)[0]);
@@ -129,10 +164,8 @@ const CheckoutPage = () => {
   const tax = Number(cartTotals?.tax) || 0;
   const total = Number(cartTotals?.grandTotal) || 0;
 
-  // Auto-switch to COD if a gift card is applied or total is 0
   useEffect(() => {
     if (appliedGiftCard || total === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPaymentMethod("COD");
     }
   }, [appliedGiftCard, total]);
@@ -144,12 +177,89 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     if (!user) {
       navigate("/login", { state: { from: "/checkout" } });
+      isSubmittingRef.current = false;
       return;
     }
 
     setOrderError("");
+
+    // Freshness validation before proceeding: retrieve fresh data for cart products only
+    let stockErrors;
+    const freshProductsMap = {};
+    try {
+      const uniqueProductIds = Array.from(
+        new Set(
+          cartItems.map((item) => {
+            const pid = typeof item.product === "object" && item.product
+              ? (item.product._id || item.product.id)
+              : item.product;
+            return pid;
+          }).filter(Boolean)
+        )
+      );
+
+      await Promise.all(
+        uniqueProductIds.map(async (id) => {
+          try {
+            const res = await api.get(`/product/public/${id}`);
+            const prod = res.data?.data || res.data;
+            if (prod) {
+              freshProductsMap[id] = prod;
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch fresh stock for product ${id}:`, err);
+          }
+        })
+      );
+
+      stockErrors = cartItems.filter((item) => {
+        const productId = typeof item.product === "object" && item.product
+          ? (item.product._id || item.product.id)
+          : item.product;
+        const freshProduct = freshProductsMap[productId];
+        if (!freshProduct) {
+          // Product is deleted or disabled
+          return true;
+        }
+        const freshStock = getFreshStockForItem(item, freshProduct);
+        return typeof freshStock === "number" && Number(item.quantity) > freshStock;
+      });
+    } catch (err) {
+      console.error("Freshness stock validation failed:", err);
+      // Fallback to local stock data if API fails
+      stockErrors = cartItems.filter((item) => {
+        const localStock = getProductStock(item);
+        return typeof localStock === "number" && Number(item.quantity) > localStock;
+      });
+    }
+
+    if (stockErrors.length > 0) {
+      const names = stockErrors
+        .map((item) => {
+          const productId = typeof item.product === "object" && item.product
+            ? (item.product._id || item.product.id)
+            : item.product;
+          const freshProduct = freshProductsMap[productId];
+          if (!freshProduct) {
+            return `${item.name || "Product"} (No longer available)`;
+          }
+          const freshStock = getFreshStockForItem(item, freshProduct);
+          return `${item.name || "Product"} (Requested: ${item.quantity}, Available: ${freshStock})`;
+        })
+        .join(", ");
+
+      setOrderError(`Stock validation failed: ${names}. Please adjust quantities in your cart.`);
+      setIsPaying(false);
+      setIsPreparingPayment(false);
+      isSubmittingRef.current = false;
+      return;
+    }
+
     setIsPaying(true);
     setIsPreparingPayment(true);
     const startTime = Date.now();
@@ -157,15 +267,7 @@ const CheckoutPage = () => {
 
     try {
       if (!orderId) {
-        const orderItemsPayload = cartItems.map((item) => ({
-          product: item.product,
-          name: item.name,
-          price: item.price,
-          qty: item.quantity,
-          size: item.size,
-          color: item.color,
-          image: item.image,
-        }));
+        const orderItemsPayload = cartItems.map((item) => normalizeCartItem(item));
 
         // Create DB order first
         // Force paymentMethod to "COD" if total is 0 (fully paid by gift card)
@@ -199,6 +301,7 @@ const CheckoutPage = () => {
         navigate(`/order-success/${orderId}`);
         setIsPaying(false);
         setIsPreparingPayment(false);
+        isSubmittingRef.current = false;
         return;
       }
 
@@ -279,6 +382,7 @@ const CheckoutPage = () => {
           } finally {
             setIsPaying(false);
             setIsPreparingPayment(false);
+            isSubmittingRef.current = false;
           }
         },
         modal: {
@@ -286,6 +390,7 @@ const CheckoutPage = () => {
             setOrderError("Payment cancelled by user.");
             setIsPaying(false);
             setIsPreparingPayment(false);
+            isSubmittingRef.current = false;
             try {
               await api.put(`/orders/${orderId}/cancel`, { note: "Payment cancelled by user at checkout." });
             } catch (cancelErr) {
@@ -300,14 +405,25 @@ const CheckoutPage = () => {
       const remainingTime = Math.max(0, 800 - elapsed);
 
       setTimeout(() => {
-        setIsPreparingPayment(false);
-        const rzp = new window.Razorpay(options);
-        rzp.open();
+        try {
+          setIsPreparingPayment(false);
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } catch {
+          setOrderError("Failed to open payment gateway. Please try again.");
+          setIsPaying(false);
+          isSubmittingRef.current = false;
+          if (orderId) {
+            api.put(`/orders/${orderId}/cancel`, { note: "Razorpay instantiation failed." }).catch(console.error);
+            setCreatedOrderId(null);
+          }
+        }
       }, remainingTime);
     } catch (err) {
       setOrderError(err?.message || "Something went wrong. Please try again.");
       setIsPaying(false);
       setIsPreparingPayment(false);
+      isSubmittingRef.current = false;
       if (orderId) {
         try {
           await api.put(`/orders/${orderId}/cancel`, { note: "Payment flow initialization failed." });
@@ -396,10 +512,12 @@ const CheckoutPage = () => {
             {activeStep === 1 && (
               <CheckoutShippingForm
                 formData={formData}
+                setFormData={setFormData}
                 handleInputChange={handleInputChange}
                 handleShippingSubmit={handleShippingSubmit}
                 shippingMethod={shippingMethod}
                 setShippingMethod={setShippingMethod}
+                orderError={orderError}
               />
             )}
 

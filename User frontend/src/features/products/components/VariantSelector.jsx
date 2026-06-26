@@ -48,7 +48,6 @@ const VariantSelector = ({
     const selectedOption = options[selectedIndex];
     if (!selectedOption) return;
     const prefix = announcementPrefix || `${label} selected`;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLiveMessage(
       `${prefix}: ${selectedOption.label || selectedOption.value}`,
     );

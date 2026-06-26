@@ -8,7 +8,7 @@ import {
   Heart,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useWishlistState } from "@/features/wishlist/hooks/useWishlist";
 import { useCartState } from "@/features/cart/hooks/useCart";
 import {
@@ -38,7 +38,7 @@ const Navbar = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   const shopMenuCloseTimerRef = useRef(null);
@@ -48,7 +48,7 @@ const Navbar = () => {
   const { logout } = useAuthActions();
   const { categories } = useCategories();
   const { subcategories: allSubCategories = [] } = useSubCategories();
-  const shopMenuItems = categories.map((cat) => {
+  const shopMenuItems = useMemo(() => categories.map((cat) => {
     const catKey =
       cat.slug ||
       cat.name
@@ -75,14 +75,18 @@ const Navbar = () => {
         route: `/shop/${cat.slug}/${sub.slug}`,
       })),
     };
-  });
+  }), [categories, allSubCategories]);
 
-  const activeShopItem =
-    shopMenuItems.find((item) => item.key === activeShopKey) ||
-    shopMenuItems[0];
-  const activeShopSubCategories = activeShopItem?.subCategories || [];
+  const activeShopItem = useMemo(
+    () => shopMenuItems.find((item) => item.key === activeShopKey) || shopMenuItems[0],
+    [shopMenuItems, activeShopKey],
+  );
+  const activeShopSubCategories = useMemo(
+    () => activeShopItem?.subCategories || [],
+    [activeShopItem],
+  );
 
-  const openShopMenu = (
+  const openShopMenu = useCallback((
     itemKey = activeShopItem?.key || shopMenuItems[0]?.key,
   ) => {
     if (shopMenuCloseTimerRef.current) {
@@ -92,9 +96,9 @@ const Navbar = () => {
 
     setActiveShopKey(itemKey);
     setShopMenuOpen(true);
-  };
+  }, [activeShopItem, shopMenuItems]);
 
-  const closeShopMenu = () => {
+  const closeShopMenu = useCallback(() => {
     if (shopMenuCloseTimerRef.current) {
       clearTimeout(shopMenuCloseTimerRef.current);
     }
@@ -102,7 +106,7 @@ const Navbar = () => {
     shopMenuCloseTimerRef.current = setTimeout(() => {
       setShopMenuOpen(false);
     }, 120);
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -128,31 +132,30 @@ const Navbar = () => {
       clearTimeout(shopMenuCloseTimerRef.current);
       shopMenuCloseTimerRef.current = null;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchOpen(false);
     setSearchQuery("");
     setMobileMenuOpen(false);
     setShopMenuOpen(false);
   }, [location.pathname]);
 
-  function closeSearch() {
+  const closeSearch = useCallback(() => {
     searchTriggerRef.current?.focus({ preventScroll: true });
     setSearchOpen(false);
     setSearchQuery("");
-  }
+  }, []);
 
-  const handleMobileNav = (path) => {
+  const scrollToFooter = useCallback(() => {
+    document.querySelector(".footer")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const handleMobileNav = useCallback((path) => {
     setMobileMenuOpen(false);
     if (path === "footer") {
       scrollToFooter();
     } else {
       navigate(path);
     }
-  };
-
-  const scrollToFooter = () => {
-    document.querySelector(".footer")?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [navigate, scrollToFooter]);
 
   useEffect(() => {
     const handleCartItemAdded = () => {
@@ -164,14 +167,14 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleDropdownKeyDown = (e) => {
+  const handleDropdownKeyDown = useCallback((e) => {
     if (e.key === "Escape") {
       setShopMenuOpen(false);
       e.currentTarget.querySelector(".shop-link")?.focus();
     }
-  };
+  }, []);
 
-  const handleShopLinkKeyDown = (e) => {
+  const handleShopLinkKeyDown = useCallback((e) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       openShopMenu(activeShopItem?.key || (shopMenuItems[0] && shopMenuItems[0].key));
@@ -180,7 +183,7 @@ const Navbar = () => {
         if (firstBtn) firstBtn.focus();
       }, 50);
     }
-  };
+  }, [openShopMenu, activeShopItem, shopMenuItems]);
 
   return (
     <>

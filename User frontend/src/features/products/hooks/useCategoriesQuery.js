@@ -11,5 +11,6 @@ export function useCategoriesQuery() {
       const json = await res.json();
       return json.data || json;
     },
+    staleTime: 300_000,
   });
 }
