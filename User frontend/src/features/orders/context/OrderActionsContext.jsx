@@ -171,7 +171,7 @@ export const OrderActionsProvider = ({ children }) => {
 
   // Request return action
   const requestReturn = async (orderId, { reason, comments, images }) => {
-    // TODO: POST /api/orders/:id/return
+    // Backend integration: POST /api/orders/:id/return
     // For backend:
     // await authFetch(`/api/orders/${orderId}/return`, { method: "POST", body: { reason, comments, images } });
 
@@ -210,7 +210,7 @@ export const OrderActionsProvider = ({ children }) => {
 
   // Check refund status helper
   const getRefundStatus = (orderId) => {
-    // TODO: GET /api/orders/:id/refund-status
+    // Backend integration: GET /api/orders/:id/refund-status
     const order = getOrderById(orderId);
     if (!order) return null;
     return order.refundStatus || null;

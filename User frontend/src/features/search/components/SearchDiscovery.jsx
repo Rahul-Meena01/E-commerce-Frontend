@@ -86,11 +86,11 @@ export default function SearchDiscovery({ onSelect }) {
       <section className="search-discovery__section">
         <div className="search-discovery__section-header">
           <div>
-            <p className="search-discovery__eyebrow">Shop now</p>
-            <h3 className="search-discovery__title">Trending Products</h3>
+            <p className="search-discovery__eyebrow">Explore</p>
+            <h3 className="search-discovery__title">Customer Favourites</h3>
           </div>
           <p className="search-discovery__summary">
-            Fresh picks from the current catalog.
+            Carefully selected pieces our community keeps coming back for.
           </p>
         </div>
 
@@ -116,7 +116,7 @@ export default function SearchDiscovery({ onSelect }) {
                 <SearchDiscoveryProductCard
                   product={product}
                   onSelect={onSelect}
-                  badge="Trending"
+                  badge="Favourite"
                 />
               )}
             </div>
@@ -127,11 +127,11 @@ export default function SearchDiscovery({ onSelect }) {
       <section className="search-discovery__section">
         <div className="search-discovery__section-header">
           <div>
-            <p className="search-discovery__eyebrow">Browse by edit</p>
-            <h3 className="search-discovery__title">Popular Categories</h3>
+            <p className="search-discovery__eyebrow">Curated</p>
+            <h3 className="search-discovery__title">Explore Categories</h3>
           </div>
           <p className="search-discovery__summary">
-            Shop the collections customers reach for most.
+            Explore our thoughtfully organised categories.
           </p>
         </div>
 
@@ -170,7 +170,7 @@ export default function SearchDiscovery({ onSelect }) {
             <div>
               <p className="search-discovery__eyebrow">Return to browsing</p>
               <h3 className="search-discovery__title">
-                Recently Viewed Products
+                Recently Viewed
               </h3>
             </div>
             <p className="search-discovery__summary">

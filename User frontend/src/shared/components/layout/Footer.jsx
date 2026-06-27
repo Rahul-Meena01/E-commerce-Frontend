@@ -10,9 +10,10 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-main">
         <div className="footer-column footer-brand">
-          <div className="footer-logo">Loft</div>
+          <div className="footer-logo">LOFT</div>
           <p className="footer-brand-description">
-            Curated collections of premium fashion for the discerning eye.
+            A carefully curated list of premium pre-loved and vintage fashion,
+            chosen for quality and individuality.
           </p>
 
           <div className="footer-socials">
@@ -103,7 +104,7 @@ const Footer = () => {
               <Link to="/shop?sort=newest">New Arrivals</Link>
             </li>
             <li>
-              <Link to="/shop?sort=rating">Best Sellers</Link>
+              <Link to="/shop?sort=rating">Customer Favourites</Link>
             </li>
           </ul>
         </div>
@@ -112,7 +113,7 @@ const Footer = () => {
           <h3 className="footer-column-title">COMPANY</h3>
           <ul className="footer-links">
             <li>
-              <Link to="/about">About Us</Link>
+              <Link to="/about">About LOFT</Link>
             </li>
             <li>
               <Link to="/careers">Careers</Link>
@@ -152,7 +153,7 @@ const Footer = () => {
 
       <div className="footer-bottom">
         <div className="footer-bottom-left">
-          <p>&copy; 2026 Loft. All rights reserved.</p>
+          <p>&copy; 2026 LOFT — List Of Favourite Thrift. All rights reserved.</p>
         </div>
 
         <div className="footer-bottom-right">

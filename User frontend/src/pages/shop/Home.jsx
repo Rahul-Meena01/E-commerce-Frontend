@@ -11,7 +11,7 @@ const Home = () => {
       
       <Reveal direction="up" delay={0.1}>
         <ProductSlider 
-          title="Trending Now" 
+          title="Newly Curated" 
           fetchUrl="/api/product/public/all?sort=popularity&limit=8"
           viewAllLink="/shop"
         />
@@ -20,18 +20,18 @@ const Home = () => {
       <Reveal direction="up">
         <Category />
       </Reveal>
-
+ 
       <Reveal direction="up" delay={0.1}>
         <ProductSlider 
-          title="New Arrivals" 
+          title="Carefully Selected" 
           fetchUrl="/api/product/public/all?sort=newest&limit=8"
           viewAllLink="/shop?sort=newest"
         />
       </Reveal>
-
+ 
       <Reveal direction="up">
         <ProductSlider 
-          title="Best Sellers" 
+          title="Customer Favourites" 
           fetchUrl="/api/product/public/all?sort=rating&limit=8"
         />
       </Reveal>

@@ -1,40 +1,40 @@
 export const siteContent = {
   hero: {
-    subtitle: "Premium Collection",
-    titleLeft: "Elevate Your\nStyle With\nSophistication",
-    aboutHeading: "About Collection",
-    titleRight: "Timeless Elegance\nMeets Modern Fashion",
-    description: "Discover our curated collection of premium clothing pieces designed to bring sophistication and style to your wardrobe. Crafted with finest materials and contemporary design principles.",
+    subtitle: "Newly Curated",
+    titleLeft: "Curated Pieces,\nWorth Keeping.",
+    aboutHeading: "Our Philosophy",
+    titleRight: "Timeless Design\nMeets Pre-Loved Character",
+    description: "Every purchase extends the life of well-made clothing. We discover and present a carefully curated selection of vintage and second-hand pieces, chosen for their longevity, design, and individuality.",
     ctaLink: "/shop",
-    ctaLabel: "Shop Now",
+    ctaLabel: "Explore the Collection",
     heroVideoUrl: "/hero-video.mp4"
   },
   newsletter: {
     label: "THE LOFT JOURNAL",
-    title: "Join Our Luxury Edit",
-    description: "Discover exclusive collections, styling insights, and early access to new releases.",
+    title: "Join the LOFT Journal",
+    description: "Be the first to discover newly curated thrift finds, stories, and customer favorites.",
     placeholder: "Enter your email address",
     buttonLabel: "Subscribe",
     successMessage: "Thank you",
-    privacyText: "We respect your privacy. Unsubscribe at any time."
+    privacyText: "We value privacy. Unsubscribe at any time."
   },
   policies: {
     shippingTitle: "Shipping & Returns",
-    shippingDetails: "Complimentary standard shipping is included with all orders. Delivery typically takes 3–5 business days.",
-    returnsDetails: "We offer free returns and exchanges within 30 days of delivery. Items must be unworn, unwashed, and returned in their original packaging with tags intact."
+    shippingDetails: "Complimentary standard shipping is included for all curated finds above ₹1000. Delivery typically takes 3–5 business days.",
+    returnsDetails: "To honor the circular nature of thrift, we offer returns within 30 days. Items must be in their original pre-loved condition, unworn, and returned in original LOFT packaging."
   },
   trustBadges: [
     {
-      title: "Secure Payment",
-      desc: "100% protected"
+      title: "Hand Curated",
+      desc: "Every piece selected by hand"
     },
     {
-      title: "Easy Returns",
-      desc: "30-day return policy"
+      title: "30-Day Returns",
+      desc: "Easy, hassle-free returns"
     },
     {
-      title: "Free Shipping",
-      desc: "Orders above ₹1000"
+      title: "Complimentary Shipping",
+      desc: "On orders above ₹1000"
     }
   ],
   popularSearches: [

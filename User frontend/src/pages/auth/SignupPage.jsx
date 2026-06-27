@@ -135,21 +135,21 @@ export default function SignupPage() {
           className="login-left-image"
         />
 
-        <div className="login-left-logo">Loft</div>
+        <div className="login-left-logo">LOFT</div>
 
         <div className="login-left-overlay">
-          <span className="login-left-label">WELCOME</span>
+          <span className="login-left-label">PREMIUM PRE-LOVED FASHION</span>
           <h1 className="login-left-heading">
-            Join the World
+            Timeless Finds,
             <br />
-            of Premium
+            Carefully Chosen.
             <br />
-            Fashion
+            Worth Keeping.
           </h1>
           <p className="login-left-desc">
-            Create an account to access exclusive
+            Discover a carefully selected list of pre-loved pieces,
             <br />
-            styles and premium collections.
+            each chosen for its quality, character, and longevity.
           </p>
         </div>
       </div>
@@ -166,9 +166,9 @@ export default function SignupPage() {
         </div>
 
         <div className="login-form-wrapper">
-          <h2 className="login-heading">Create your account</h2>
+          <h2 className="login-heading">Join the LOFT Community</h2>
           <p className="login-subheading">
-            Join Loft — access premium collections and faster checkout.
+            Join LOFT — discover curated pre-loved fashion and timeless designs.
           </p>
 
           <form onSubmit={onSubmit} className="login-form">

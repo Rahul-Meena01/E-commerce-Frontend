@@ -68,7 +68,7 @@ const Navbar = () => {
       route: `/shop/${cat.slug}`,
       note: "",
       description:
-        cat.description || `Explore our dynamic ${cat.name} collection.`,
+        cat.description || `Explore our carefully selected list of pre-loved ${cat.name} finds.`,
       subCategories: catSubCats.map((sub) => ({
         label: sub.name,
         slug: sub.slug,
@@ -189,7 +189,7 @@ const Navbar = () => {
     <>
       <div className="announcement-bar">
         <p>
-          New Arrivals: Summer Edit Now Live • 30-day premium return policy
+          Newly Curated: Summer Thrift Finds Worth Discovering • 30-day returns
         </p>
       </div>
       <nav
@@ -197,7 +197,7 @@ const Navbar = () => {
         aria-label="Main navigation"
       >
         <Link to="/" className="navbar-logo">
-          Loft
+          LOFT
         </Link>
 
         <ul className="navbar-links">

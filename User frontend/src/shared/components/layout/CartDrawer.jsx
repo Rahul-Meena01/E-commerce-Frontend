@@ -181,9 +181,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
           {cartItems.length === 0 ? (
             <div className="cart-drawer-empty">
               <ShoppingBag size={48} className="empty-icon" />
-              <p>Your shopping cart is empty</p>
+              <p>You haven't selected any curated finds yet.</p>
               <Button variant="primary" onClick={onClose}>
-                Continue Shopping
+                Explore the Collection
               </Button>
             </div>
           ) : (

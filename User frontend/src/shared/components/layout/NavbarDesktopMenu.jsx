@@ -45,7 +45,7 @@ const NavbarDesktopMenu = ({
           <div className="mega-menu-center" key={activeShopKey}>
             <div className="mega-menu-section-heading">
               <span className="mega-menu-section-eyebrow">
-                Selected category
+                Selected edit
               </span>
               <h3>{activeShopItem?.label}</h3>
               <p>{activeShopItem?.description}</p>
@@ -82,22 +82,22 @@ const NavbarDesktopMenu = ({
             <div className="mega-menu-promo-image-wrap">
               <OptimizedImage
                 src="/heroSection.png"
-                alt="Luxury Fashion Campaign"
+                alt="Curated Thrift Campaign"
                 className="mega-menu-promo-image"
               />
             </div>
 
             <div className="mega-menu-promo-content">
               <span className="mega-menu-promo-kicker">
-                Luxury Fashion Campaign
+                Curated Thrift Campaign
               </span>
               <h3>Curated silhouettes for the modern wardrobe</h3>
               <p>
-                Discover elevated tailoring, seasonal layers, and refined
-                essentials selected for the Loft edit.
+                Discover elevated tailoring, seasonal layers, and character-rich
+                essentials hand-picked for the LOFT edit.
               </p>
               <span className="mega-menu-promo-cta">
-                Discover campaign
+                Explore campaign
               </span>
             </div>
           </Link>

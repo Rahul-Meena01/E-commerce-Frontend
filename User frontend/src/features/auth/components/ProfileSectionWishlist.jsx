@@ -70,12 +70,12 @@ const ProfileSectionWishlist = ({ wishlistCount, wishlistItems, removeFromWishli
         <div className="profile-empty-state">
           <Heart size={48} color="#d0d0d0" />
           <h3>Your wishlist is empty</h3>
-          <p>Browse our collections and heart the items you love.</p>
+          <p>Browse our curated finds and heart the items you wish to save.</p>
           <button
             className="profile-cta-btn"
             onClick={() => navigate("/shop")}
           >
-            Start Shopping
+            Explore the Collection
           </button>
         </div>
       )}

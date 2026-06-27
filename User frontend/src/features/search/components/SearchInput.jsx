@@ -28,8 +28,8 @@ export default function SearchInput({
         value={value}
         onChange={onChange}
         onKeyDown={onKeyDown}
-        placeholder="Search products, brands, or categories"
-        aria-label="Search products, brands, or categories"
+        placeholder="Search curated thrift finds..."
+        aria-label="Search curated thrift finds"
         aria-expanded={ariaExpanded}
         aria-controls={ariaControls}
         aria-activedescendant={ariaActiveDescendant}

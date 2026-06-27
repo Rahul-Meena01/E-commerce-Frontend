@@ -39,11 +39,11 @@ const ProfileSectionOrders = ({ orders, ordersLoading, navigate }) => {
   return (
     <div className="profile-section-orders">
       <div className="profile-section-header">
-        <h2 className="profile-section-title">Order History</h2>
+        <h2 className="profile-section-title">Orders</h2>
         <p className="profile-section-subtitle">
           {mergedOrders.length > 0
             ? `${mergedOrders.length} order${mergedOrders.length > 1 ? "s" : ""}`
-            : "Your recent purchases will appear here"}
+            : "Your order history is empty"}
         </p>
       </div>
 
@@ -68,12 +68,12 @@ const ProfileSectionOrders = ({ orders, ordersLoading, navigate }) => {
         <div className="loft-empty-state">
           <ShoppingBag size={48} />
           <h3>No Orders Found</h3>
-          <p>Once you place your first order, it will show up here.</p>
+          <p>Once you place your first order, it will appear here.</p>
           <button
             className="loft-btn loft-btn-primary"
             onClick={() => navigate("/shop")}
           >
-            Start Shopping
+            Explore the Collection
           </button>
         </div>
       )}

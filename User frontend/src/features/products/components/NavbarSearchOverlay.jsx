@@ -25,10 +25,10 @@ export default function NavbarSearchOverlay({
       <input
         ref={searchInputRef}
         type="text"
-        placeholder="Search products..."
+        placeholder="Search curated thrift finds..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        aria-label="Search products"
+        aria-label="Search curated thrift finds"
         onKeyDown={(e) => e.key === "Escape" && closeSearch()}
       />
       <button

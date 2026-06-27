@@ -76,7 +76,7 @@ const CategoryPage = () => {
     <div className="category-page">
       <header className="cat-hero">
         <div className="cat-hero-inner">
-          <h1 className="cat-title">{selectedCategory.name} Collection</h1>
+          <h1 className="cat-title">{selectedCategory.name} Edit</h1>
         </div>
       </header>
 

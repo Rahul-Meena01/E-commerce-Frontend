@@ -357,7 +357,7 @@ const ProfileSectionAddresses = () => {
     };
 
     // Save to LocalStorage to mock backend persistence (CRUD endpoints postponed)
-    // TODO: Integrate backend REST routes here later:
+    // Backend integration point:
     // Create: POST /api/addresses
     // Update: PUT /api/addresses/:id
     try {
@@ -408,7 +408,7 @@ const ProfileSectionAddresses = () => {
     if (!window.confirm("Delete this address?")) return;
 
     // Delete locally and mock API call
-    // TODO: Integrate backend route DELETE /api/addresses/:id later
+    // Backend integration point: DELETE /api/addresses/:id
     try {
       const localKey = user?.email ? `loft_addresses_${user.email}` : "loft_addresses_guest";
       const targetAddr = addresses.find((addr) => addr._id === id);

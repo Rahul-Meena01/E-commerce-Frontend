@@ -243,7 +243,7 @@ const SubCategoryPage = () => {
       </div>
 
       <header className="subcat-editorial-header">
-        <span className="subcat-eyebrow">Curated Collection</span>
+        <span className="subcat-eyebrow">Carefully Selected</span>
 
         <h1 className="subcat-title-editorial">{displayTitle}</h1>
       </header>
@@ -303,7 +303,7 @@ const SubCategoryPage = () => {
         <section className="subcat-grid">
           <header className="subcat-header">
             <span className="subcat-count">
-              {isLoading ? "Loading..." : `${visible.length} items found`}
+              {isLoading ? "Loading..." : `${visible.length} pieces curated`}
             </span>
           </header>
 
@@ -325,7 +325,7 @@ const SubCategoryPage = () => {
                   textAlign: "center",
                 }}
               >
-                <p>No products matched your filters.</p>
+                <p>No curated pieces match your filters.</p>
               </div>
             )}
           </div>
@@ -337,7 +337,7 @@ const SubCategoryPage = () => {
                 onClick={handleLoadMore}
                 type="button"
               >
-                Load More ({visible.length - displayCount} remaining)
+                Explore More ({visible.length - displayCount} remaining)
               </button>
             </div>
           )}

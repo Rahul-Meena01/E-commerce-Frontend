@@ -155,6 +155,81 @@ router.get("/list", async (req, res) => {
   }
 });
 
+// GET USER'S OWN GIFT CARDS
+router.get("/my", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    // Find gift cards where receiverName matches the user's name
+    const giftCards = await GiftCard.find({
+      receiverName: { $regex: new RegExp(`^${req.user.name}$`, "i") }
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: giftCards,
+    });
+  } catch (error) {
+    console.error("Error fetching own gift cards:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching user gift cards",
+    });
+  }
+});
+
+// VERIFY GIFT CARD
+router.post("/verify", async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "Gift card code is required",
+      });
+    }
+
+    const giftCard = await GiftCard.findOne({ code: code.trim().toUpperCase() });
+
+    if (!giftCard) {
+      return res.status(404).json({
+        success: false,
+        valid: false,
+        message: "Gift card not found or invalid",
+      });
+    }
+
+    if (!giftCard.isValidGiftCard()) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "Gift card is invalid, expired, or has zero balance",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      valid: true,
+      amount: giftCard.giftCardValue,
+      message: "Gift card applied successfully",
+    });
+  } catch (error) {
+    console.error("Error verifying gift card:", error);
+    res.status(500).json({
+      success: false,
+      valid: false,
+      message: "Server error while verifying gift card",
+    });
+  }
+});
+
 // GET SINGLE GIFT CARD
 router.get("/single/:id", async (req, res) => {
   try {

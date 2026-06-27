@@ -16,7 +16,7 @@ const OrderDetailsPage = () => {
   const navigate = useNavigate();
   const { getOrderById, cancelOrder, requestReturn, canCancelOrder, canReturnOrder } = useOrderActions();
 
-  // TODO: GET /api/orders/:id
+  // Backend integration: GET /api/orders/:id
   // When connecting backend, fetch single order via API or React Query hook.
   const order = getOrderById(orderId);
   const loading = false; // Mock data is loaded synchronously
@@ -64,12 +64,12 @@ const OrderDetailsPage = () => {
   });
 
   const handleCancelConfirm = (id, reason) => {
-    // TODO: POST /api/orders/:id/cancel
+    // Backend integration: POST /api/orders/:id/cancel
     cancelOrder(id, reason);
   };
 
   const handleReturnConfirm = (id, payload) => {
-    // TODO: POST /api/orders/:id/return
+    // Backend integration: POST /api/orders/:id/return
     requestReturn(id, payload);
   };
 
@@ -147,7 +147,7 @@ const OrderDetailsPage = () => {
           </div>
 
           {/* Refund Card (if applicable) */}
-          {/* TODO: GET /api/orders/:id/refund-status */}
+          {/* Backend integration: GET /api/orders/:id/refund-status */}
           {order.refundStatus && statusType !== "cancelled" && (
             <RefundStatusCard
               refundStatus={order.refundStatus}

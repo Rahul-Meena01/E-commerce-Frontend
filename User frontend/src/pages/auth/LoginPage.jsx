@@ -77,21 +77,21 @@ export default function LoginPage() {
           className="login-left-image"
         />
 
-        <div className="login-left-logo">Loft</div>
+        <div className="login-left-logo">LOFT</div>
 
         <div className="login-left-overlay">
-          <span className="login-left-label">PREMIUM COLLECTION</span>
+          <span className="login-left-label">PREMIUM PRE-LOVED FASHION</span>
           <h1 className="login-left-heading">
-            Elevate Your
+            Timeless Finds,
             <br />
-            Style With
+            Carefully Chosen.
             <br />
-            Sophistication
+            Worth Keeping.
           </h1>
           <p className="login-left-desc">
-            Discover timeless fashion pieces crafted
+            Discover a carefully selected list of pre-loved pieces,
             <br />
-            with elegance, luxury, and modern design.
+            each chosen for its quality, character, and longevity.
           </p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function LoginPage() {
         </div>
 
         <div className="login-form-wrapper">
-          <h2 className="login-heading">Login to your account</h2>
+          <h2 className="login-heading">Welcome back to LOFT</h2>
           <p className="login-subheading">Enter your details below to access your account.</p>
 
 

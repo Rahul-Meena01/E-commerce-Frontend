@@ -312,10 +312,10 @@ export default function CheckoutOrderSummary({
         <div className="checkout-security-panel">
           <div className="checkout-secure-header">
             <Lock size={14} className="checkout-secure-lock-icon" />
-            <span className="checkout-secure-header-title">SECURE GATEWAY ENCRYPTION</span>
+            <span className="checkout-secure-header-title">SECURE CONNECTION</span>
           </div>
           <p className="checkout-security-description">
-            Your connection is encrypted with 256-bit SSL protocol. Payments are verified securely in real-time.
+            Each transaction is protected by 256-bit encryption. Your details are handled with care.
           </p>
           
           {/* SVG Payment Badges Grid */}
@@ -351,24 +351,24 @@ export default function CheckoutOrderSummary({
           <div className="checkout-promise-item">
             <Truck size={15} />
             <div>
-              <p className="checkout-promise-title">Free Standard Delivery</p>
-              <p className="checkout-promise-desc">Complimentary for all purchases above {formatPrice(1000)}</p>
+              <p className="checkout-promise-title">Complimentary Shipping</p>
+              <p className="checkout-promise-desc">Complimentary on orders above {formatPrice(1000)}</p>
             </div>
           </div>
 
           <div className="checkout-promise-item">
             <RotateCcw size={15} />
             <div>
-              <p className="checkout-promise-title">Complimentary Returns</p>
-              <p className="checkout-promise-desc">30-day elegant returns and size exchanges</p>
+              <p className="checkout-promise-title">30-Day Returns</p>
+              <p className="checkout-promise-desc">Complimentary returns on all curated finds</p>
             </div>
           </div>
 
           <div className="checkout-promise-item">
             <Clock size={15} />
             <div>
-              <p className="checkout-promise-title">Concierge Customer Support</p>
-              <p className="checkout-promise-desc">Available 24/7 to assist with your ordering inquiries</p>
+              <p className="checkout-promise-title">Customer Care</p>
+              <p className="checkout-promise-desc">Support for all your curation and ordering questions</p>
             </div>
           </div>
         </div>
