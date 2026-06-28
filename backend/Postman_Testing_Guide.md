@@ -41,21 +41,7 @@ This guide provides step-by-step instructions and example payloads for testing a
   ```
 - **Action**: Copy the `token` from the response and save it as `{{userToken}}` in your environment.
 
-### 1.3 Register Admin
-- **Method**: `POST`
-- **URL**: `{{baseUrl}}/api/auth/register-admin`
-- **Body (JSON)**:
-  ```json
-  {
-    "name": "Super Admin",
-    "email": "admin@test.com",
-    "password": "password123",
-    "phone": "0987654321"
-  }
-  ```
-- **Action**: Login as admin and save the token as `{{adminToken}}`.
-
-### 1.4 Register Vendor
+### 1.3 Register Vendor
 - **Method**: `POST`
 - **URL**: `{{baseUrl}}/api/auth/register-vendor`
 - **Body (JSON)**:
@@ -65,7 +51,7 @@ This guide provides step-by-step instructions and example payloads for testing a
     "email": "vendor@test.com",
     "password": "password123",
     "phone": "1112223333",
-    "storeName": "Vendor Store"
+    "shopName": "Vendor Store"
   }
   ```
 - **Action**: Login as vendor and save the token as `{{vendorToken}}`.
@@ -83,7 +69,8 @@ Ensure you use `{{adminToken}}` for these requests.
   ```json
   {
     "name": "Electronics",
-    "description": "Electronic gadgets and devices"
+    "slug": "electronics",
+    "status": "Active"
   }
   ```
 - **Action**: Note the `_id` of the created category to use in the next steps.
@@ -242,8 +229,8 @@ Ensure you use `{{adminToken}}`.
     "code": "SUMMER20",
     "discountType": "percentage",
     "discountValue": 20,
-    "maxUses": 100,
-    "expiryDate": "2027-12-31"
+    "maxUsesPerUser": 1,
+    "expiresAt": "2027-12-31"
   }
   ```
 

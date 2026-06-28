@@ -36,8 +36,13 @@ export default function SignupPage() {
 
   const handlePhoneChange = (value) => {
     setPhone(value);
-    if (value && value !== "+" && !validatePhone(value)) {
-      setPhoneError("Invalid phone number format.");
+    const digitCount = (value.match(/\d/g) || []).length;
+    if (value && value !== "+" && digitCount > 3) {
+      if (!validatePhone(value)) {
+        setPhoneError("Invalid phone number format.");
+      } else {
+        setPhoneError("");
+      }
     } else {
       setPhoneError("");
     }

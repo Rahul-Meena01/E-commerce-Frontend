@@ -1,232 +1,113 @@
-/* ═══════════════════════════════════════════════════════
-   LOFT Variant Selector Styles
-   ═══════════════════════════════════════════════════════ */
-
-.vs-root {
-  margin-bottom: var(--ds-space-5, 20px);
-}
-
-.vs-header {
+.pd-variants-section {
+  margin: 24px 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--ds-space-2, 8px);
-}
-
-.vs-title {
-  font-family: var(--ds-font-sans), sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--ds-color-text, #111827);
-}
-
-.vs-current-val {
-  font-weight: 500;
-  color: var(--ds-color-text-muted, #667085);
-  margin-left: 4px;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-.vs-size-guide-btn {
-  background: none;
-  border: none;
-  font-family: var(--ds-font-sans), sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ds-color-text-muted, #667085);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: var(--ds-radius-xs, 4px);
-  transition: all var(--ds-duration-fast) ease;
-}
-
-.vs-size-guide-btn:hover {
-  color: var(--ds-color-text, #111827);
-  background-color: var(--ds-color-surface-muted, #f8fafc);
-}
-
-.vs-size-guide-icon {
-  opacity: 0.7;
-}
-
-.vs-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* ── Base Option Button ── */
-.vs-option {
-  border: 1px solid var(--ds-color-border, #e4e7ec);
-  background: #ffffff;
-  color: var(--ds-color-text, #111827);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    border-color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    box-shadow var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    transform var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-  position: relative;
-  font-family: var(--ds-font-sans), sans-serif;
-  box-shadow: none;
-  outline: none;
-}
-
-/* Accessible Premium Focus States */
-.vs-option:focus-visible {
-  outline: 2px solid var(--ds-color-accent, #a47551);
-  outline-offset: 2px;
-}
-
-/* ═══════════════════════════════════════════════════════
-   COLOR SELECTOR SWATCHES (Massimo Dutti / COS style)
-   ═══════════════════════════════════════════════════════ */
-.vs-options--color {
+  flex-direction: column;
   gap: 12px;
 }
 
-.vs-options--color .vs-option {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.pd-variants-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ds-color-muted, #718096);
+  margin: 0;
+}
+
+.pd-variants-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pd-variant-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 90px;
   padding: 0;
-  border: 1.5px solid var(--ds-color-border, #e4e7ec);
-  background: transparent;
-  min-width: 32px;
-  min-height: 32px;
-  transition:
-    transform var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    border-color var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    box-shadow var(--motion-normal, 300ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  border: 2px solid var(--ds-color-border, #e2e8f0);
+  border-radius: 8px;
+  background-color: var(--ds-color-bg, #ffffff);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  font-family: inherit;
 }
 
-.vs-options--color .vs-option:hover:not(.vs-option--disabled) {
-  transform: scale(1.08);
-  border-color: var(--ds-color-border-strong, #cbd5e1);
+.pd-variant-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--ds-color-text, #1a1a1a);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.vs-options--color .vs-option--selected {
-  border-color: var(--ds-color-text, #111827);
-  transform: scale(1.08);
-  box-shadow: 0 0 0 1px var(--ds-color-text, #111827);
+.pd-variant-card.active {
+  border-color: var(--ds-color-accent, #2b6cb0);
+  box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.15), 0 4px 12px rgba(43, 108, 176, 0.1);
 }
 
-.vs-swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  display: block;
-  box-sizing: border-box;
-  margin: auto;
-  transition: all var(--ds-duration-fast) ease;
+.pd-variant-card-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  background-color: var(--ds-color-bg-alt, #f7fafc);
+  overflow: hidden;
 }
 
-/* Selected Color inner gap ring */
-.vs-options--color .vs-option--selected .vs-swatch {
-  border: 2px solid #ffffff;
+.pd-variant-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-/* ═══════════════════════════════════════════════════════
-   SIZE & FIT SELECTOR BUTTONS
-   ═══════════════════════════════════════════════════════ */
-.vs-options--size .vs-option,
-.vs-options--text .vs-option {
-  min-width: 52px;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: var(--ds-radius-xs, 4px);
-  font-size: 13px;
+.pd-variant-card:hover:not(:disabled) .pd-variant-card-image {
+  transform: scale(1.05);
+}
+
+.pd-variant-card-name {
+  font-size: 0.7rem;
   font-weight: 500;
+  color: var(--ds-color-text, #1a1a1a);
+  width: 100%;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-top: 1px solid var(--ds-color-border, #e2e8f0);
+}
+
+.pd-variant-card.active .pd-variant-card-name {
+  font-weight: 600;
+  color: var(--ds-color-accent, #2b6cb0);
+  border-top-color: rgba(43, 108, 176, 0.2);
+}
+
+/* Out of Stock & Disabled States */
+.pd-variant-card.out-of-stock {
+  cursor: not-allowed;
+  opacity: 0.55;
+  border-color: var(--ds-color-border, #e2e8f0);
+}
+
+.pd-variant-sold-out-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.vs-options--size .vs-option:hover:not(.vs-option--disabled),
-.vs-options--text .vs-option:hover:not(.vs-option--disabled) {
-  border-color: var(--ds-color-text, #111827);
-  background-color: var(--ds-color-surface-muted, #f8fafc);
-}
-
-/* Selected Size/Fit State */
-.vs-options--size .vs-option--selected,
-.vs-options--text .vs-option--selected {
-  background-color: var(--ds-color-text, #111827);
-  border-color: var(--ds-color-text, #111827);
-  color: #ffffff;
-}
-
-/* ═══════════════════════════════════════════════════════
-   PREMIUM OUT-OF-STOCK VISUAL STATE (Diagonal Cross-out)
-   ═══════════════════════════════════════════════════════ */
-.vs-option.vs-option--disabled {
-  opacity: 0.35;
-  border-color: var(--ds-color-border-subtle, #f0f0f0);
-  background-color: #fafafa;
-  cursor: not-allowed;
-}
-
-/* Diagonal line strike-through on out-of-stock sizes */
-.vs-options--size .vs-option.vs-option--disabled::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to top right, transparent calc(50% - 1px), var(--ds-color-text-subtle, #98a2b3) 50%, transparent calc(50% + 1px));
-  pointer-events: none;
-}
-
-.vs-badge {
-  display: none; /* Hide legacy "Out" badge, line indicator is cleaner and premium */
-}
-
-/* ── Auxiliary Messages ── */
-.vs-helper {
-  font-size: 11px;
-  color: var(--ds-color-text-subtle, #98a2b3);
-  margin-top: 6px;
-}
-
-.vs-error {
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ds-color-danger, #b42318);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.vs-live {
-  border: 0;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  width: 1px;
-  white-space: nowrap;
-}
-
-/* Responsive Overrides */
-@media (max-width: 768px) {
-  .vs-options--size .vs-option,
-  .vs-options--text .vs-option {
-    min-width: 58px;
-    height: 44px; /* Larger touch targets for mobile accessibility */
-    font-size: 14px;
-  }
+.pd-variant-card:focus-visible {
+  box-shadow: 0 0 0 3px var(--ds-color-accent, #2b6cb0);
 }

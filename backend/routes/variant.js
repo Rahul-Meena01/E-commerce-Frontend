@@ -26,7 +26,9 @@ const variantUpload = upload.fields([
 ]);
 
 const getImagePath = (files, field) => {
-  if (files && files[field] && files[field][0]) return `/uploads/${files[field][0].filename}`;
+  if (files && files[field] && files[field][0] && files[field][0].path) {
+    return files[field][0].path; // Cloudinary URL
+  }
   return null;
 };
 

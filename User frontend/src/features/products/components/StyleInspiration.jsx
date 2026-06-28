@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import ResponsiveImage from "@/shared/components/ui/ResponsiveImage";
+import { useProductPresentation } from "@/features/products/context/ProductPresentationContext";
 import "./StyleInspiration.css";
 
 /**
@@ -12,7 +13,11 @@ import "./StyleInspiration.css";
  *
  * Reinforces premium perception with editorial layout.
  */
-const StyleInspiration = ({ images = [], productName = "Product" }) => {
+const StyleInspiration = ({ images: propImages, productName: propProductName }) => {
+  const presentation = useProductPresentation();
+
+  const images = propImages || presentation?.gallery?.images || [];
+  const productName = propProductName || presentation?.name || "Product";
   const sectionRef = useRef(null);
   const [visible, setVisible] = useState(false);
 

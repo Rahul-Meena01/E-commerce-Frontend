@@ -76,6 +76,13 @@ const couponSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // Max times a single user can use this coupon
+    maxUsesPerUser: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+
     // How many times used
     usedCount: {
       type: Number,
@@ -123,7 +130,6 @@ const couponSchema = new mongoose.Schema(
 //
 // INDEXES
 //
-couponSchema.index({ code: 1 });
 couponSchema.index({ status: 1 });
 couponSchema.index({ expiryDate: 1 });
 

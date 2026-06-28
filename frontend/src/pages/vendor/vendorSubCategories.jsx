@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import API from "../../utils/api";
 import ImageUploader from "../../components/ImageUploader";
+import Pagination from "../../components/Pagination";
 import "../../styles/vendor.css";
 
 /* ─────────────────────────────────────────────────────────────
@@ -620,44 +621,7 @@ function VendorSubCategories() {
           </table>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                Showing <strong>{(safePage - 1) * PAGE_SIZE + 1}</strong> to{" "}
-                <strong>{Math.min(safePage * PAGE_SIZE, filtered.length)}</strong> of{" "}
-                <strong>{filtered.length}</strong> results
-              </div>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={safePage === 1}
-                  onClick={() => setPage(safePage - 1)}
-                  style={{ padding: "4px 8px" }}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                {pageNumbers().map((p, i) => (
-                  <button
-                    key={i}
-                    className={`btn btn-sm ${p === safePage ? "btn-primary" : "btn-secondary"}`}
-                    disabled={p === "..."}
-                    onClick={() => p !== "..." && setPage(p)}
-                    style={{ padding: "4px 10px", minWidth: "32px" }}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={safePage === totalPages}
-                  onClick={() => setPage(safePage + 1)}
-                  style={{ padding: "4px 8px" }}
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination page={safePage} pages={totalPages} onPageChange={setPage} />
         </div>
       )}
 

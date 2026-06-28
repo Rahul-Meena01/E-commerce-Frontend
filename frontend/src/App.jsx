@@ -71,6 +71,7 @@ import Product from "./pages/admin/Product";
 import VariantProducts from "./pages/admin/VariantProducts";
 import Coupons from "./pages/admin/Coupons";
 import GiftCards from "./pages/admin/GiftCards";
+import AuditLogs from "./pages/admin/AuditLogs";
 import Profile from "./pages/admin/Profile";
 
 // ── Vendor pages ───────────────────────────────────────────────────────────────
@@ -229,6 +230,10 @@ function App() {
         <Route
           path="/admin/giftcards"
           element={<AdminLayout><GiftCards /></AdminLayout>}
+        />
+        <Route
+          path="/admin/audit-logs"
+          element={<AdminLayout><AuditLogs /></AdminLayout>}
         />
 
         {/* Admin profile */}

@@ -5,11 +5,13 @@ import {
   removeFromWishlist,
   clearWishlist,
 } from "../controllers/wishlistController.js";
+import { validate } from "../middleware/validate.js";
+import { wishlistSchema } from "../middleware/schemas.js";
 
 const router = express.Router();
 
 router.get("/", getWishlist);
-router.post("/add", addToWishlist);
+router.post("/add", validate(wishlistSchema), addToWishlist);
 router.delete("/remove/:productId", removeFromWishlist);
 router.delete("/clear", clearWishlist);
 

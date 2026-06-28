@@ -1,8 +1,12 @@
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./product.css";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import ImageUploader from "../../components/ImageUploader";
+import Pagination from "../../components/Pagination";
+import StatCard from "../../components/admin/StatCard";
+import AdminButton from "../../components/admin/AdminButton";
+import { ToggleLeft, ToggleRight } from "lucide-react";
+import API from "../../utils/api";
 
 // ─────────────────────────────────────────────────────────────
 // ICONS
@@ -137,9 +141,6 @@ const API_URL = "http://localhost:3000";
 // HELPERS
 // ─────────────────────────────────────────────────────────────
 
-const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-});
 
 const calcFinalPrice = (price, pct) => {
   if (!pct) return price;
@@ -169,7 +170,7 @@ function ProductModal({
   const [name, setName] = useState(isEdit ? product?.name || "" : "");
   const [brand, setBrand] = useState(isEdit ? product?.brand || "" : "");
   const [slug, setSlug] = useState(isEdit ? product?.slug || "" : "");
-  const [stock, setStock] = useState(isEdit ? product?.stock ?? "" : "");
+  const [stock, setStockQty] = useState(isEdit ? product?.stock ?? "" : "");
   const [price, setPrice] = useState(isEdit ? product?.price || "" : "");
 
   const [discountPercent, setDiscountPercent] = useState(
@@ -242,16 +243,13 @@ function ProductModal({
         }
       });
 
-      const response = await fetch(
+      const data = await API(
         isEdit ? `/api/product/update/${product._id}` : "/api/product/create",
         {
           method: isEdit ? "PUT" : "POST",
-          headers: getHeaders(),
           body: formData,
         },
       );
-
-      const data = await response.json();
 
       if (data.success) {
         onSaved();
@@ -339,7 +337,7 @@ function ProductModal({
               <SearchableDropdown
                 value={selectedCategory}
                 onChange={(val) => setSelectedCategory(val)}
-                fetchUrl="/api/subCategory/search"
+                fetchUrl={selectedParent ? `/api/subCategory/search?parentCategory=${selectedParent}` : "/api/subCategory/search"}
                 placeholder="Select Sub Category"
               />
             </div>
@@ -382,14 +380,13 @@ function ProductModal({
             </div>
 
             <div className="pm-field">
-              <label>Stock</label>
-
-              <input
-                type="number"
-                min="0"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-              />
+                <label className="pm-label">Stock *</label>
+                <input
+                  type="number"
+                  className="pm-input"
+                  value={stock}
+                  onChange={(e) => setStockQty(e.target.value)}
+                />
             </div>
           </div>
 
@@ -513,11 +510,6 @@ function Product() {
 
   const load = useCallback(async (pageNum = 1) => {
     try {
-      const headers = {
-        "Content-Type": "application/json",
-        ...getHeaders(),
-      };
-
       const params = new URLSearchParams({
         page: pageNum,
         search: search,
@@ -529,11 +521,11 @@ function Product() {
       }
 
       const queryParams = params.toString();
-      const prodRes = await fetch(`/api/product/all?${queryParams}`, { headers });
-      const prodData = await prodRes.json();
+      const prodData = await API(`/api/product/all?${queryParams}`);
 
-      setProducts(prodData.data || []);
-      setTotalPages(Math.ceil((prodData.total || 1) / PAGE_SIZE) || 1);
+      const activeProducts = (prodData.data || []).filter(p => !p.isDeleted);
+      setProducts(activeProducts);
+      setTotalPages(prodData.pages || Math.ceil((prodData.total || 1) / PAGE_SIZE) || 1);
       setStats({
         total: prodData.total || 0,
         active: prodData.active || 0,
@@ -566,12 +558,9 @@ function Product() {
     if (!deleteTarget) return;
 
     try {
-      const response = await fetch(`/api/product/delete/${deleteTarget._id}`, {
+      const data = await API(`/api/product/delete/${deleteTarget._id}`, {
         method: "DELETE",
-        headers: getHeaders(),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         load();
@@ -582,59 +571,38 @@ function Product() {
     }
   };
 
+  const handleToggleStatus = async (product) => {
+    try {
+      const newStatus = product.status === "Active" ? "Inactive" : "Active";
+      const data = await API(`/api/product/update/${product._id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (data.success) {
+        load();
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <div className="container">
       <div className="pm-header">
         <h1>Manage Products</h1>
-
-        <button
-          className="btn-new-product"
-          onClick={() =>
-            setModal({
-              mode: "create",
-            })
-          }
+        <AdminButton
+          icon={PlusIcon}
+          onClick={() => setModal({ mode: "create" })}
         >
-          <PlusIcon />
           New Product
-        </button>
+        </AdminButton>
       </div>
 
       {/* Stats */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "24px" }}>
-        {[
-          ["Total", stats.total, "#6366f1"],
-          ["Active", stats.active, "#10b981"],
-          ["Inactive", stats.inactive, "#f43f5e"],
-        ].map(([label, val, color]) => (
-          <div
-            key={label}
-            style={{
-              flex: 1,
-              background: "white",
-              padding: "20px",
-              borderRadius: "16px",
-              border: "1px solid #e2e8f0",
-              borderLeft: `4px solid ${color}`,
-            }}
-          >
-            <p
-              style={{
-                fontSize: "13px",
-                color: "#64748b",
-                marginBottom: "4px",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                margin: 0
-              }}
-            >
-              {label}
-            </p>
-            <h2 style={{ margin: 0, fontSize: "28px", color: "#0f172a" }}>
-              {val}
-            </h2>
-          </div>
-        ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "32px" }}>
+        <StatCard label="Total" value={stats.total} color="#6366f1" />
+        <StatCard label="Active" value={stats.active} color="#10b981" />
+        <StatCard label="Inactive" value={stats.inactive} color="#f43f5e" />
       </div>
 
       {/* SEARCH + FILTERS */}
@@ -676,6 +644,7 @@ function Product() {
         <table>
           <thead>
             <tr>
+              <th>ID</th>
               <th>Image</th>
               <th>Product</th>
               <th>Brand</th>
@@ -697,19 +666,21 @@ function Product() {
                 <td colSpan="12">No Products Found</td>
               </tr>
             ) : (
-              paginated.map((product) => {
+              paginated.map((product, index) => {
                 const finalPrice = calcFinalPrice(
                   product.price,
                   product.discountPercent,
                 );
                 const effectiveStatus = getEffectiveProductStatus(product);
+                const displayId = (page - 1) * PAGE_SIZE + index + 1;
 
                 return (
                   <tr key={product._id}>
+                    <td>{displayId}</td>
                     <td>
                       {product.image ? (
                         <img
-                          src={`${API_URL}${product.image}`}
+                          src={product.image.startsWith("http") ? product.image : `${API_URL}${product.image}`}
                           alt={product.name}
                           className="pm-thumb"
                         />
@@ -759,25 +730,26 @@ function Product() {
                     </td>
 
                     <td>
-                      <div className="pm-action-cell">
-                        <button
-                          className="btn-icon-action btn-edit-icon"
-                          onClick={() =>
-                            setModal({
-                              mode: "edit",
-                              product,
-                            })
-                          }
-                        >
-                          <EditIcon />
-                        </button>
-
-                        <button
-                          className="btn-icon-action btn-del-icon"
+                      <div className="pm-action-cell" style={{ display: "flex", gap: "8px" }}>
+                        <AdminButton
+                          variant="secondary"
+                          icon={product.status === "Active" ? ToggleRight : ToggleLeft}
+                          onClick={() => handleToggleStatus(product)}
+                          title={product.status === "Active" ? "Set Inactive" : "Set Active"}
+                          style={{ color: product.status === "Active" ? "#10b981" : "#94a3b8" }}
+                        />
+                        <AdminButton
+                          variant="secondary"
+                          icon={EditIcon}
+                          onClick={() => setModal({ mode: "edit", product })}
+                          title="Edit"
+                        />
+                        <AdminButton
+                          variant="danger"
+                          icon={DeleteIcon}
                           onClick={() => setDeleteTarget(product)}
-                        >
-                          <DeleteIcon />
-                        </button>
+                          title="Delete"
+                        />
                       </div>
                     </td>
                   </tr>
@@ -789,36 +761,7 @@ function Product() {
       </div>
 
       {/* PAGINATION */}
-
-      {totalPages > 1 && (
-        <div className="pm-pagination">
-          <button
-            className="pm-page-btn"
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <ChevronLeftIcon />
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              className={`pm-page-btn ${page === p ? "pm-page-active" : ""}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
-
-          <button
-            className="pm-page-btn"
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            <ChevronRightIcon />
-          </button>
-        </div>
-      )}
+      <Pagination page={page} pages={totalPages} onPageChange={setPage} />
 
       {/* MODALS */}
 

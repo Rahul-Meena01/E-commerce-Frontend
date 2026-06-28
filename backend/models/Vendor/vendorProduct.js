@@ -27,9 +27,21 @@ const VendorProductSchema = new mongoose.Schema(
     stock: { type: Number, default: 0, min: 0 },
     images: [{ type: String }],
     isActive: { type: Boolean, default: true },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
+
+VendorProductSchema.pre(/^find/, function () {
+  this.where({ isDeleted: { $ne: true } });
+});
 
 
 

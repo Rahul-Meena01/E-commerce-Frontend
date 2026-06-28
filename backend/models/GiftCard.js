@@ -75,7 +75,6 @@ const giftCardSchema = new mongoose.Schema(
 //
 // INDEXES
 //
-giftCardSchema.index({ code: 1 });
 giftCardSchema.index({ status: 1 });
 giftCardSchema.index({ expiryDate: 1 });
 

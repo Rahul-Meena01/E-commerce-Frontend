@@ -31,28 +31,14 @@ export const useCartQuery = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
 
-  const mergeCartMutation = useMutation({
-    mutationKey: ["mergeCart"],
-    mutationFn: async (localItems) => {
-      const res = await cartApi.mergeCart(localItems);
-      if (!res.ok) throw new Error("Merge failed");
-      return res;
-    },
-    onSuccess: () => {
-      localStorage.removeItem(STORAGE_KEY);
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-    },
-  });
-
   useEffect(() => {
     if (!isAuthenticated) return;
     const localItems = loadLocalCart();
     if (localItems.length > 0) {
-      if (queryClient.isMutating({ mutationKey: ["mergeCart"] }) === 0) {
-        mergeCartMutation.mutate(localItems);
-      }
+      localStorage.removeItem(STORAGE_KEY);
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     }
-  }, [isAuthenticated, queryClient, mergeCartMutation]);
+  }, [isAuthenticated, queryClient]);
   
   return useQuery({
     queryKey: ["cart", isAuthenticated],
@@ -129,7 +115,7 @@ export const useCartMutations = () => {
   };
 
   const addToCart = useMutation({
-    mutationFn: async ({ product, size = "", color = "", quantity = 1 }) => {
+    mutationFn: async ({ product, size = "", color = "", quantity = 1, variant = null }) => {
       const effectivePrice = (product.discountPrice && product.discountPrice < product.price)
         ? product.discountPrice
         : product.price;
@@ -142,6 +128,7 @@ export const useCartMutations = () => {
         size,
         color,
         image: product.image || "",
+        variant,
       };
 
       const stock = getProductStock(product);
@@ -149,7 +136,7 @@ export const useCartMutations = () => {
       if (!isAuthenticated) {
         handleGuestCartUpdate((prev) => {
           const existing = prev.findIndex(
-            (item) => item.product === itemPayload.productId && item.size === size && item.color === color
+            (item) => item.product === itemPayload.productId && item.size === size && item.color === color && (item.variant === variant || (!item.variant && !variant))
           );
           
           const availableStock = getAvailableQuantity(product);
@@ -170,7 +157,7 @@ export const useCartMutations = () => {
             initialQty = Math.max(1, availableStock === Infinity ? 1 : availableStock);
             toast.warning(`Only ${availableStock} units available for ${itemPayload.name}. Capping cart quantity.`);
           }
-          return [...prev, { _id: tempId, product: itemPayload.productId, name: itemPayload.name, price: itemPayload.price, quantity: initialQty, size, color, image: itemPayload.image, stock }];
+          return [...prev, { _id: tempId, product: itemPayload.productId, name: itemPayload.name, price: itemPayload.price, quantity: initialQty, size, color, image: itemPayload.image, stock, variant }];
         });
         return;
       }

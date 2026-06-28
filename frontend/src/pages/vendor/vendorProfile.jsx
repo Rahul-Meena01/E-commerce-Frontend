@@ -34,6 +34,7 @@ function VendorProfile() {
     description: "",
     logo: "",
   });
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const loadProfile = useCallback(async () => {
     try {
@@ -75,6 +76,7 @@ function VendorProfile() {
       setIsSaving(true);
       setError(null);
       setSuccess(null);
+      setFieldErrors({});
       await API(`/api/vendor/${vendorSlug}/me`, {
         method: "PUT",
         body: JSON.stringify(formData),
@@ -83,8 +85,14 @@ function VendorProfile() {
       await loadProfile();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message || "Failed to update profile");
-      console.error(err);
+      if (err.data && err.data.errors) {
+        const errors = {};
+        err.data.errors.forEach(e => { errors[e.path[0]] = e.message; });
+        setFieldErrors(errors);
+        setError("Please fix the validation errors below.");
+      } else {
+        setError(err.message || "Failed to update profile");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -186,7 +194,9 @@ function VendorProfile() {
                     value={formData.shopName}
                     onChange={handleChange}
                     placeholder="Your shop name"
+                    className={fieldErrors.shopName ? "input-error" : ""}
                   />
+                  {fieldErrors.shopName && <div className="field-error">{fieldErrors.shopName}</div>}
                 </div>
 
                 <div className="form-group">
@@ -200,7 +210,9 @@ function VendorProfile() {
                     value={formData.businessEmail}
                     onChange={handleChange}
                     placeholder="business@example.com"
+                    className={fieldErrors.businessEmail ? "input-error" : ""}
                   />
+                  {fieldErrors.businessEmail && <div className="field-error">{fieldErrors.businessEmail}</div>}
                 </div>
               </div>
 
@@ -216,7 +228,9 @@ function VendorProfile() {
                     value={formData.businessPhone}
                     onChange={handleChange}
                     placeholder="+91 XXXXX XXXXX"
+                    className={fieldErrors.businessPhone ? "input-error" : ""}
                   />
+                  {fieldErrors.businessPhone && <div className="field-error">{fieldErrors.businessPhone}</div>}
                 </div>
               </div>
 
@@ -228,7 +242,9 @@ function VendorProfile() {
                   onChange={handleChange}
                   placeholder="Tell us about your business..."
                   rows="4"
+                  className={fieldErrors.description ? "input-error" : ""}
                 />
+                {fieldErrors.description && <div className="field-error">{fieldErrors.description}</div>}
               </div>
 
               {/* Address */}
@@ -246,21 +262,26 @@ function VendorProfile() {
                     value={formData.address}
                     onChange={handleChange}
                     placeholder="Street address"
+                    className={fieldErrors.address ? "input-error" : ""}
                   />
+                  {fieldErrors.address && <div className="field-error">{fieldErrors.address}</div>}
                 </div>
 
                 <div className="form-row" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
                   <div className="form-group">
                     <label>City</label>
-                    <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="City" />
+                    <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="City" className={fieldErrors.city ? "input-error" : ""} />
+                    {fieldErrors.city && <div className="field-error">{fieldErrors.city}</div>}
                   </div>
                   <div className="form-group">
                     <label>Website</label>
-                    <input type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} placeholder="https://" />
+                    <input type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} placeholder="https://" className={fieldErrors.websiteUrl ? "input-error" : ""} />
+                    {fieldErrors.websiteUrl && <div className="field-error">{fieldErrors.websiteUrl}</div>}
                   </div>
                   <div className="form-group">
                     <label>Pincode</label>
-                    <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} placeholder="000000" />
+                    <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} placeholder="000000" className={fieldErrors.pincode ? "input-error" : ""} />
+                    {fieldErrors.pincode && <div className="field-error">{fieldErrors.pincode}</div>}
                   </div>
                 </div>
               </div>

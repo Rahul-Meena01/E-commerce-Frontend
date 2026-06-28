@@ -22,6 +22,8 @@ import Coupon from "../models/Coupon.js";
 import GiftCard from "../models/GiftCard.js";
 import { protect, requireAuth } from "../middleware/authMiddleware.js";
 import { getIO } from "../socket.js";
+import { validate } from "../middleware/validate.js";
+import { orderSchema } from "../middleware/schemas.js";
 
 const router = express.Router();
 
@@ -54,7 +56,7 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 // ─── POST /api/orders ─────────────────────────────────────────────────────────
 // @desc    Create a new order & atomically deduct inventory
 // @access  Private
-router.post("/", protect, async (req, res) => {
+router.post("/", protect, validate(orderSchema), async (req, res) => {
   try {
     const { orderItems, shippingAddress, paymentMethod } = req.body;
 
@@ -212,16 +214,20 @@ router.post("/", protect, async (req, res) => {
       const bulkOpsVendorProduct = [];
 
       dbOrderItems.forEach((item) => {
-        const op = {
-          updateOne: {
-            filter: { _id: item.product, stock: { $gte: item.qty } },
-            update: { $inc: { stock: -item.qty } },
-          },
-        };
         if (item.productModel === "VendorProduct") {
-          bulkOpsVendorProduct.push(op);
+          bulkOpsVendorProduct.push({
+            updateOne: {
+              filter: { _id: item.product, stock: { $gte: item.qty } },
+              update: { $inc: { stock: -item.qty } },
+            },
+          });
         } else {
-          bulkOpsProduct.push(op);
+          bulkOpsProduct.push({
+            updateOne: {
+              filter: { _id: item.product, stock_qty: { $gte: item.qty } },
+              update: { $inc: { stock_qty: -item.qty } },
+            },
+          });
         }
       });
 
@@ -342,21 +348,23 @@ router.post("/", protect, async (req, res) => {
 // ⚠️  Must stay above GET /:id
 router.get("/myorders", protect, async (req, res) => {
   try {
-    const pageSize = 10;
-    const page = Math.max(1, Number(req.query.pageNumber) || 1);
+    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(1, parseInt(req.query.page) || parseInt(req.query.pageNumber) || 1);
     const filter = { user: req.user._id };
     const count = await Order.countDocuments(filter);
 
     const orders = await Order.find(filter)
       .sort({ createdAt: -1 })
-      .limit(pageSize)
-      .skip(pageSize * (page - 1));
+      .limit(limit)
+      .skip(limit * (page - 1));
 
     res.json({
-      orders: orders.map(formatOrder),
+      data: orders.map(formatOrder),
+      orders: orders.map(formatOrder), // keeping for backwards compatibility
       page,
-      pages: Math.ceil(count / pageSize),
-      totalOrders: count,
+      pages: Math.ceil(count / limit),
+      total: count,
+      totalOrders: count, // keeping for backwards compatibility
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -385,20 +393,22 @@ router.get("/", protect, requireAuth("admin"), async (req, res) => {
       .sort({ createdAt: -1 });
 
     const isAll = req.query.limit === "all";
-    const pageSize = isAll ? count : 10;
-    const page = isAll ? 1 : Math.max(1, Number(req.query.pageNumber) || 1);
+    const limit = isAll ? count : (parseInt(req.query.limit) || 20);
+    const page = isAll ? 1 : Math.max(1, parseInt(req.query.page) || parseInt(req.query.pageNumber) || 1);
 
     if (!isAll) {
-      query = query.limit(pageSize).skip(pageSize * (page - 1));
+      query = query.limit(limit).skip(limit * (page - 1));
     }
 
     const orders = await query;
 
     res.json({
-      orders: orders.map(formatOrder),
+      data: orders.map(formatOrder),
+      orders: orders.map(formatOrder), // backwards compatibility
       page,
-      pages: isAll ? 1 : Math.ceil(count / (pageSize || 1)),
-      totalOrders: count,
+      pages: isAll ? 1 : Math.ceil(count / (limit || 1)),
+      total: count,
+      totalOrders: count, // backwards compatibility
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -436,61 +446,7 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-// ─── PUT /api/orders/:id/pay ──────────────────────────────────────────────────
-// @desc    Mark order as paid after payment gateway callback
-// @access  Private
-router.put("/:id/pay", protect, async (req, res) => {
-  try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid order ID format" });
-    }
 
-    if (!req.body.id || !req.body.status || !req.body.update_time) {
-      return res.status(400).json({
-        message: "Payment result must include id, status, and update_time",
-      });
-    }
-
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-    if (order.isPaid)
-      return res
-        .status(400)
-        .json({ message: "Order is already marked as paid" });
-
-    if (
-      order.user.toString() !== req.user._id.toString() &&
-      !req.user.isAdmin
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorised to update this order" });
-    }
-
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    order.paymentResult = {
-      id: req.body.id,
-      status: req.body.status,
-      update_time: req.body.update_time,
-      email_address: req.body.email_address,
-    };
-
-    const updatedOrder = await order.save();
-    await updatedOrder.populate("user", "id name email phone");
-
-    try {
-      const io = getIO();
-      io.emit("orderUpdated", formatOrder(updatedOrder));
-    } catch (err) {
-      console.error("Socket error on order pay:", err);
-    }
-
-    res.json(formatOrder(updatedOrder));
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 // ─── PUT /api/orders/:id/cancel ───────────────────────────────────────────────
 // @desc    User cancels their own order (only Pending / Processing)
@@ -531,16 +487,20 @@ router.put("/:id/cancel", protect, async (req, res) => {
       const restoreOpsVendorProduct = [];
 
       order.orderItems.forEach((item) => {
-        const op = {
-          updateOne: {
-            filter: { _id: item.product },
-            update: { $inc: { stock: item.qty } },
-          },
-        };
         if (item.productModel === "VendorProduct") {
-          restoreOpsVendorProduct.push(op);
+          restoreOpsVendorProduct.push({
+            updateOne: {
+              filter: { _id: item.product },
+              update: { $inc: { stock: item.qty } },
+            },
+          });
         } else {
-          restoreOpsProduct.push(op);
+          restoreOpsProduct.push({
+            updateOne: {
+              filter: { _id: item.product },
+              update: { $inc: { stock_qty: item.qty } },
+            },
+          });
         }
       });
 
@@ -645,6 +605,13 @@ router.put("/:id/status", protect, requireAuth("admin"), async (req, res) => {
     }
 
     const newStatus = req.body.status;
+    const statusOrder = ["Pending", "Processing", "Shipped", "Delivered"];
+    
+    if (newStatus !== "Cancelled" && statusOrder.indexOf(newStatus) < statusOrder.indexOf(order.orderStatus)) {
+      return res.status(400).json({
+        message: `Cannot move order status backward from ${order.orderStatus} to ${newStatus}`,
+      });
+    }
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -670,16 +637,20 @@ router.put("/:id/status", protect, requireAuth("admin"), async (req, res) => {
         const restoreOpsVendorProduct = [];
 
         order.orderItems.forEach((item) => {
-          const op = {
-            updateOne: {
-              filter: { _id: item.product },
-              update: { $inc: { stock: item.qty } },
-            },
-          };
           if (item.productModel === "VendorProduct") {
-            restoreOpsVendorProduct.push(op);
+            restoreOpsVendorProduct.push({
+              updateOne: {
+                filter: { _id: item.product },
+                update: { $inc: { stock: item.qty } },
+              },
+            });
           } else {
-            restoreOpsProduct.push(op);
+            restoreOpsProduct.push({
+              updateOne: {
+                filter: { _id: item.product },
+                update: { $inc: { stock_qty: item.qty } },
+              },
+            });
           }
         });
 

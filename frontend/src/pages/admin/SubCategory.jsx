@@ -5,6 +5,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import ImageUploader from "../../components/ImageUploader";
+import StatCard from "../../components/admin/StatCard";
+import AdminButton from "../../components/admin/AdminButton";
+import { ToggleLeft, ToggleRight, Edit2, Trash2, Plus } from "lucide-react";
+import API from "../../utils/api";
 
 const EditIcon = () => (
   <svg
@@ -123,26 +127,21 @@ export default function SubCategory() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const getEffectiveSubStatus = (sub) =>
     sub.parentCategory?.status === "Inactive"
       ? "Inactive"
       : sub.status;
 
-  const getHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-    "Content-Type": "application/json",
-  });
 
   const loadCategories = useCallback(async () => {
-    const res = await fetch("/api/category/all", { headers: getHeaders() });
-    const data = await res.json();
+    const data = await API("/api/category/all");
     setCategories(data.data || []);
   }, []);
 
   const loadSubCategories = useCallback(async (pageNum = 1) => {
-    const res = await fetch(`/api/subCategory/all?page=${pageNum}`, { headers: getHeaders() });
-    const data = await res.json();
+    const data = await API(`/api/subCategory/all?page=${pageNum}`);
     setSubCategories(data.data || []);
     setTotalPages(data.totalPages || 1);
     setStats({
@@ -253,12 +252,10 @@ export default function SubCategory() {
       : "/api/subCategory/create";
     const method = editingId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
+    const data = await API(url, {
       method,
-      headers: getHeaders(),
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
     setIsSaving(false);
 
     if (data.success) {
@@ -272,58 +269,97 @@ export default function SubCategory() {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this subcategory?")) return;
-    const res = await fetch(`/api/subCategory/delete/${id}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-    });
-    const data = await res.json();
-    if (data.success) {
-      loadSubCategories();
+    try {
+      const data = await API(`/api/subCategory/delete/${id}`, {
+        method: "DELETE",
+      });
+      if (data.success) {
+        setSelectedIds(prev => prev.filter(i => i !== id));
+        loadSubCategories(page);
+      } else {
+        alert(data.message || "Failed to delete subcategory.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error deleting subcategory.");
+    }
+  };
+
+  const handleToggleStatus = async (subCategory) => {
+    try {
+      const newStatus = subCategory.status === "Active" ? "Inactive" : "Active";
+      const data = await API(`/api/subCategory/update/${subCategory._id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (data.success) {
+        loadSubCategories(page);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredSubCategories.map(s => s._id));
     } else {
-      alert(data.message || "Unable to delete subcategory.");
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} selected subcategories?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => 
+        API(`/api/subCategory/delete/${id}`, { method: "DELETE" })
+      ));
+      setSelectedIds([]);
+      loadSubCategories(page);
+    } catch (err) { 
+      console.error(err); 
+      alert("Error during bulk delete");
+    }
+  };
+
+  const handleBulkStatus = async (status) => {
+    if (!selectedIds.length) return;
+    try {
+      await Promise.all(selectedIds.map(id => 
+        API(`/api/subCategory/update/${id}`, { 
+          method: "PUT", 
+          body: JSON.stringify({ status })
+        })
+      ));
+      setSelectedIds([]);
+      loadSubCategories(page);
+    } catch (err) { 
+      console.error(err);
+      alert("Error updating status for selected items");
     }
   };
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", padding: "24px", color: "#0f172a" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');`}</style>
-
-      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "18px", marginBottom: "22px" }}>
+    <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "32px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: 700 }}>Sub Categories</h1>
-          <p style={{ margin: "8px 0 0", color: "#64748b" }}>Search, filter and manage all subcategories.</p>
-          <div style={{ display: "flex", gap: "12px", marginTop: "16px", flexWrap: "wrap" }}>
-            {[
-              ["Total", stats.total, "#4338ca"],
-              ["Active", stats.active, "#16a34a"],
-              ["Inactive", stats.inactive, "#dc2626"],
-            ].map(([label, value, color]) => (
-              <div key={label} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "14px", minWidth: "120px", border: `1px solid ${color}22` }}>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>{label}</p>
-                <p style={{ margin: "4px 0 0", fontSize: "18px", fontWeight: 700, color }}>{value}</p>
-              </div>
-            ))}
-          </div>
+          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>Subcategory Management</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "15px" }}>Create and manage child categories.</p>
         </div>
-        <button
-          onClick={openCreateModal}
-          style={{
-            maxHeight: "50px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "10px",
-            background: "#2563eb",
-            color: "#fff",
-            border: "none",
-            borderRadius: "99px",
-            padding: "2px 8px",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          <PlusIcon />
+        <AdminButton icon={Plus} onClick={openCreateModal}>
           Create Subcategory
-        </button>
+        </AdminButton>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "32px" }}>
+        <StatCard label="Total Subcategories" value={stats.total} color="#6366f1" />
+        <StatCard label="Active" value={stats.active} color="#10b981" />
+        <StatCard label="Inactive" value={stats.inactive} color="#f43f5e" />
       </div>
 
       <div style={{ display: "grid", gap: "14px", marginBottom: "20px", gridTemplateColumns: "1fr auto auto" }}>
@@ -352,10 +388,29 @@ export default function SubCategory() {
         </div>
       </div>
 
+      {selectedIds.length > 0 && (
+        <div style={{ padding: "12px 16px", background: "#eef2ff", borderRadius: "12px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "16px", border: "1px solid #c7d2fe" }}>
+          <span style={{ fontWeight: "600", color: "#3730a3" }}>{selectedIds.length} selected</span>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <AdminButton variant="success" onClick={() => handleBulkStatus("Active")}>Set Active</AdminButton>
+            <AdminButton variant="secondary" onClick={() => handleBulkStatus("Inactive")}>Set Inactive</AdminButton>
+            <AdminButton variant="danger" onClick={handleBulkDelete}>Delete Selected</AdminButton>
+          </div>
+        </div>
+      )}
+
       <div style={{ overflowX: "auto", background: "#fff", borderRadius: "20px", border: "1px solid #e2e8f0", padding: "1px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "780px" }}>
           <thead>
             <tr style={{ background: "#f8fafc" }}>
+              <th style={{ ...headerCellStyle, width: "40px" }}>
+                <input 
+                  type="checkbox" 
+                  checked={filteredSubCategories.length > 0 && selectedIds.length === filteredSubCategories.length}
+                  onChange={handleSelectAll}
+                />
+              </th>
+              <th style={{ ...headerCellStyle, width: "50px" }}>ID</th>
               <th style={headerCellStyle}>Image</th>
               <th style={headerCellStyle}>Parent Category</th>
               <th style={headerCellStyle}>Subcategory</th>
@@ -365,64 +420,84 @@ export default function SubCategory() {
             </tr>
           </thead>
           <tbody>
-            {filteredSubCategories.map((subCategory) => (
-              <tr key={subCategory._id} style={{ borderTop: "1px solid #e2e8f0" }}>
-                <td style={{ ...bodyCellStyle, width: "50px" }}>
-                  {subCategory.image ? (
-                    <img 
-                      src={subCategory.image.startsWith('http') ? subCategory.image : `${window.location.origin}${subCategory.image}`} 
-                      alt={subCategory.name}
-                      style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover", border: "1px solid #e2e8f0" }}
+            {filteredSubCategories.map((subCategory, index) => {
+              const displayId = (page - 1) * 10 + index + 1; // Assuming pageSize = 10
+              return (
+                <tr key={subCategory._id} style={{ borderTop: "1px solid #e2e8f0" }}>
+                  <td style={bodyCellStyle}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(subCategory._id)}
+                      onChange={() => handleSelectOne(subCategory._id)}
                     />
-                  ) : (
-                    <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", border: "1px solid #e2e8f0" }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  </td>
+                  <td style={bodyCellStyle}>{displayId}</td>
+                  <td style={{ ...bodyCellStyle, width: "50px" }}>
+                    {subCategory.image ? (
+                      <img 
+                        src={subCategory.image.startsWith('http') ? subCategory.image : `${window.location.origin}${subCategory.image}`} 
+                        alt={subCategory.name}
+                        style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover", border: "1px solid #e2e8f0" }}
+                      />
+                    ) : (
+                      <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", border: "1px solid #e2e8f0" }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                      </div>
+                    )}
+                  </td>
+                  <td style={bodyCellStyle}>{subCategory.parentCategory?.name || "—"}</td>
+                  <td style={bodyCellStyle}>{subCategory.name}</td>
+                  <td style={bodyCellStyle}>
+                    <code style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "4px", fontSize: "12px", color: "#64748b" }}>
+                      {subCategory.slug}
+                    </code>
+                  </td>
+                  <td style={bodyCellStyle}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "6px 12px",
+                        borderRadius: "999px",
+                        background: getEffectiveSubStatus(subCategory) === "Active" ? "#d1fae5" : "#fee2e2",
+                        color: getEffectiveSubStatus(subCategory) === "Active" ? "#065f46" : "#991b1b",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {getEffectiveSubStatus(subCategory)}
+                    </span>
+                  </td>
+                  <td style={bodyCellStyle}>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <AdminButton
+                        variant="secondary"
+                        icon={subCategory.status === "Active" ? ToggleRight : ToggleLeft}
+                        onClick={() => handleToggleStatus(subCategory)}
+                        title={subCategory.status === "Active" ? "Set Inactive" : "Set Active"}
+                        style={{ color: subCategory.status === "Active" ? "#10b981" : "#94a3b8" }}
+                      />
+                      <AdminButton
+                        variant="secondary"
+                        icon={Edit2}
+                        onClick={() => openEditModal(subCategory)}
+                        title="Edit"
+                      />
+                      <AdminButton
+                        variant="danger"
+                        icon={Trash2}
+                        onClick={() => handleDelete(subCategory._id)}
+                        title="Delete"
+                      />
                     </div>
-                  )}
-                </td>
-                <td style={bodyCellStyle}>{subCategory.parentCategory?.name || "—"}</td>
-                <td style={bodyCellStyle}>{subCategory.name}</td>
-                <td style={bodyCellStyle}>{subCategory.slug}</td>
-                <td style={bodyCellStyle}>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "6px 12px",
-                      borderRadius: "999px",
-                      background: getEffectiveSubStatus(subCategory) === "Active" ? "#d1fae5" : "#fee2e2",
-                      color: getEffectiveSubStatus(subCategory) === "Active" ? "#065f46" : "#991b1b",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {getEffectiveSubStatus(subCategory)}
-                  </span>
-                </td>
-                <td style={bodyCellStyle}>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <button
-                      onClick={() => openEditModal(subCategory)}
-                      title="Edit"
-                      style={actionButtonStyleBlue}
-                    >
-                      <EditIcon />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(subCategory._id)}
-                      title="Delete"
-                      style={actionButtonStyleRed}
-                    >
-                      <DeleteIcon />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
             {filteredSubCategories.length === 0 && (
               <tr>
-                <td colSpan="5" style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>
+                <td colSpan="8" style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>
                   No subcategories found.
                 </td>
               </tr>
@@ -498,7 +573,14 @@ export default function SubCategory() {
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(event) => handleChange("name", event.target.value)}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    setForm((f) => ({
+                      ...f,
+                      name: val,
+                      slug: editingId ? f.slug : val.toLowerCase().replace(/\s+/g, "-"),
+                    }));
+                  }}
                   style={inputStyle}
                   placeholder="Enter subcategory name"
                 />

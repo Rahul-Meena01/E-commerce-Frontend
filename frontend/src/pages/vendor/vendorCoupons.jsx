@@ -16,7 +16,10 @@ import {
 } from "lucide-react";
 import API from "../../utils/api";
 import Modal from "../../components/Modal";
+import Pagination from "../../components/Pagination";
 import "../../styles/vendor.css";
+
+const PAGE_SIZE = 10;
 
 const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
@@ -28,6 +31,7 @@ function VendorCoupons() {
   const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchCoupons();
@@ -53,6 +57,12 @@ function VendorCoupons() {
     if (filter === "inactive") return c.isActive === false;
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredCoupons.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginatedCoupons = filteredCoupons.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [filter]);
 
   const activeCoupons = coupons.filter((c) => c.isActive).length;
   const totalUses = coupons.reduce((sum, c) => sum + (c.usageCount || 0), 0);
@@ -101,8 +111,6 @@ function VendorCoupons() {
       }
       setShowModal(null);
       fetchCoupons();
-    } catch (err) {
-      alert(err.message || "Failed to save coupon");
     } finally {
       setSaving(false);
     }
@@ -223,7 +231,7 @@ function VendorCoupons() {
               </tr>
             </thead>
             <tbody>
-              {filteredCoupons.map((coupon) => (
+              {paginatedCoupons.map((coupon) => (
                 <tr key={coupon._id}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -284,6 +292,7 @@ function VendorCoupons() {
               ))}
             </tbody>
           </table>
+          <Pagination page={safePage} pages={totalPages} onPageChange={setPage} />
         </div>
       )}
 
@@ -302,14 +311,16 @@ function VendorCoupons() {
 
 function CouponModal({ mode, initial, onClose, onSave, saving }) {
   const [form, setForm] = useState(
-    initial || { code: "", discountType: "percent", discountValue: "", minOrderValue: "", maxUses: "", expiresAt: "" }
+    initial || { code: "", discountType: "percent", discountValue: "", minOrderValue: "", maxUses: "", maxUsesPerUser: 1, expiresAt: "" }
   );
   const [err, setErr] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
+    setFieldErrors({});
     if (!form.code.trim()) return setErr("Coupon code is required");
     if (!form.discountValue || Number(form.discountValue) <= 0) return setErr("Valid discount value required");
     setErr("");
@@ -319,9 +330,21 @@ function CouponModal({ mode, initial, onClose, onSave, saving }) {
       discountValue: Number(form.discountValue),
       minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : 0,
       maxUses: form.maxUses ? Number(form.maxUses) : null,
+      maxUsesPerUser: form.maxUsesPerUser ? Number(form.maxUsesPerUser) : 1,
       expiresAt: form.expiresAt || null
     };
-    onSave(payload);
+    try {
+      await onSave(payload);
+    } catch (error) {
+      if (error.data && error.data.errors) {
+        const errors = {};
+        error.data.errors.forEach(e => { errors[e.path[0]] = e.message; });
+        setFieldErrors(errors);
+        setErr("Please fix the validation errors below.");
+      } else {
+        setErr(error.message || "An error occurred.");
+      }
+    }
   };
 
   return (
@@ -344,37 +367,51 @@ function CouponModal({ mode, initial, onClose, onSave, saving }) {
 
         <div className="form-group">
           <label>Coupon Code <span className="required">*</span></label>
-          <input type="text" value={form.code} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="e.g. SUMMER50" disabled={saving || mode === "edit"} autoFocus />
+          <input type="text" value={form.code} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="e.g. SUMMER50" disabled={saving || mode === "edit"} autoFocus className={fieldErrors.code ? "input-error" : ""} />
+          {fieldErrors.code && <div className="field-error">{fieldErrors.code}</div>}
         </div>
 
         <div className="form-row">
           <div className="form-group">
             <label>Discount Type</label>
-            <select value={form.discountType} onChange={(e) => set("discountType", e.target.value)} disabled={saving}>
+            <select value={form.discountType} onChange={(e) => set("discountType", e.target.value)} disabled={saving} className={fieldErrors.discountType ? "input-error" : ""}>
               <option value="percent">Percentage (%)</option>
               <option value="flat">Flat Amount (₹)</option>
             </select>
+            {fieldErrors.discountType && <div className="field-error">{fieldErrors.discountType}</div>}
           </div>
           <div className="form-group">
             <label>Discount Value <span className="required">*</span></label>
-            <input type="number" min="0" step="0.01" value={form.discountValue} onChange={(e) => set("discountValue", e.target.value)} placeholder="0" disabled={saving} />
+            <input type="number" min="0" step="0.01" value={form.discountValue} onChange={(e) => set("discountValue", e.target.value)} placeholder="0" disabled={saving} className={fieldErrors.discountValue ? "input-error" : ""} />
+            {fieldErrors.discountValue && <div className="field-error">{fieldErrors.discountValue}</div>}
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
             <label>Min Order Value (₹)</label>
-            <input type="number" min="0" step="0.01" value={form.minOrderValue} onChange={(e) => set("minOrderValue", e.target.value)} placeholder="Optional" disabled={saving} />
+            <input type="number" min="0" step="0.01" value={form.minOrderValue} onChange={(e) => set("minOrderValue", e.target.value)} placeholder="Optional" disabled={saving} className={fieldErrors.minOrderValue ? "input-error" : ""} />
+            {fieldErrors.minOrderValue && <div className="field-error">{fieldErrors.minOrderValue}</div>}
           </div>
           <div className="form-group">
             <label>Max Uses (Total)</label>
-            <input type="number" min="1" value={form.maxUses} onChange={(e) => set("maxUses", e.target.value)} placeholder="Unlimited" disabled={saving} />
+            <input type="number" min="1" value={form.maxUses} onChange={(e) => set("maxUses", e.target.value)} placeholder="Unlimited" disabled={saving} className={fieldErrors.maxUses ? "input-error" : ""} />
+            {fieldErrors.maxUses && <div className="field-error">{fieldErrors.maxUses}</div>}
           </div>
         </div>
 
-        <div className="form-group">
-          <label>Expiry Date</label>
-          <input type="date" value={form.expiresAt ? new Date(form.expiresAt).toISOString().split('T')[0] : ""} onChange={(e) => set("expiresAt", e.target.value)} disabled={saving} />
+        <div className="form-row">
+          <div className="form-group">
+            <label>Max Uses Per User</label>
+            <input type="number" min="1" value={form.maxUsesPerUser} onChange={(e) => set("maxUsesPerUser", e.target.value)} placeholder="1" disabled={saving} className={fieldErrors.maxUsesPerUser ? "input-error" : ""} />
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>Limit how many times a single user can apply this coupon.</div>
+            {fieldErrors.maxUsesPerUser && <div className="field-error">{fieldErrors.maxUsesPerUser}</div>}
+          </div>
+          <div className="form-group">
+            <label>Expiry Date</label>
+            <input type="date" value={form.expiresAt ? new Date(form.expiresAt).toISOString().split('T')[0] : ""} onChange={(e) => set("expiresAt", e.target.value)} disabled={saving} className={fieldErrors.expiresAt ? "input-error" : ""} />
+            {fieldErrors.expiresAt && <div className="field-error">{fieldErrors.expiresAt}</div>}
+          </div>
         </div>
 
         <div className="form-actions">

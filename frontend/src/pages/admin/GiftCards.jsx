@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import API from "../../utils/api";
 import "./GiftCards.css";
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
+import StatCard from "../../components/admin/StatCard";
+import AdminButton from "../../components/admin/AdminButton";
+import Pagination from "../../components/Pagination";
+import { Edit2, Trash2, Plus } from "lucide-react";
 const SearchIcon = () => (
   <svg
     width="18"
@@ -327,19 +330,9 @@ const GiftCardGridCard = ({ card, onEdit, onDelete }) => {
         <p className="gc-card-field-value gc-description">{card.description}</p>
       </div>
 
-      <div className="gc-card-actions">
-        <button
-          onClick={() => onEdit(card)}
-          className="gc-btn-action gc-btn-edit"
-        >
-          <EditIcon /> Edit
-        </button>
-        <button
-          onClick={() => onDelete(card._id)}
-          className="gc-btn-action gc-btn-delete"
-        >
-          <DeleteIcon /> Delete
-        </button>
+      <div className="gc-card-actions" style={{ display: "flex", gap: "8px" }}>
+        <AdminButton variant="secondary" icon={Edit2} onClick={() => onEdit(card)} title="Edit" />
+        <AdminButton variant="danger" icon={Trash2} onClick={() => onDelete(card._id)} title="Delete" />
       </div>
     </div>
   );
@@ -356,6 +349,7 @@ export default function GiftCards() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [stats, setStats] = useState({ active: 0, inactive: 0 });
   const itemsPerPage = 10;
 
   const API_BASE_URL = "http://localhost:3000/api/giftCard";
@@ -372,20 +366,25 @@ export default function GiftCards() {
         status: mappedStatus,
       });
 
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${API_BASE_URL}/list?${queryParams}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
+      const data = await API(`/api/giftCard/list?${queryParams}`);
 
       if (data.success) {
         setGiftCards(data.data);
         setTotalCards(data.totalGiftCards);
         setTotalPages(data.totalPages);
+
+        // Fetch active/inactive stats (only once per general fetch for the dashboard feel)
+        if (filterStatus === "all" && searchQuery === "") {
+           Promise.all([
+             API(`/api/giftCard/list?limit=1&status=active`),
+             API(`/api/giftCard/list?limit=1&status=inactive`)
+           ]).then(([activeRes, inactiveRes]) => {
+             setStats({
+                active: activeRes.success ? activeRes.totalGiftCards : 0,
+                inactive: inactiveRes.success ? inactiveRes.totalGiftCards : 0
+             });
+           }).catch(err => console.error("Stats fetch error:", err));
+        }
       }
     } catch (error) {
       console.error("Error fetching gift cards:", error);
@@ -422,30 +421,19 @@ export default function GiftCards() {
     };
 
     try {
-      let response;
-      const token = localStorage.getItem("token");
-
+      let data;
+      
       if (formData._id) {
-        response = await fetch(`${API_BASE_URL}/update/${formData._id}`, {
+        data = await API(`/api/giftCard/update/${formData._id}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(payload),
         });
       } else {
-        response = await fetch(`${API_BASE_URL}/create`, {
+        data = await API(`/api/giftCard/create`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(payload),
         });
       }
-
-      const data = await response.json();
 
       if (data.success) {
         setIsModalOpen(false);
@@ -462,15 +450,9 @@ export default function GiftCards() {
   const handleDeleteCard = async (id) => {
     if (window.confirm("Are you sure you want to delete this gift card?")) {
       try {
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(`${API_BASE_URL}/delete/${id}`, {
+        const data = await API(`/api/giftCard/delete/${id}`, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         });
-        const data = await response.json();
 
         if (data.success) {
           if (giftCards.length === 1 && currentPage > 1) {
@@ -488,10 +470,21 @@ export default function GiftCards() {
   };
 
   return (
-    <div style={{ width: "100%" }}>
-      <div className="gc-header">
-        <h1>Gift Cards</h1>
-        <p>Manage and create gift cards for your customers</p>
+    <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "32px", color: "#0f172a", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: 800 }}>Gift Cards</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "15px" }}>Manage and create gift cards for your customers</p>
+        </div>
+        <AdminButton icon={Plus} onClick={handleOpenModal}>
+          Create New
+        </AdminButton>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "32px" }}>
+        <StatCard label="Total Gift Cards" value={totalCards} color="#6366f1" />
+        <StatCard label="Active Cards" value={stats.active || 0} color="#10b981" />
+        <StatCard label="Inactive Cards" value={stats.inactive || 0} color="#f43f5e" />
       </div>
 
       <div className="gc-controls">
@@ -526,10 +519,6 @@ export default function GiftCards() {
               <option value="used">Used</option>
             </select>
           </div>
-
-          <button onClick={handleOpenModal} className="gc-btn-create">
-            <PlusIcon /> Create New
-          </button>
         </div>
       </div>
 
@@ -557,39 +546,7 @@ export default function GiftCards() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="gc-pagination">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="gc-pagination-btn"
-          >
-            <ChevronLeftIcon />
-          </button>
-
-          <div style={{ display: "flex", gap: "4px" }}>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`gc-pagination-btn ${currentPage === page ? "gc-active" : ""}`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-            }
-            disabled={currentPage === totalPages}
-            className="gc-pagination-btn"
-          >
-            <ChevronRightIcon />
-          </button>
-        </div>
-      )}
+      <Pagination page={currentPage} pages={totalPages} onPageChange={setCurrentPage} />
 
       <GiftCardModal
         isOpen={isModalOpen}

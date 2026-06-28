@@ -150,18 +150,18 @@ router.post("/apply", async (req, res) => {
     }
 
     //
-    // CHECK PER-USER USAGE (one-time use per user)
+    // CHECK PER-USER USAGE
     //
-    const alreadyUsed = await CouponUsage.findOne({
+    const userUsesCount = await CouponUsage.countDocuments({
       coupon: coupon._id,
       user: userId,
       status: { $in: ["applied", "confirmed"] },
     });
 
-    if (alreadyUsed) {
+    if (userUsesCount >= (coupon.maxUsesPerUser || 1)) {
       return res.status(400).json({
         success: false,
-        message: "You have already used this coupon",
+        message: "You have reached the maximum usage limit for this coupon",
       });
     }
 
@@ -431,6 +431,7 @@ router.post("/create", async (req, res) => {
       description,
       bannerImage,
       isFeatured,
+      maxUsesPerUser,
     } = req.body;
 
     const normalizedDiscountValue = discountValue ?? discount;
@@ -537,6 +538,7 @@ router.post("/create", async (req, res) => {
       description: description || "",
       bannerImage: bannerImage || "",
       isFeatured: isFeatured || false,
+      maxUsesPerUser: maxUsesPerUser || 1,
     });
 
     await coupon.save();
@@ -561,6 +563,12 @@ router.post("/create", async (req, res) => {
 //
 router.get("/", async (req, res) => {
   try {
+    // Automatically turn expired coupons inactive
+    await Coupon.updateMany(
+      { expiryDate: { $lt: new Date() }, status: { $ne: "inactive" } },
+      { $set: { status: "inactive" } }
+    );
+
     const { status, type, featured, search, page = 1, limit = 10 } = req.query;
 
     const query = {};
@@ -613,6 +621,12 @@ router.get("/", async (req, res) => {
 //
 router.get("/:id", async (req, res) => {
   try {
+    // Automatically turn expired coupons inactive
+    await Coupon.updateMany(
+      { expiryDate: { $lt: new Date() }, status: { $ne: "inactive" } },
+      { $set: { status: "inactive" } }
+    );
+
     const coupon = await Coupon.findById(req.params.id).populate(
       "applicableProducts",
       "name price image stock",
@@ -662,6 +676,7 @@ router.put("/update/:id", async (req, res) => {
       description,
       bannerImage,
       isFeatured,
+      maxUsesPerUser,
     } = req.body;
 
     const normalizedDiscountValue = discountValue ?? discount;
@@ -742,6 +757,7 @@ router.put("/update/:id", async (req, res) => {
     if (description !== undefined) coupon.description = description;
     if (bannerImage !== undefined) coupon.bannerImage = bannerImage;
     if (isFeatured !== undefined) coupon.isFeatured = isFeatured;
+    if (maxUsesPerUser !== undefined) coupon.maxUsesPerUser = maxUsesPerUser;
 
     if (type !== undefined || normalizedProducts !== undefined) {
       const nextType = type || coupon.type;

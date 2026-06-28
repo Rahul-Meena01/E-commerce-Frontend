@@ -170,16 +170,10 @@ export default function Profile() {
       if (form.confirmPassword) formData.append("confirmPassword", form.confirmPassword);
       if (profileImage) formData.append("profileImage", profileImage);
 
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      const response = await fetch(`${API_URL}/api/admin/profile`, {
+      const data = await API("/api/admin/profile", {
         method: "PUT",
         body: formData,
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
       });
-
-      const data = await response.json();
       if (data.success) {
         setProfile(data.profile);
         setForm((prev) => ({

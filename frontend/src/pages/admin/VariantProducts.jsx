@@ -873,13 +873,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./VariantProduct.css";
+import StatCard from "../../components/admin/StatCard";
+import AdminButton from "../../components/admin/AdminButton";
+import Pagination from "../../components/Pagination";
+import { ToggleLeft, ToggleRight, Edit2, Trash2, Plus } from "lucide-react";
+import API from "../../utils/api";
 
 const API_URL = "http://localhost:3000";
 const PAGE_SIZE = 10;
 
-const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-});
 
 const calcFinalPrice = (price, discountPercent) => {
   if (!discountPercent) return Number(price || 0);
@@ -933,18 +935,10 @@ function VariantProducts() {
 
   const loadData = useCallback(async () => {
     try {
-      const headers = {
-        "Content-Type": "application/json",
-        ...getHeaders(),
-      };
-
-      const [variantRes, productRes] = await Promise.all([
-        fetch("/api/variant/all", { headers }),
-        fetch("/api/product/all", { headers }),
+      const [variantData, productData] = await Promise.all([
+        API("/api/variant/all"),
+        API("/api/product/all?limit=1000"),
       ]);
-
-      const variantData = await variantRes.json();
-      const productData = await productRes.json();
 
       setVariants(variantData.data || []);
       setProducts(productData.data || []);
@@ -1083,18 +1077,15 @@ function VariantProducts() {
         }
       });
 
-      const response = await fetch(
+      const data = await API(
         editingVariant
           ? `/api/variant/update/${editingVariant._id}`
           : "/api/variant/create",
         {
           method: editingVariant ? "PUT" : "POST",
-          headers: getHeaders(),
           body: payload,
         },
       );
-
-      const data = await response.json();
 
       if (data.success) {
         loadData();
@@ -1113,12 +1104,9 @@ function VariantProducts() {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/variant/delete/${deleteTarget._id}`, {
+      const data = await API(`/api/variant/delete/${deleteTarget._id}`, {
         method: "DELETE",
-        headers: getHeaders(),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         loadData();
@@ -1129,7 +1117,25 @@ function VariantProducts() {
     }
   };
 
-  // FILTER
+  const handleToggleStatus = async (variant) => {
+    try {
+      const newStatus = variant.status === "Active" ? "Inactive" : "Active";
+      const payload = new FormData();
+      payload.append("status", newStatus);
+
+      const data = await API(`/api/variant/update/${variant._id}`, {
+        method: "PUT",
+        body: payload,
+      });
+      if (data.success) {
+        loadData();
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // PAGINATIONER
 
   const filteredVariants = useMemo(() => {
     return variants.filter((variant) => {
@@ -1205,20 +1211,34 @@ function VariantProducts() {
     );
   };
 
+  const stats = useMemo(() => {
+    return {
+      total: variants.length,
+      active: variants.filter((v) => v.status === "Active").length,
+      inactive: variants.filter((v) => v.status === "Inactive").length,
+    };
+  }, [variants]);
+
   return (
-    <div className="vp-container">
+    <div className="vp-container container">
       {/* HEADER */}
 
-      <div className="vp-header">
+      <div className="vp-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <div>
-          <h1>Variant Products</h1>
-
-          <p>Manage all product variants</p>
+          <h1 style={{ margin: 0 }}>Variant Products</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b" }}>Manage all product variants</p>
         </div>
 
-        <button className="vp-create-btn" onClick={openCreateModal}>
-          + Create Variant
-        </button>
+        <AdminButton icon={Plus} onClick={openCreateModal}>
+          New Variant
+        </AdminButton>
+      </div>
+
+      {/* STATS */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "32px" }}>
+        <StatCard label="Total Variants" value={stats.total} color="#6366f1" />
+        <StatCard label="Active" value={stats.active} color="#10b981" />
+        <StatCard label="Inactive" value={stats.inactive} color="#f43f5e" />
       </div>
 
       {/* FILTERS */}
@@ -1251,6 +1271,7 @@ function VariantProducts() {
         <table className="vp-table">
           <thead>
             <tr>
+              <th>ID</th>
               <th>Image</th>
               <th>Variant</th>
               <th>Base Product</th>
@@ -1266,21 +1287,23 @@ function VariantProducts() {
           <tbody>
             {paginatedVariants.length === 0 ? (
               <tr>
-                <td colSpan="9">No Variant Products Found</td>
+                <td colSpan="10">No Variant Products Found</td>
               </tr>
             ) : (
-              paginatedVariants.map((variant) => {
+              paginatedVariants.map((variant, index) => {
                 const finalPrice = calcFinalPrice(
                   variant.price,
                   variant.discountPercent,
                 );
+                const displayId = (page - 1) * PAGE_SIZE + index + 1;
 
                 return (
                   <tr key={variant._id}>
+                    <td>{displayId}</td>
                     <td>
                       {variant.image ? (
                         <img
-                          src={`${API_URL}${variant.image}`}
+                          src={variant.image.startsWith("http") ? variant.image : `${API_URL}${variant.image}`}
                           alt={variant.name}
                           className="vp-table-image"
                         />
@@ -1291,7 +1314,7 @@ function VariantProducts() {
 
                     <td>{variant.name}</td>
 
-                    <td>{variant.parentProduct?.name || "-"}</td>
+                    <td>{products.find(p => p._id === variant.parentProduct || p._id === variant.parentProduct?._id)?.name || variant.parentProduct?.name || "-"}</td>
 
                     <td>{variant.brand}</td>
 
@@ -1318,14 +1341,26 @@ function VariantProducts() {
                     </td>
 
                     <td>
-                      <div className="vp-actions">
-                        <button onClick={() => openEditModal(variant)}>
-                          Edit
-                        </button>
-
-                        <button onClick={() => setDeleteTarget(variant)}>
-                          Delete
-                        </button>
+                      <div className="vp-actions" style={{ display: "flex", gap: "8px" }}>
+                        <AdminButton
+                          variant="secondary"
+                          icon={variant.status === "Active" ? ToggleRight : ToggleLeft}
+                          onClick={() => handleToggleStatus(variant)}
+                          title={variant.status === "Active" ? "Set Inactive" : "Set Active"}
+                          style={{ color: variant.status === "Active" ? "#10b981" : "#94a3b8" }}
+                        />
+                        <AdminButton
+                          variant="secondary"
+                          icon={Edit2}
+                          onClick={() => openEditModal(variant)}
+                          title="Edit"
+                        />
+                        <AdminButton
+                          variant="danger"
+                          icon={Trash2}
+                          onClick={() => setDeleteTarget(variant)}
+                          title="Delete"
+                        />
                       </div>
                     </td>
                   </tr>
@@ -1338,25 +1373,7 @@ function VariantProducts() {
 
       {/* PAGINATION */}
 
-      <div className="vp-pagination">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((prev) => prev - 1)}
-        >
-          Prev
-        </button>
-
-        <span>
-          {page} / {totalPages}
-        </span>
-
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage((prev) => prev + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <Pagination page={page} pages={totalPages} onPageChange={setPage} />
 
       {/* MODAL */}
 

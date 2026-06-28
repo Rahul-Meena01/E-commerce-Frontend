@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, CreditCard, Receipt, ShoppingBag, AlertTriangle } from "lucide-react";
 import { useOrderActions } from "../context/OrderActionsContext";
 import { formatPrice } from "../../../utils/pricing";
+import { useQuery } from "@tanstack/react-query";
+import { orderApi } from "../../checkout/services/checkout.service";
 import OrderStatusBadge from "../components/OrderStatusBadge";
 import OrderTimeline from "../components/OrderTimeline";
 import RefundStatusCard from "../components/RefundStatusCard";
@@ -17,9 +19,21 @@ const OrderDetailsPage = () => {
   const { getOrderById, cancelOrder, requestReturn, canCancelOrder, canReturnOrder } = useOrderActions();
 
   // Backend integration: GET /api/orders/:id
-  // When connecting backend, fetch single order via API or React Query hook.
-  const order = getOrderById(orderId);
-  const loading = false; // Mock data is loaded synchronously
+  const { data: backendOrder, isLoading: isQueryLoading } = useQuery({
+    queryKey: ["order", orderId],
+    queryFn: async () => {
+      const res = await orderApi.getOrder(orderId);
+      if (res.ok) {
+        const json = await res.json();
+        return json._id ? json : (json.data || json.order || null);
+      }
+      return null;
+    },
+    retry: false,
+  });
+
+  const order = getOrderById(orderId, backendOrder ? [backendOrder] : []);
+  const loading = isQueryLoading;
   
   // Modals state
   const [isCancelOpen, setIsCancelOpen] = useState(false);

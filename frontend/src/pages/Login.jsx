@@ -95,6 +95,8 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [makeItVisible, setMakeItVisible] = useState(false);
 
+  const [fieldErrors, setFieldErrors] = useState({});
+
   const isRegister = mode === "register";
   const isAdmin = accountType === "admin";
   const isVendor = accountType === "vendor";
@@ -111,11 +113,13 @@ function Login() {
   const updateForm = (key, value) => {
     setForm((c) => ({ ...c, [key]: value }));
     setMessage({ type: "", text: "" });
+    setFieldErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
   const resetForm = () => {
     setForm(initialForm);
     setMessage({ type: "", text: "" });
+    setFieldErrors({});
   };
 
   const switchMode = (next) => {
@@ -218,10 +222,23 @@ function Login() {
       }
 
       if (!response.ok || !data.success) {
-        setMessage({
-          type: "error",
-          text: data.message || "Authentication failed",
-        });
+        if (data.errors && Array.isArray(data.errors)) {
+          const newFieldErrors = {};
+          data.errors.forEach(e => {
+             const fieldName = e.path && e.path[0];
+             if (fieldName) newFieldErrors[fieldName] = e.message;
+          });
+          setFieldErrors(newFieldErrors);
+          setMessage({
+            type: "error",
+            text: "Please fix the validation errors below.",
+          });
+        } else {
+          setMessage({
+            type: "error",
+            text: data.message || "Authentication failed",
+          });
+        }
         return;
       }
 
@@ -312,6 +329,7 @@ function Login() {
                       className="loft-input"
                     />
                   </div>
+                  {fieldErrors.name && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{fieldErrors.name}</div>}
                 </div>
                 <div className="loft-field-group">
                   <label className="loft-label">Phone Number</label>
@@ -324,6 +342,7 @@ function Login() {
                       className="loft-input"
                     />
                   </div>
+                  {fieldErrors.phone && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{fieldErrors.phone}</div>}
                 </div>
                 {isVendor && (
                   <div className="loft-field-group">
@@ -337,6 +356,7 @@ function Login() {
                         className="loft-input"
                       />
                     </div>
+                    {fieldErrors.shopName && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{fieldErrors.shopName}</div>}
                   </div>
                 )}
               </>
@@ -353,6 +373,7 @@ function Login() {
                   className="loft-input"
                 />
               </div>
+              {fieldErrors.email && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{fieldErrors.email}</div>}
             </div>
 
             <div className="loft-field-group">
@@ -374,6 +395,7 @@ function Login() {
                   {makeItVisible ? "Hide" : "Show"}
                 </button>
               </div>
+              {fieldErrors.password && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{fieldErrors.password}</div>}
             </div>
 
             {isRegister && (
@@ -388,6 +410,7 @@ function Login() {
                     className="loft-input"
                   />
                 </div>
+                {fieldErrors.confirmPassword && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{fieldErrors.confirmPassword}</div>}
               </div>
             )}
 

@@ -55,28 +55,14 @@ export const useWishlistQuery = () => {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  const mergeWishlistMutation = useMutation({
-    mutationKey: ["mergeWishlist"],
-    mutationFn: async (localItems) => {
-      const res = await wishlistApi.mergeWishlist(localItems);
-      if (!res.ok) throw new Error("Merge failed");
-      return res;
-    },
-    onSuccess: () => {
-      localStorage.removeItem(STORAGE_KEY);
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
-    },
-  });
-
   useEffect(() => {
     if (!isAuthenticated) return;
     const localItems = loadLocalWishlist();
     if (localItems.length > 0) {
-      if (queryClient.isMutating({ mutationKey: ["mergeWishlist"] }) === 0) {
-        mergeWishlistMutation.mutate(localItems);
-      }
+      localStorage.removeItem(STORAGE_KEY);
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     }
-  }, [isAuthenticated, queryClient, mergeWishlistMutation]);
+  }, [isAuthenticated, queryClient]);
 
   return useQuery({
     queryKey: ["wishlist", isAuthenticated],

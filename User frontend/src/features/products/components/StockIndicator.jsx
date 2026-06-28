@@ -1,14 +1,19 @@
-
 import PropTypes from "prop-types";
+import { useProductPresentation } from "@/features/products/context/ProductPresentationContext";
 import "./StockIndicator.css";
 
 const StockIndicator = ({
-  inStock,
-  stockCount,
+  inStock: propInStock,
+  stockCount: propStockCount,
   backorder,
   lowStockThreshold = 5,
   className = "",
 }) => {
+  const presentation = useProductPresentation();
+
+  const inStock = propInStock !== undefined ? propInStock : (presentation?.availability?.inStock ?? true);
+  const stockCount = propStockCount !== undefined ? propStockCount : (presentation?.availability?.stock);
+
   let state = "in";
   if (!inStock) state = "out";
   else if (backorder) state = "backorder";

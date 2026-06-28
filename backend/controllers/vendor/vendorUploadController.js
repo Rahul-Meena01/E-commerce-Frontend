@@ -49,12 +49,8 @@ export const uploadVendorImage = (req, res) => {
     });
   }
 
-  // Build the public URL path.
-  // server.js serves the /uploads folder as static files:
-  //   app.use("/uploads", express.static("uploads"))
-  // So a file saved as uploads/1718000000000.jpg is accessible at:
-  //   http://localhost:3000/uploads/1718000000000.jpg
-  const imageUrl = `/uploads/${req.file.filename}`;
+  // With Cloudinary Storage, the URL is stored in req.file.path
+  const imageUrl = req.file.path;
 
   return res.status(200).json({
     success: true,

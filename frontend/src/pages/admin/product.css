@@ -881,12 +881,12 @@
 .pm-field input,
 .pm-field select,
 .pm-field textarea {
-    height: 40px;
+    height: 44px;
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
-    padding: 0 12px;
+    padding: 10px 14px;
     outline: none;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-primary);
     background: var(--surface);
     font-family: var(--font);
@@ -895,8 +895,8 @@
 }
 
 .pm-field textarea {
-    height: 80px;
-    padding: 10px 12px;
+    height: 100px;
+    padding: 12px 14px;
     resize: vertical;
     line-height: 1.5;
 }

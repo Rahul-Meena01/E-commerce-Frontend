@@ -4,30 +4,9 @@
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import StatCard from "../../components/admin/StatCard";
 
-// const API = (path) =>
-//   fetch(path, {
-//     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-//   }).then((r) => r.json());
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-const API = async (path) => {
-  const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-  const token = userInfo?.token || localStorage.getItem("token");
-
-  const res = await fetch(path, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error("API request failed");
-  }
-
-  return res.json();
-};
+import API from "../../utils/api";
 
 const COLORS = [
   "#6366f1",
@@ -37,88 +16,6 @@ const COLORS = [
   "#f59e0b",
   "#ef4444",
 ];
-
-function StatCard({ label, value, sub, color, onClick }) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "24px",
-        cursor: onClick ? "pointer" : "default",
-        border: `1px solid ${color}22`,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-        transition: "transform 0.15s, box-shadow 0.15s",
-        position: "relative",
-        overflow: "hidden",
-      }}
-      onMouseEnter={(e) => {
-        if (onClick) {
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "none";
-        e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          width: "80px",
-          height: "80px",
-          background: `${color}10`,
-          borderRadius: "0 16px 0 80px",
-        }}
-      />
-      <p
-        style={{
-          color: "#64748b",
-          fontSize: "13px",
-          fontWeight: "500",
-          marginBottom: "8px",
-          fontFamily: "'Outfit',sans-serif",
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-        }}
-      >
-        {label}
-      </p>
-      <h2
-        style={{
-          color: "#0f172a",
-          fontSize: "32px",
-          fontWeight: "700",
-          fontFamily: "'Outfit',sans-serif",
-          margin: 0,
-        }}
-      >
-        {value}
-      </h2>
-      {sub && (
-        <p
-          style={{
-            color,
-            fontSize: "12px",
-            marginTop: "6px",
-            fontWeight: "500",
-          }}
-        >
-          {sub}
-        </p>
-      )}
-      {onClick && (
-        <p style={{ color: "#94a3b8", fontSize: "11px", marginTop: "4px" }}>
-          Click to view →
-        </p>
-      )}
-    </div>
-  );
-}
 
 function MiniBar({ label, value, max, color, prefix = "₹", suffix = "" }) {
   return (

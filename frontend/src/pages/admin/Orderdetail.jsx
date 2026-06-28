@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../../utils/api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useSocket } from "../../context/SocketContext";
@@ -11,15 +11,7 @@ import { useSocket } from "../../context/SocketContext";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const PAGE_SIZE = 10;
 
-// ── Token helper ──────────────────────────────────────────────────────────────
-function getToken() {
-  try {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    return userInfo?.token || localStorage.getItem("token") || "";
-  } catch {
-    return localStorage.getItem("token") || "";
-  }
-}
+
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -792,28 +784,15 @@ export default function Orderdetails() {
     try {
       setLoading(true);
       setError("");
-      const token = getToken();
-      if (!token) {
-        setError("Admin token missing. Please login again.");
-        return;
-      }
-      const { data } = await axios.get(`${API_URL}/api/orders?limit=all`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const data = await API(`/api/orders?limit=all`);
       setOrders(data.orders || []);
     } catch (err) {
-      const msg =
-        err.response?.data?.message || err.message || "Failed to fetch orders";
+      const msg = err.message || "Failed to fetch orders";
       setError(msg);
-      if (err.response?.status === 401) {
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("token");
-        navigate("/login");
-      }
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -823,17 +802,10 @@ export default function Orderdetails() {
   const handleStatusUpdate = async (id, status) => {
     try {
       setUpdating(true);
-      const token = getToken();
-      await axios.put(
-        `${API_URL}/api/orders/${id}/status`,
-        { status },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      await API(`/api/orders/${id}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status })
+      });
       const patch = (o) => {
         if (o._id !== id) return o;
         const isDeliveredNow = status === "Delivered";
@@ -860,7 +832,7 @@ export default function Orderdetails() {
       }
     } catch (err) {
       console.error("Error in status update or PDF generation:", err);
-      alert(err.response?.data?.message || err.message || "Failed to update status");
+      alert(err.message || "Failed to update status");
     } finally {
       setUpdating(false);
     }
@@ -1254,17 +1226,26 @@ export default function Orderdetails() {
                         }}
                         aria-label="Update order status"
                       >
-                        {[
-                          "Pending",
-                          "Processing",
-                          "Shipped",
-                          "Delivered",
-                          "Cancelled",
-                        ].map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
+                        {(() => {
+                          const currentStatus = order.orderStatus;
+                          let available = [];
+                          if (currentStatus === "Delivered" || currentStatus === "Cancelled") {
+                            available = [currentStatus];
+                          } else if (currentStatus === "Pending") {
+                            available = ["Pending", "Processing", "Cancelled"];
+                          } else if (currentStatus === "Processing") {
+                            available = ["Processing", "Shipped", "Cancelled"];
+                          } else if (currentStatus === "Shipped") {
+                            available = ["Shipped", "Delivered"];
+                          } else {
+                            available = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
+                          }
+                          return available.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ));
+                        })()}
                       </select>
                     </td>
                     <td style={{ padding: "9px 12px", textAlign: "center" }}>

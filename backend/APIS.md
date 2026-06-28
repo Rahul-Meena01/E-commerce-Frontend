@@ -1,8 +1,8 @@
 # API Endpoints
 
-Generated: 2026-06-04
+Generated: 2026-06-26
 
-**TOTAL 103 API's**
+**TOTAL 104 API's**
 
 This document lists all Express routes in the project with their HTTP method, full path (including router mounts), and source file.
 
@@ -80,16 +80,15 @@ This document lists all Express routes in the project with their HTTP method, fu
 - PUT  /api/giftCard/update/:id — Update gift card — [backend/routes/giftCard.js](backend/routes/giftCard.js)
 - DELETE /api/giftCard/delete/:id — Delete gift card — [backend/routes/giftCard.js](backend/routes/giftCard.js)
 
-**Profile / Admin profile (mounted under `/api/profile`)**  
-- GET  /api/profile/admin/profile — Get admin profile — [backend/routes/profile.js](backend/routes/profile.js)
-- PUT  /api/profile/admin/profile — Update admin profile (upload allowed) — [backend/routes/profile.js](backend/routes/profile.js)
+**Profile / Admin profile (mounted under `/api/admin/profile`)**  
+- GET  /api/admin/profile — Get admin profile — [backend/routes/profile.js](backend/routes/profile.js)
+- PUT  /api/admin/profile — Update admin profile (upload allowed) — [backend/routes/profile.js](backend/routes/profile.js)
 
 **Orders (/api/orders)**  
 - POST /api/orders/ — Create order (private, supports both admin and vendor products natively) — [backend/routes/order.js](backend/routes/order.js)
 - GET  /api/orders/myorders — Get logged-in user's orders — [backend/routes/order.js](backend/routes/order.js)
 - GET  /api/orders/ — Admin: list all orders — [backend/routes/order.js](backend/routes/order.js)
 - GET  /api/orders/:id — Get single order (owner or admin) — [backend/routes/order.js](backend/routes/order.js)
-- PUT  /api/orders/:id/pay — Mark order as paid (callback) — [backend/routes/order.js](backend/routes/order.js)
 - PUT  /api/orders/:id/cancel — User cancels order — [backend/routes/order.js](backend/routes/order.js)
 - PUT  /api/orders/:id/status — Admin: update order status — [backend/routes/order.js](backend/routes/order.js)
 
@@ -98,6 +97,9 @@ This document lists all Express routes in the project with their HTTP method, fu
 - POST /api/payment/verify — Verify Razorpay payment signature — [backend/routes/payment.js](backend/routes/payment.js)
 - POST /api/payment/webhook — Razorpay webhook handler — [backend/routes/payment.js](backend/routes/payment.js)
 - POST /api/payment/test-setup — DEV ONLY: Create dummy user/order for UI testing — [backend/routes/payment.js](backend/routes/payment.js)
+
+**Uploads (/api/upload)**
+- POST /api/upload/ — Upload a single image (returns URL) — [backend/routes/upload.js](backend/routes/upload.js)
 
 **Users (/api/users)**  
 - GET  /api/users/stats — Admin dashboard counts (hot/cold/deactive) — [backend/routes/user.js](backend/routes/user.js)
@@ -112,6 +114,9 @@ This document lists all Express routes in the project with their HTTP method, fu
 - PUT  /api/admin/vendors/:id/status — Approve/suspend vendor — [backend/routes/adminVendorRoutes.js](backend/routes/adminVendorRoutes.js)
 - PUT  /api/admin/vendors/:id/commission — Set vendor commission — [backend/routes/adminVendorRoutes.js](backend/routes/adminVendorRoutes.js)
 - DELETE /api/admin/vendors/:id — Delete vendor — [backend/routes/adminVendorRoutes.js](backend/routes/adminVendorRoutes.js)
+
+**Admin Audit Logs (/api/admin/audit-logs)**
+- GET  /api/admin/audit-logs/ — List audit logs — [backend/routes/adminAuditRoutes.js](backend/routes/adminAuditRoutes.js)
 
 **Vendor-scoped routes (mounted at `/api/vendor/:vendorSlug`)**
 

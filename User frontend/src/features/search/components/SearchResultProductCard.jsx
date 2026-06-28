@@ -22,8 +22,11 @@ export default function SearchResultProductCard({ product, onSelect }) {
       : null;
 
   const displayPrice = discountPrice ?? fullPrice;
+  const category = product?.category;
   const categoryLabel =
-    product?.categoryName || product?.category || "Featured";
+    product?.categoryName ||
+    (category && typeof category === "object" ? category.name || category.title : category) ||
+    "Featured";
   const inStock =
     product?.stock > 0 || product?.inventory > 0 || product?.inStock;
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown } from "lucide-react";
+import API from "../utils/api";
 
 export default function SearchableDropdown({
   value,
@@ -17,17 +18,15 @@ export default function SearchableDropdown({
   const fetchOptions = async (query = "") => {
     setLoading(true);
     try {
-      const res = await fetch(`${fetchUrl}?q=${query}&limit=5`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken") || localStorage.getItem("token")}`,
-        },
-      });
-      const data = await res.json();
-      if (data.success) {
+      const separator = fetchUrl.includes("?") ? "&" : "?";
+      const url = `${fetchUrl}${separator}q=${query}&limit=5`;
+      
+      const data = await API(url);
+      if (data && data.success) {
         setOptions(data.data || []);
       }
     } catch (error) {
-      console.error("Error fetching options:", error);
+      console.error("Error fetching options:", error.message || error);
     } finally {
       setLoading(false);
     }

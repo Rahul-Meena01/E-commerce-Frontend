@@ -110,6 +110,11 @@ function Modal({ title, onClose, children }) {
   );
 }
 
+import Pagination from "../../components/Pagination";
+import StatCard from "../../components/admin/StatCard";
+import AdminButton from "../../components/admin/AdminButton";
+import { ToggleLeft, ToggleRight, Edit2, Trash2, Plus } from "lucide-react";
+
 export default function Category() {
   const [categories, setCategories] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -145,7 +150,7 @@ export default function Category() {
     const res = await fetch(`/api/category/all?page=${pageNum}`, { headers: getHeaders() });
     const data = await res.json();
     setCategories(data.data || []);
-    setTotalPages(data.totalPages || 1);
+    setTotalPages(data.pages || data.totalPages || 1);
     setStats({
       total: data.total || 0,
       active: data.active || 0,
@@ -183,6 +188,26 @@ export default function Category() {
       setShowForm(false);
       loadCategories();
     } else alert(data.message);
+  };
+
+  const handleToggleStatus = async (cat) => {
+    try {
+      const newStatus = cat.status === "Active" ? "Inactive" : "Active";
+      const response = await fetch(`/api/category/update/${cat._id}`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ ...cat, status: newStatus }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        loadCategories(page);
+      } else {
+        alert(data.message || "Failed to update category status");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error toggling category status");
+    }
   };
 
   const handleDelete = async (id) => {
@@ -225,80 +250,31 @@ export default function Category() {
 
 
   return (
-    <div style={S}>
+    <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "32px", color: "#0f172a", fontFamily: "'Outfit',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');`}</style>
-
-      <div style={{ marginBottom: "24px" }}>
-        <h1
-          style={{
-            color: "#0f172a",
-            fontWeight: "700",
-            fontSize: "24px",
-            margin: 0,
-          }}
-        >
-          Categories
-        </h1>
-        <p style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>
-          Manage product categories
-        </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: 800 }}>Category Management</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "15px" }}>Create and manage product categories.</p>
+        </div>
+        <AdminButton icon={Plus} onClick={openAdd}>
+          Add Category
+        </AdminButton>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "24px" }}>
-        {[
-          ["Total", stats.total, "#6366f1"],
-          ["Active", stats.active, "#10b981"],
-          ["Inactive", stats.inactive, "#ef4444"],
-        ].map(([l, v, c]) => (
-          <div
-            key={l}
-            style={{
-              background: "white",
-              borderRadius: "12px",
-              padding: "16px 24px",
-              border: `1px solid ${c}22`,
-              flex: 1,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-            }}
-          >
-            <p
-              style={{
-                margin: 0,
-                color: "#64748b",
-                fontSize: "12px",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              {l} Categories
-            </p>
-            <p
-              style={{
-                margin: "4px 0 0",
-                fontSize: "28px",
-                fontWeight: "700",
-                color: c,
-              }}
-            >
-              {v}
-            </p>
-          </div>
-        ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "32px" }}>
+        <StatCard label="Total Categories" value={stats.total} color="#6366f1" />
+        <StatCard label="Active" value={stats.active} color="#10b981" />
+        <StatCard label="Inactive" value={stats.inactive} color="#f43f5e" />
       </div>
 
-      {/* Toolbar */}
       <div
         style={{
-          background: "white",
-          borderRadius: "12px",
-          padding: "16px 20px",
-          border: "1px solid #e2e8f0",
-          marginBottom: "16px",
           display: "flex",
           gap: "12px",
           alignItems: "center",
           flexWrap: "wrap",
+          marginBottom: "20px"
         }}
       >
         <input
@@ -313,7 +289,6 @@ export default function Category() {
             border: "1px solid #e2e8f0",
             fontSize: "14px",
             outline: "none",
-            fontFamily: "'Outfit',sans-serif",
           }}
         />
         <select
@@ -324,7 +299,6 @@ export default function Category() {
             borderRadius: "8px",
             border: "1px solid #e2e8f0",
             fontSize: "14px",
-            fontFamily: "'Outfit',sans-serif",
             background: "white",
             cursor: "pointer",
           }}
@@ -333,39 +307,18 @@ export default function Category() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        {selected.length > 0 && (
-          <button
-            onClick={handleBulkDelete}
-            style={{
-              padding: "9px 16px",
-              borderRadius: "8px",
-              background: "#fef2f2",
-              color: "#ef4444",
-              border: "1px solid #fecaca",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Delete ({selected.length})
-          </button>
-        )}
-        <button
-          onClick={openAdd}
-          style={{
-            padding: "9px 20px",
-            borderRadius: "8px",
-            background: "#6366f1",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "600",
-          }}
-        >
-          + Add Category
-        </button>
       </div>
+
+      {selected.length > 0 && (
+        <div style={{ padding: "12px 16px", background: "#eef2ff", borderRadius: "12px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "16px", border: "1px solid #c7d2fe" }}>
+          <span style={{ fontWeight: "600", color: "#3730a3" }}>{selected.length} selected</span>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <AdminButton variant="success" onClick={() => handleBulkStatus("Active")}>Set Active</AdminButton>
+            <AdminButton variant="secondary" onClick={() => handleBulkStatus("Inactive")}>Set Inactive</AdminButton>
+            <AdminButton variant="danger" onClick={handleBulkDelete}>Delete Selected</AdminButton>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div
@@ -472,7 +425,7 @@ export default function Category() {
                         fontSize: "12px",
                       }}
                     >
-                      #{String(i + 1).padStart(3, "0")}
+                      {(page - 1) * 10 + i + 1}
                     </td>
                     <td
                       style={{
@@ -517,40 +470,25 @@ export default function Category() {
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                       <div style={{ display: "flex", gap: "8px" }}>
-                        <button
+                        <AdminButton
+                          variant="secondary"
+                          icon={cat.status === "Active" ? ToggleRight : ToggleLeft}
+                          onClick={() => handleToggleStatus(cat)}
+                          title={cat.status === "Active" ? "Set Inactive" : "Set Active"}
+                          style={{ color: cat.status === "Active" ? "#10b981" : "#94a3b8" }}
+                        />
+                        <AdminButton
+                          variant="secondary"
+                          icon={Edit2}
                           onClick={() => openEdit(cat)}
-                          style={{
-                            padding: "6px",
-                            borderRadius: "6px",
-                            background: "#eff6ff",
-                            color: "#3b82f6",
-                            border: "1px solid #bfdbfe",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
                           title="Edit"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
+                        />
+                        <AdminButton
+                          variant="danger"
+                          icon={Trash2}
                           onClick={() => handleDelete(cat._id)}
-                          style={{
-                            padding: "6px",
-                            borderRadius: "6px",
-                            background: "#fef2f2",
-                            color: "#ef4444",
-                            border: "1px solid #fecaca",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
                           title="Delete"
-                        >
-                          <DeleteIcon />
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -561,43 +499,7 @@ export default function Category() {
         </div>
         
         {/* Pagination Controls */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px", borderTop: "1px solid #e2e8f0" }}>
-          <span style={{ fontSize: "14px", color: "#64748b" }}>
-            Page {page} of {totalPages}
-          </span>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: "1px solid #e2e8f0",
-                background: page === 1 ? "#f8fafc" : "white",
-                color: page === 1 ? "#94a3b8" : "#0f172a",
-                cursor: page === 1 ? "not-allowed" : "pointer",
-                fontSize: "14px",
-              }}
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: "1px solid #e2e8f0",
-                background: page === totalPages ? "#f8fafc" : "white",
-                color: page === totalPages ? "#94a3b8" : "#0f172a",
-                cursor: page === totalPages ? "not-allowed" : "pointer",
-                fontSize: "14px",
-              }}
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination page={page} pages={totalPages} onPageChange={setPage} />
       </div>
 
       {/* Form Modal */}
@@ -794,153 +696,4 @@ export default function Category() {
     </div>
   );
 }
-
-// import { useState, useEffect } from "react";
-
-// function Category() {
-//   const [categories, setCategories] = useState([]);
-//   const [name, setName] = useState("");
-//   const [slug, setSlug] = useState("");
-//   const [status, setStatus] = useState("active");
-//   let [editingId, setEditingId] = useState(null);
-
-//   useEffect(() => {
-//     loadCategories();
-//   }, []);
-
-//   const getHeaders = () => ({
-//     Authorization: `Bearer ${localStorage.getItem("token")}`,
-//     "Content-Type": "application/json",
-//   });
-
-//   async function loadCategories() {
-//     const res = await fetch("/api/category/all", { headers: getHeaders() });
-//     const data = await res.json();
-//     setCategories(data.data);
-//   }
-//   const handleDelete = async (id) => {
-//     const res = await fetch(`/api/category/delete/${id}`, {
-//       method: "DELETE",
-//       headers: getHeaders(),
-//     });
-//     const data = await res.json();
-//     if (data.success) {
-//       loadCategories();
-//     }
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     if (editingId) {
-//       const res = await fetch(`/api/category/update/${editingId}`, {
-//         method: "PUT",
-//         headers: getHeaders(),
-//         body: JSON.stringify({ name, slug, status }),
-//       });
-//       const data = await res.json();
-//       if (data.success) {
-//         alert("Category updated successfully :)");
-//         loadCategories();
-//         setEditingId(null);
-//       }
-//     } else {
-//       const res = await fetch("/api/category/create", {
-//         method: "POST",
-//         headers: getHeaders(),
-//         body: JSON.stringify({ name, slug, status }),
-//       });
-//       const data = await res.json();
-//       if (data.success) {
-//         loadCategories(); // reload from DB
-//         setName("");
-//         setSlug("");
-//         setStatus("active");
-//       } else {
-//         alert(data.message);
-//       }
-//     }
-//   };
-
-//   const handleEdit = (category) => {
-//     setEditingId(category._id);
-//     setName(category.name);
-//     setSlug(category.slug);
-//     setStatus(category.status);
-//   };
-//   return (
-//     <div className="container">
-//       <h1>Manage Categories</h1>
-
-//       {/* Category Form */}
-//       <form onSubmit={handleSubmit}>
-//         <input
-//           type="text"
-//           name="name"
-//           placeholder="Enter category name"
-//           value={name}
-//           onChange={(e) => setName(e.target.value)}
-//         />
-
-//         <input
-//           type="text"
-//           name="slug"
-//           placeholder="Enter category slug"
-//           value={slug}
-//           onChange={(e) => setSlug(e.target.value)}
-//         />
-
-//         <select
-//           name="status"
-//           value={status}
-//           onChange={(e) => setStatus(e.target.value)}
-//         >
-//           <option value="">Select Status</option>
-//           <option value="Active">Active</option>
-//           <option value="Inactive">Inactive</option>
-//         </select>
-
-//         <button type="submit">
-//           {editingId ? "Update Category" : "Add Category"}
-//         </button>
-//       </form>
-
-//       {/* Categories Table */}
-//       <div className="table-container">
-//         <table border="1" cellPadding="10">
-//           <thead>
-//             <tr>
-//               <th>Name</th>
-//               <th>Slug</th>
-//               <th>Status</th>
-//               <th>Actions</th>
-//             </tr>
-//           </thead>
-
-//           <tbody>
-//             {categories.length > 0 ? (
-//               categories.map((category) => (
-//                 <tr key={category._id}>
-//                   <td>{category.name}</td>
-//                   <td>{category.slug}</td>
-//                   <td>{category.status}</td>
-//                   <td>
-//                     <button onClick={() => handleEdit(category)}>Edit</button>
-//                     <button onClick={() => handleDelete(category._id)}>
-//                       Delete
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))
-//             ) : (
-//               <tr>
-//                 <td colSpan="4">No categories added</td>
-//               </tr>
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default Category;
+  

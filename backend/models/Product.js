@@ -65,9 +65,27 @@ const ProductSchema = new mongoose.Schema(
       default: "Active",
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  }
 );
+
+ProductSchema.pre(/^find/, function () {
+  this.where({ isDeleted: { $ne: true } });
+});
+
+ProductSchema.index({ name: 'text', brand: 'text' });
+ProductSchema.index({ subCategory: 1 });
+ProductSchema.index({ status: 1, isDeleted: 1 });
 
 // module.exports = mongoose.model("Products", ProductSchema);
 const Product = mongoose.model("Products", ProductSchema);

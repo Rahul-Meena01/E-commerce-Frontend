@@ -1,217 +1,105 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Ruler } from "lucide-react";
+import PropTypes from "prop-types";
+import { useMemo } from "react";
+import { resolveProductImage } from "@/shared/utils/api";
+import { isOutOfStock } from "@/shared/utils/productUtils";
 import "./VariantSelector.css";
 
-const findFirstEnabledIndex = (options) =>
-  options.findIndex((option) => !option.disabled);
-
-const nextEnabledIndex = (options, currentIndex, direction) => {
-  if (!options.length) return -1;
-  for (let i = 1; i <= options.length; i += 1) {
-    const candidate =
-      (currentIndex + direction * i + options.length) % options.length;
-    const option = options[candidate];
-    if (option && !option.disabled) return candidate;
-  }
-  return currentIndex;
-};
-
 const VariantSelector = ({
-  name,
-  label,
-  type = "text",
-  options = [],
-  selectedValue,
-  onChange,
-  error,
-  helperText,
-  disabled = false,
-  announcementPrefix,
-  onSizeGuideClick,
+  product,
+  variants = [],
+  selectedVariantId = "",
+  onSelectVariant,
 }) => {
-  const buttonRefs = useRef([]);
-  const [liveMessage, setLiveMessage] = useState("");
+  const activeVariants = useMemo(() => {
+    return Array.isArray(variants) ? variants.filter((v) => v.status === "Active") : [];
+  }, [variants]);
 
-  const selectedIndex = useMemo(
-    () => options.findIndex((option) => option.value === selectedValue),
-    [options, selectedValue],
-  );
+  if (!product || activeVariants.length === 0) {
+    return null;
+  }
 
-  // Active index for keyboard focus
-  const activeIndex =
-    selectedIndex >= 0 ? selectedIndex : findFirstEnabledIndex(options);
-  const selectorId = `variant-selector-${name}`;
-  const helpId = `${selectorId}-help`;
-  const errorId = `${selectorId}-error`;
+  const isBaseOutOfStock = isOutOfStock(product) || product.status === "Inactive";
 
-  useEffect(() => {
-    const selectedOption = options[selectedIndex];
-    if (!selectedOption) return;
-    const prefix = announcementPrefix || `${label} selected`;
-    setLiveMessage(
-      `${prefix}: ${selectedOption.label || selectedOption.value}`,
-    );
-  }, [announcementPrefix, label, options, selectedIndex]);
-
-  const handleSelect = (option) => {
-    // Block action if base component is disabled, or option is explicitly disabled / out of stock
-    if (!option || option.disabled || option.outOfStock || disabled) return;
-    onChange(option.value, option);
-  };
-
-  const handleKeyDown = (event, index) => {
-    if (disabled) return;
-    const key = event.key;
-    if (
-      ![
-        "ArrowRight",
-        "ArrowDown",
-        "ArrowLeft",
-        "ArrowUp",
-        "Home",
-        "End",
-        " ",
-        "Enter",
-      ].includes(key)
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-
-    if (key === " " || key === "Enter") {
-      handleSelect(options[index]);
-      return;
-    }
-
-    if (key === "Home") {
-      const firstIndex = findFirstEnabledIndex(options);
-      if (firstIndex >= 0) {
-        buttonRefs.current[firstIndex]?.focus();
-        handleSelect(options[firstIndex]);
-      }
-      return;
-    }
-
-    if (key === "End") {
-      const reversed = [...options].reverse();
-      const reverseIndex = findFirstEnabledIndex(reversed);
-      if (reverseIndex >= 0) {
-        const finalIndex = options.length - 1 - reverseIndex;
-        buttonRefs.current[finalIndex]?.focus();
-        handleSelect(options[finalIndex]);
-      }
-      return;
-    }
-
-    const direction = key === "ArrowRight" || key === "ArrowDown" ? 1 : -1;
-    const nextIndex = nextEnabledIndex(options, index, direction);
-    if (nextIndex >= 0) {
-      buttonRefs.current[nextIndex]?.focus();
-      handleSelect(options[nextIndex]);
-    }
-  };
-
-  const renderContent = (option) => {
-    if (type === "color") {
-      return (
-        <span
-          className="vs-swatch"
-          style={{ backgroundColor: option.swatch || "#d5d5d5" }}
-          aria-hidden="true"
-        />
-      );
-    }
-
-    if (type === "image") {
-      return (
-        <>
-          <span className="vs-image-wrap" aria-hidden="true">
-            <img src={option.image} alt="" className="vs-image" />
-          </span>
-          <span className="vs-label">{option.label}</span>
-        </>
-      );
-    }
-
-    return <span className="vs-label">{option.label}</span>;
+  const handleCardClick = (id, isUnavailable) => {
+    if (isUnavailable) return;
+    onSelectVariant(id);
   };
 
   return (
-    <div className={`vs-root vs-root--${name} ${error ? "vs-root--error" : ""}`}>
-      <div className="vs-header">
-        <span className="vs-title" id={selectorId}>
-          {label}: <span className="vs-current-val">{selectedIndex >= 0 ? options[selectedIndex]?.label : "Select size"}</span>
-        </span>
-        {name === "size" && (
-          <button type="button" className="vs-size-guide-btn" onClick={onSizeGuideClick}>
-            <Ruler size={14} className="vs-size-guide-icon" /> Size Guide
-          </button>
-        )}
-      </div>
+    <div className="pd-variants-section">
+      <h3 className="pd-variants-title">Available Variants</h3>
+      <div className="pd-variants-grid">
+        {/* Base Product Card */}
+        <button
+          type="button"
+          className={`pd-variant-card ${selectedVariantId === "" ? "active" : ""} ${isBaseOutOfStock ? "out-of-stock" : ""}`}
+          onClick={() => handleCardClick("", isBaseOutOfStock)}
+          disabled={isBaseOutOfStock}
+          aria-label={`Select Original Product ${isBaseOutOfStock ? "(Sold Out)" : ""}`}
+        >
+          <div className="pd-variant-card-image-wrap">
+            <img
+              src={resolveProductImage(product.image)}
+              alt="Original Product"
+              className="pd-variant-card-image"
+              loading="lazy"
+            />
+            {isBaseOutOfStock && <div className="pd-variant-sold-out-overlay">Sold Out</div>}
+          </div>
+          <span className="pd-variant-card-name">Original</span>
+        </button>
 
-      <div
-        className={`vs-options vs-options--${type}`}
-        role="radiogroup"
-        aria-labelledby={selectorId}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : helperText ? helpId : undefined}
-      >
-        {options.map((option, index) => {
-          const isSelected = option.value === selectedValue;
-          const isSelectionDisabled = disabled || option.disabled;
-          const isOutOfStock = option.outOfStock;
-          const isVisuallyDisabled = isSelectionDisabled || isOutOfStock;
+        {/* Variant Cards */}
+        {activeVariants.map((v) => {
+          const isSelected = selectedVariantId === v._id;
+          const isOutOfStockVal = isOutOfStock(v) || v.status === "Inactive";
+          const imageSrc = resolveProductImage(v.image || product.image);
 
           return (
             <button
-              key={`${name}-${option.value}`}
+              key={v._id}
               type="button"
-              role="radio"
-              aria-checked={isSelected}
-              aria-label={
-                isOutOfStock
-                  ? `${option.label}, out of stock`
-                  : option.label
-              }
-              aria-disabled={isOutOfStock ? "true" : undefined}
-              tabIndex={
-                index === activeIndex || (activeIndex === -1 && index === 0)
-                  ? 0
-                  : -1
-              }
-              className={`vs-option ${isSelected ? "vs-option--selected" : ""} ${isVisuallyDisabled ? "vs-option--disabled" : ""}`}
-              disabled={isSelectionDisabled}
-              ref={(node) => {
-                buttonRefs.current[index] = node;
-              }}
-              onClick={() => handleSelect(option)}
-              onKeyDown={(event) => handleKeyDown(event, index)}
+              className={`pd-variant-card ${isSelected ? "active" : ""} ${isOutOfStockVal ? "out-of-stock" : ""}`}
+              onClick={() => handleCardClick(v._id, isOutOfStockVal)}
+              disabled={isOutOfStockVal}
+              aria-label={`Select ${v.name} ${isOutOfStockVal ? "(Sold Out)" : ""}`}
             >
-              {renderContent(option)}
-              {option.outOfStock ? <span className="vs-badge">Out</span> : null}
+              <div className="pd-variant-card-image-wrap">
+                <img
+                  src={imageSrc}
+                  alt={v.name}
+                  className="pd-variant-card-image"
+                  loading="lazy"
+                />
+                {isOutOfStockVal && <div className="pd-variant-sold-out-overlay">Sold Out</div>}
+              </div>
+              <span className="pd-variant-card-name" title={v.name}>
+                {v.name}
+              </span>
             </button>
           );
         })}
       </div>
-
-      {helperText && !error ? (
-        <p className="vs-helper" id={helpId}>
-          {helperText}
-        </p>
-      ) : null}
-
-      {error ? (
-        <p className="vs-error" id={errorId} role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      <p className="vs-live" aria-live="polite" aria-atomic="true">
-        {liveMessage}
-      </p>
     </div>
   );
+};
+
+VariantSelector.propTypes = {
+  product: PropTypes.shape({
+    image: PropTypes.string,
+    stock: PropTypes.number,
+  }).isRequired,
+  variants: PropTypes.arrayOf(
+    PropTypes.shape({
+      _id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      image: PropTypes.string,
+      stock: PropTypes.number,
+      status: PropTypes.string,
+    })
+  ),
+  selectedVariantId: PropTypes.string,
+  onSelectVariant: PropTypes.func.isRequired,
 };
 
 export default VariantSelector;

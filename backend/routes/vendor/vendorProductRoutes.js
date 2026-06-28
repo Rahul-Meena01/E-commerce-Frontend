@@ -41,6 +41,8 @@ import express from "express";
 import { protect, requireAuth } from "../../middleware/authMiddleware.js";
 import { vendorGuard } from "../../middleware/vendor/vendorMiddleware.js";
 import upload from "../../middleware/upload.js";
+import { validate } from "../../middleware/validate.js";
+import { productSchema } from "../../middleware/schemas.js";
 import {
   getProducts,
   getProductById,
@@ -92,13 +94,13 @@ router.get("/:id", auth, getProductById);
 //         images?: string[], category?, subCategory?, isActive? }
 // Note: images[] should contain URLs already returned by the upload-image route.
 //       images[0] = thumbnail, images[1-4] = carousel (max 5 total).
-router.post("/", auth, createProduct);
+router.post("/", auth, validate(productSchema), createProduct);
 
 // PUT /api/vendor/:vendorSlug/products/:id
 // Updates an existing product (must belong to this vendor).
 // Any subset of product fields can be sent — only provided fields are updated.
 // images: undefined → no change | images: [] → clear all | images: [...] → replace
-router.put("/:id", auth, updateProduct);
+router.put("/:id", auth, validate(productSchema.partial()), updateProduct);
 
 // DELETE /api/vendor/:vendorSlug/products/:id
 // Permanently deletes a product (must belong to this vendor).

@@ -20,6 +20,8 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String, default: "" },
     profileImage: { type: String, default: "" },
+    location: { type: String, default: "" },
+    bio: { type: String, default: "" },
 
     role: {
       type: String,
@@ -45,9 +47,23 @@ const UserSchema = new mongoose.Schema(
     address: { type: String, default: "" },
     city: { type: String, default: "" },
     pincode: { type: String, default: "" },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
+
+UserSchema.pre(/^find/, function () {
+  this.where({ isDeleted: { $ne: true } });
+});
 
 export default mongoose.model("User", UserSchema);
 

@@ -1,11 +1,12 @@
-
 import express from "express";
+import Category from "../models/Category.js";
 import SubCategory from "../models/SubCategory.js";
 import Product from "../models/Product.js";
 import VendorProduct from "../models/vendor/vendorProduct.js";
 import Variant from "../models/Variant.js";
 import upload from "../middleware/upload.js";
 import { protect } from "../middleware/authMiddleware.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -28,8 +29,8 @@ const cpUpload = upload.fields([
 // ======================================================
 
 const getImagePath = (files, field) => {
-  if (files && files[field] && files[field][0] && files[field][0].filename) {
-    return `/uploads/${files[field][0].filename}`;
+  if (files && files[field] && files[field][0] && files[field][0].path) {
+    return files[field][0].path; // Cloudinary URL
   }
 
   return null;
@@ -160,43 +161,82 @@ router.get("/all", protect, async (req, res) => {
     // FILTERS
     // ------------------------------
 
-    if (status) {
-      query.status = status;
-    }
+    const inactiveCategories = await Category.find({ status: "Inactive" }).select("_id");
+    const inactiveCategoryIds = inactiveCategories.map((c) => c._id);
+
+    const inactiveSubCategories = await SubCategory.find({
+      $or: [
+        { status: "Inactive" },
+        { parentCategory: { $in: inactiveCategoryIds } }
+      ]
+    }).select("_id");
+
+    const effectivelyInactiveSubCategoryIds = inactiveSubCategories.map((sc) => sc._id);
+
+    // Create a base query without status for the stats calculations
+    const baseQuery = {};
 
     if (subCategory) {
-      query.subCategory = subCategory;
+      baseQuery.subCategory = subCategory;
     } else if (category) {
       const categorySubcategories = await SubCategory.find({ parentCategory: category }).select("_id");
-      query.subCategory = { $in: categorySubcategories.map((sub) => sub._id) };
+      baseQuery.subCategory = { $in: categorySubcategories.map((sub) => sub._id) };
     }
-
-    // ------------------------------
-    // SEARCH
-    // ------------------------------
 
     if (search) {
-      query.$or = [
-        {
-          name: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          brand: {
-            $regex: search,
-            $options: "i",
-          },
-        },
+      baseQuery.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
       ];
     }
+
+    // Now apply the status filter to the actual query
+    Object.assign(query, baseQuery);
+
+    if (status === "Active") {
+      query.status = "Active";
+      if (query.subCategory) {
+        if (query.subCategory.$in) {
+          query.subCategory.$in = query.subCategory.$in.filter(id => !effectivelyInactiveSubCategoryIds.some(eid => eid.equals(id)));
+        } else {
+          if (effectivelyInactiveSubCategoryIds.some(eid => eid.equals(query.subCategory))) {
+            query.subCategory = null; // force empty
+          }
+        }
+      } else {
+        query.subCategory = { $nin: effectivelyInactiveSubCategoryIds };
+      }
+    } else if (status === "Inactive") {
+      const baseSubCategory = query.subCategory;
+      delete query.subCategory;
+      
+      const inactiveConditions = [
+        { status: "Inactive" },
+        { subCategory: { $in: effectivelyInactiveSubCategoryIds } }
+      ];
+
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: inactiveConditions }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = inactiveConditions;
+      }
+
+      if (baseSubCategory) {
+        query.$and = query.$and || [];
+        query.$and.push({ subCategory: baseSubCategory });
+      }
+    }
+
 
     // ------------------------------
     // PAGINATION
     // ------------------------------
 
-    const parsedLimit = 10;
+    const parsedLimit = parseInt(limit) || 20;
     const parsedPage = parseInt(page) || 1;
 
     const skip = (parsedPage - 1) * parsedLimit;
@@ -206,8 +246,22 @@ router.get("/all", protect, async (req, res) => {
     // ------------------------------
 
     const total = await Product.countDocuments(query);
-    const active = await Product.countDocuments({ ...query, status: "Active" });
-    const inactive = await Product.countDocuments({ ...query, status: "Inactive" });
+
+    // For stats, we use baseQuery so that they don't zero out when filtered by status
+    const activeQuery = { ...baseQuery, status: "Active" };
+    if (activeQuery.subCategory) {
+        if (activeQuery.subCategory.$in) {
+            activeQuery.subCategory.$in = activeQuery.subCategory.$in.filter(id => !effectivelyInactiveSubCategoryIds.some(eid => eid.equals(id)));
+        } else if (effectivelyInactiveSubCategoryIds.some(eid => eid.equals(activeQuery.subCategory))) {
+            activeQuery.subCategory = null;
+        }
+    } else {
+        activeQuery.subCategory = { $nin: effectivelyInactiveSubCategoryIds };
+    }
+
+    const active = await Product.countDocuments(activeQuery);
+    const baseTotal = await Product.countDocuments(baseQuery);
+    const inactive = baseTotal - active;
 
     // ------------------------------
     // FETCH PRODUCTS
@@ -234,10 +288,12 @@ router.get("/all", protect, async (req, res) => {
       total,
       active,
       inactive,
+      page: parsedPage,
+      pages: Math.ceil(total / parsedLimit),
       data: products,
     });
   } catch (error) {
-    console.log("GET PRODUCTS ERROR:", error);
+    logger.error(`GET PRODUCTS ERROR: ${error.message}`, { error: error.stack });
 
     return res.status(500).json({
       success: false,
@@ -252,7 +308,7 @@ router.get("/all", protect, async (req, res) => {
 
 router.get("/public/all", async (req, res) => {
   try {
-    const { category, subCategory, search } = req.query;
+    const { category, subCategory, search, limit, page } = req.query;
 
     // ======================================================
     // FETCH ADMIN PRODUCTS
@@ -332,12 +388,21 @@ router.get("/public/all", async (req, res) => {
       });
     }
 
+    const parsedLimit = parseInt(limit) || 20;
+    const parsedPage = parseInt(page) || 1;
+    const total = allProducts.length;
+    const startIndex = (parsedPage - 1) * parsedLimit;
+    const paginatedProducts = allProducts.slice(startIndex, startIndex + parsedLimit);
+
     return res.status(200).json({
       success: true,
-      data: allProducts,
+      total,
+      page: parsedPage,
+      pages: Math.ceil(total / parsedLimit),
+      data: paginatedProducts,
     });
   } catch (error) {
-    console.log("PUBLIC PRODUCTS ERROR:", error);
+    logger.error(`PUBLIC PRODUCTS ERROR: ${error.message}`, { error: error.stack });
 
     return res.status(500).json({
       success: false,
@@ -474,7 +539,11 @@ router.delete("/delete/:id", protect, async (req, res) => {
   try {
     const productId = req.params.id;
 
-    const deletedProduct = await Product.findByIdAndDelete(productId);
+    const deletedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
 
     if (!deletedProduct) {
       return res.status(404).json({

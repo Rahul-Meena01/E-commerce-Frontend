@@ -13,26 +13,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { BarChart3, TrendingUp, Users, AlertCircle, Search, Settings } from "lucide-react";
+import Pagination from "../../components/Pagination";
+import API from "../../utils/api";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const API_BASE = "/api/users";
 
-// Reads JWT from localStorage — swap key name if yours differs
-const authHeader = () => {
-  const token = localStorage.getItem("adminToken") || localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
-const apiFetch = async (url, options = {}) => {
-  const res = await fetch(url, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...authHeader(), ...options.headers },
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Request failed");
-  return data;
-};
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
@@ -114,7 +103,7 @@ const UserProfileDrawer = ({ userId, onClose, onStatusChanged }) => {
 
   useEffect(() => {
     setLoading(true); setError(null);
-    apiFetch(`${API_BASE}/${userId}`)
+    API(`${API_BASE}/${userId}`)
       .then(setProfile)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -123,7 +112,7 @@ const UserProfileDrawer = ({ userId, onClose, onStatusChanged }) => {
   const handleStatusOverride = async (newStatus) => {
     setSaving(true);
     try {
-      await apiFetch(`${API_BASE}/${userId}/status`, {
+      await API(`${API_BASE}/${userId}/status`, {
         method: "PUT",
         body: JSON.stringify({ status: newStatus }),
       });
@@ -424,7 +413,7 @@ const UserManagementPage = () => {
 
   // ── Load stats ──────────────────────────────────────────────────────────────
   const loadStats = useCallback(() => {
-    apiFetch(`${API_BASE}/stats`).then(setStats).catch(console.error);
+    API(`${API_BASE}/stats`).then(setStats).catch(console.error);
   }, []);
 
   useEffect(() => { loadStats(); }, [loadStats]);
@@ -436,9 +425,10 @@ const UserManagementPage = () => {
     if (search)       q.set("search",  search);
     if (statusFilter) q.set("status",  statusFilter);
 
-    apiFetch(`${API_BASE}?${q}`)
+    API(`${API_BASE}?${q}`)
       .then((data) => {
-        setUsers(data.users);
+        const activeUsers = (data.users || []).filter(u => !u.isDeleted);
+        setUsers(activeUsers);
         setPages(data.pages);
         setTotalUsers(data.totalUsers);
       })
@@ -629,46 +619,7 @@ const UserManagementPage = () => {
         </div>
 
         {/* ── Pagination ── */}
-        {pages > 1 && (
-          <div style={{
-            display: "flex", justifyContent: "center", alignItems: "center",
-            gap: 6, padding: "16px 20px", borderTop: "1px solid #f1f5f9",
-          }}>
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              style={{
-                padding: "7px 16px", border: "1px solid #e2e8f0", borderRadius: 8,
-                background: "#fff", cursor: page <= 1 ? "not-allowed" : "pointer",
-                opacity: page <= 1 ? .4 : 1, fontSize: 13, fontWeight: 600,
-              }}
-            >← Prev</button>
-
-            {Array.from({ length: Math.min(pages, 7) }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                style={{
-                  width: 34, height: 34, borderRadius: 8, fontSize: 13,
-                  cursor: "pointer", fontWeight: p === page ? 800 : 500,
-                  border: p === page ? "none" : "1px solid #e2e8f0",
-                  background: p === page ? "#6366f1" : "#fff",
-                  color: p === page ? "#fff" : "#374151",
-                }}
-              >{p}</button>
-            ))}
-
-            <button
-              disabled={page >= pages}
-              onClick={() => setPage((p) => p + 1)}
-              style={{
-                padding: "7px 16px", border: "1px solid #e2e8f0", borderRadius: 8,
-                background: "#fff", cursor: page >= pages ? "not-allowed" : "pointer",
-                opacity: page >= pages ? .4 : 1, fontSize: 13, fontWeight: 600,
-              }}
-            >Next →</button>
-          </div>
-        )}
+        <Pagination page={page} pages={pages} onPageChange={setPage} />
       </div>
 
       {/* ── Profile Drawer ── */}

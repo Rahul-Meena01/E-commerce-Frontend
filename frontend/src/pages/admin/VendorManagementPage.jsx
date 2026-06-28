@@ -18,9 +18,12 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { BarChart3, TrendingUp, Users, AlertCircle, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../../components/Pagination";
+import API from "../../utils/api";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────────────────
 
 const avatarFallback = (name) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "U")}&background=1e293b&color=fff&size=128&bold=true`;
@@ -166,29 +169,19 @@ const VendorManagementPage = () => {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
+      const searchParams = new URLSearchParams({ page, limit: ITEMS_PER_PAGE });
+      if (statusFilter) searchParams.set("status", statusFilter);
+      const params = searchParams.toString();
+      const data = await API(`/api/admin/vendors?${params}`);
 
-      // Build query string
-      const params = new URLSearchParams({
-        page,
-        limit: ITEMS_PER_PAGE,
-        ...(statusFilter && { status: statusFilter }), // omit if empty
-      });
-
-      const res = await fetch(`/api/admin/vendors?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         setError(data.message || "Failed to load vendors.");
         return;
       }
 
-      setVendors(data.data);
-      setTotalCount(data.total);
-      setTotalPages(data.totalPages);
+      setVendors(data.data || data.vendors || []);
+      setTotalPages(data.pages || data.totalPages || 1);
+      setTotalCount(data.total || data.totalVendors || 0);
     } catch (err) {
       setError("Network error. Please try again.");
     } finally {
@@ -200,29 +193,12 @@ const VendorManagementPage = () => {
   // We call the API 3 times in parallel — once per status — to get counts.
   // These power the stat cards at the top.
   const fetchStats = useCallback(async () => {
-    const token = localStorage.getItem("token");
-
     try {
-      const [allRes, activeRes, pendingRes, suspendedRes] = await Promise.all([
-        fetch("/api/admin/vendors?limit=1", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/admin/vendors?limit=1&status=active", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/admin/vendors?limit=1&status=pending", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/admin/vendors?limit=1&status=suspended", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
-
       const [all, active, pending, suspended] = await Promise.all([
-        allRes.json(),
-        activeRes.json(),
-        pendingRes.json(),
-        suspendedRes.json(),
+        API("/api/admin/vendors?limit=1"),
+        API("/api/admin/vendors?limit=1&status=active"),
+        API("/api/admin/vendors?limit=1&status=pending"),
+        API("/api/admin/vendors?limit=1&status=suspended"),
       ]);
 
       setStats({
@@ -550,75 +526,7 @@ const VendorManagementPage = () => {
         </div>
 
         {/* ── Pagination ── */}
-        {totalPages > 1 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 6,
-              padding: "16px 20px",
-              borderTop: "1px solid #f1f5f9",
-            }}
-          >
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              style={{
-                padding: "7px 16px",
-                border: "1px solid #e2e8f0",
-                borderRadius: 8,
-                background: "#fff",
-                cursor: page <= 1 ? "not-allowed" : "pointer",
-                opacity: page <= 1 ? 0.4 : 1,
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              ← Prev
-            </button>
-
-            {Array.from(
-              { length: Math.min(totalPages, 7) },
-              (_, i) => i + 1,
-            ).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 8,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontWeight: p === page ? 800 : 500,
-                  border: p === page ? "none" : "1px solid #e2e8f0",
-                  background: p === page ? "#6366f1" : "#fff",
-                  color: p === page ? "#fff" : "#374151",
-                }}
-              >
-                {p}
-              </button>
-            ))}
-
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              style={{
-                padding: "7px 16px",
-                border: "1px solid #e2e8f0",
-                borderRadius: 8,
-                background: "#fff",
-                cursor: page >= totalPages ? "not-allowed" : "pointer",
-                opacity: page >= totalPages ? 0.4 : 1,
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              Next →
-            </button>
-          </div>
-        )}
+        <Pagination page={page} pages={totalPages} onPageChange={setPage} />
       </div>
 
       {/* Shimmer animation */}

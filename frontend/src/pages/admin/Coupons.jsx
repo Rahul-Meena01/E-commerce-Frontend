@@ -4,6 +4,11 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
+import StatCard from "../../components/admin/StatCard";
+import AdminButton from "../../components/admin/AdminButton";
+import Pagination from "../../components/Pagination";
+import { ToggleLeft, ToggleRight, Edit2, Trash2, Plus } from "lucide-react";
+import apiClient from "../../utils/api";
 
 const API = {
   coupons: "/api/coupon",
@@ -82,7 +87,7 @@ const styles = {
     width: "100%",
     minWidth: "920px",
     borderCollapse: "collapse",
-    tableLayout: "fixed",
+    tableLayout: "auto",
   },
   th: {
     background: "#f8fafc",
@@ -252,6 +257,8 @@ export default function Coupon() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [couponSearch, setCouponSearch] = useState("");
+  const [couponFilterStatus, setCouponFilterStatus] = useState("all");
 
   const [showModal, setShowModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
@@ -287,7 +294,7 @@ export default function Coupon() {
 
   useEffect(() => {
     fetchCoupons();
-  }, [page]);
+  }, [page, couponSearch, couponFilterStatus]);
 
   useEffect(() => {
     if (activeTab === "usage") {
@@ -317,10 +324,7 @@ export default function Coupon() {
       try {
         setProductLoading(true);
         const query = new URLSearchParams({ limit: 5, search: productSearch });
-        const res = await fetch(`${API.products}?${query}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const data = await res.json();
+        const data = await apiClient(`${API.products}?${query}`);
         const newProducts = data?.data || [];
         setProducts((prev) =>
           append ? [...prev, ...newProducts] : newProducts,
@@ -348,13 +352,9 @@ export default function Coupon() {
     try {
       setLoading(true);
       const query = new URLSearchParams({ page });
-      const res = await fetch(`${API.coupons}?${query}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
+      if (couponSearch) query.set("search", couponSearch);
+      if (couponFilterStatus && couponFilterStatus !== "all") query.set("status", couponFilterStatus);
+      const data = await apiClient(`${API.coupons}?${query}`);
       setCoupons(data?.data || []);
       setTotalPages(data?.pagination?.totalPages || 1);
     } catch (error) {
@@ -371,10 +371,7 @@ export default function Coupon() {
       const query = new URLSearchParams({ page: usageFilters.page, limit: 20 });
       if (usageFilters.status) query.set("status", usageFilters.status);
 
-      const res = await fetch(`${API.usageHistory}?${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await apiClient(`${API.usageHistory}?${query}`);
       setUsages(data?.data || []);
       setUsagePagination(
         data?.pagination || { total: 0, currentPage: 1, totalPages: 1 },
@@ -448,17 +445,10 @@ export default function Coupon() {
       const url = editingCoupon ? API.update(editingCoupon._id) : API.create;
       const method = editingCoupon ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const data = await apiClient(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Something went wrong");
 
       setShowModal(false);
       fetchCoupons();
@@ -473,11 +463,9 @@ export default function Coupon() {
   async function handleDelete(id) {
     if (!window.confirm("Delete this coupon permanently?")) return;
     try {
-      const res = await fetch(API.delete(id), {
+      await apiClient(API.delete(id), {
         method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) throw new Error("Delete failed");
       fetchCoupons();
     } catch (error) {
       console.error(error);
@@ -500,62 +488,38 @@ export default function Coupon() {
     [coupons],
   );
 
+  const handleToggleStatus = async (coupon) => {
+    try {
+      const data = await apiClient(API.toggleStatus(coupon._id), {
+        method: "PUT",
+      });
+      if (data.success) {
+        loadCoupons();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // ───────────────────────────────────────────────────────────────────────────
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="container">
       {/* Header */}
-      <div style={styles.topBar}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
         <div>
-          <h1 style={styles.heading}>Coupons</h1>
-          <p style={{ marginTop: "6px", color: "#64748b", fontSize: "14px" }}>
-            Manage coupon discounts and track usage history.
-          </p>
+          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>Coupons</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "15px" }}>Manage coupon discounts and track usage history.</p>
         </div>
-        <button style={styles.button} onClick={openCreateModal}>
-          + Create Coupon
-        </button>
+        <AdminButton icon={Plus} onClick={openCreateModal}>
+          Create Coupon
+        </AdminButton>
       </div>
 
       {/* Stats */}
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        {[
-          { label: "Total Coupons", value: coupons.length, color: "#0f172a" },
-          {
-            label: "Active Coupons",
-            value: activeCoupons.length,
-            color: "#16a34a",
-          },
-          {
-            label: "Inactive Coupons",
-            value: coupons.length - activeCoupons.length,
-            color: "#dc2626",
-          },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            style={{
-              background: "white",
-              padding: "18px",
-              borderRadius: "14px",
-              border: "1px solid #e2e8f0",
-              minWidth: "180px",
-            }}
-          >
-            <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>
-              {stat.label}
-            </p>
-            <h2 style={{ margin: "8px 0 0", color: stat.color }}>
-              {stat.value}
-            </h2>
-          </div>
-        ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "32px" }}>
+        <StatCard label="Total Coupons" value={coupons.length} color="#6366f1" />
+        <StatCard label="Active" value={activeCoupons.length} color="#10b981" />
+        <StatCard label="Inactive" value={coupons.length - activeCoupons.length} color="#f43f5e" />
       </div>
 
       {/* Tabs */}
@@ -599,11 +563,29 @@ export default function Coupon() {
       {/* ── COUPONS TAB ── */}
       {activeTab === "coupons" && (
         <>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
+           <input
+             placeholder="Search coupons..."
+             value={couponSearch}
+             onChange={(e) => { setCouponSearch(e.target.value); setPage(1); }}
+             style={{ flex: 1, minWidth: "200px", maxWidth: "300px", padding: "10px 14px", border: "1px solid #e2e8f0", borderRadius: "8px", outline: "none", fontSize: "14px" }}
+           />
+           <select
+             value={couponFilterStatus}
+             onChange={(e) => { setCouponFilterStatus(e.target.value); setPage(1); }}
+             style={{ padding: "10px 14px", border: "1px solid #e2e8f0", borderRadius: "8px", outline: "none", fontSize: "14px", background: "white", cursor: "pointer" }}
+           >
+             <option value="all">All Status</option>
+             <option value="Active">Active</option>
+             <option value="Inactive">Inactive</option>
+           </select>
+        </div>
         <div style={styles.tableWrapper}>
           <table style={styles.table}>
             <thead>
               <tr>
                 {[
+                  "ID",
                   "Code",
                   "Discount",
                   "Type",
@@ -624,7 +606,7 @@ export default function Coupon() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     style={{
                       ...styles.td,
                       textAlign: "center",
@@ -638,7 +620,7 @@ export default function Coupon() {
               ) : coupons.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     style={{
                       ...styles.td,
                       textAlign: "center",
@@ -650,8 +632,11 @@ export default function Coupon() {
                   </td>
                 </tr>
               ) : (
-                coupons.map((coupon) => (
+                coupons.slice((page - 1) * 10, page * 10).map((coupon, index) => {
+                  const displayId = (page - 1) * 10 + index + 1;
+                  return (
                   <tr key={coupon._id}>
+                    <td style={styles.td}>{displayId}</td>
                     <td style={styles.td}>
                       <span
                         style={{
@@ -700,102 +685,40 @@ export default function Coupon() {
                     </td>
                     <td style={styles.td}>
                       <div style={{ display: "flex", gap: "8px" }}>
-                        <button
+                        <AdminButton
+                          variant="secondary"
+                          icon={coupon.status === "active" ? ToggleRight : ToggleLeft}
+                          onClick={() => handleToggleStatus(coupon)}
+                          title={coupon.status === "active" ? "Set Inactive" : "Set Active"}
+                          style={{ color: coupon.status === "active" ? "#10b981" : "#94a3b8" }}
+                        />
+                        <AdminButton
+                          variant="secondary"
+                          icon={Edit2}
                           onClick={() => openEditModal(coupon)}
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            padding: 0,
-                            border: "none",
-                            borderRadius: "8px",
-                            background: "#dbeafe",
-                            color: "#1d4ed8",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
                           title="Edit"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
+                        />
+                        <AdminButton
+                          variant="danger"
+                          icon={Trash2}
                           onClick={() => handleDelete(coupon._id)}
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            padding: 0,
-                            border: "none",
-                            borderRadius: "8px",
-                            background: "#fee2e2",
-                            color: "#b91c1c",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
                           title="Delete"
-                        >
-                          <DeleteIcon />
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+              })
               )}
             </tbody>
           </table>
         </div>
         
-      
-        {totalPages > 1 && (
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "16px",
-              justifyContent: "center",
-            }}
-          >
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                background: "white",
-                cursor: "pointer",
-                opacity: page <= 1 ? 0.4 : 1,
-              }}
-            >
-              ← Prev
-            </button>
-            <span
-              style={{
-                padding: "8px 16px",
-                fontSize: "14px",
-                color: "#475569",
-              }}
-            >
-              Page {page} / {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                background: "white",
-                cursor: "pointer",
-                opacity: page >= totalPages ? 0.4 : 1,
-              }}
-            >
-              Next →
-            </button>
-          </div>
-        )}
+        <Pagination 
+          page={page} 
+          pages={totalPages} 
+          onPageChange={setPage} 
+        />
         </>
       )}
 

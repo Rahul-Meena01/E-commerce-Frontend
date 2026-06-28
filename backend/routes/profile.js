@@ -116,7 +116,7 @@ router.put('/profile', protect, upload.single('profileImage'), async (req, res) 
     admin.phone = phone?.trim() || '';
 
     if (req.file) {
-      admin.profileImage = `/uploads/${req.file.filename}`;
+      admin.profileImage = req.file.path;
     } else if (profileImage !== undefined) {
       admin.profileImage = profileImage;
     }

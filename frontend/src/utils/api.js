@@ -111,6 +111,33 @@ function clearAuthAndRedirect() {
 // Main API wrapper
 // ─────────────────────────────────────────────────────────────────────────────
 
+let refreshPromise = null;
+
+async function getRefreshedToken() {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const refreshRes = await fetch(`${BASE_URL}/api/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
+        
+        const refreshData = await refreshRes.json();
+        
+        if (refreshRes.ok && refreshData.success && refreshData.token) {
+          localStorage.setItem("token", refreshData.token);
+          return refreshData.token;
+        }
+        
+        throw new Error("Refresh failed");
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+}
+
 /*
  * API(path, options)
  *
@@ -157,16 +184,28 @@ const API = async (path, options = {}) => {
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 
-  // ── 4. Fire the request ───────────────────────────────────────────────────
+  // ── 4. Fire the request (with retry logic for 401) ────────────────────────
   let res;
-  try {
-    res = await fetch(url, {
+  let isRetry = false;
+  
+  const performRequest = async (overrideToken) => {
+    const activeToken = overrideToken || token;
+    const reqHeaders = {
+      ...defaultHeaders,
+      ...options.headers,
+    };
+    if (overrideToken) {
+      reqHeaders.Authorization = `Bearer ${overrideToken}`;
+    }
+    
+    return fetch(url, {
       ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers, // caller can override or add headers (e.g. custom x- headers)
-      },
+      headers: reqHeaders,
     });
+  };
+
+  try {
+    res = await performRequest();
   } catch (networkError) {
     /*
      * fetch() itself only throws on true network failures:
@@ -190,13 +229,33 @@ const API = async (path, options = {}) => {
    * We clear auth state and redirect to login immediately.
    * No point trying to parse the response body — the session is over.
    */
-  if (res.status === 401) {
-    clearAuthAndRedirect();
-    /*
-     * Throw after redirect so any .catch() in calling code also stops execution.
-     * In practice the page will reload before this propagates, but it's cleaner.
-     */
-    throw new Error("Session expired. Please log in again.");
+  if (res.status === 401 && !url.includes("/api/auth/login") && !url.includes("/api/auth/refresh")) {
+    if (isRetry) {
+      clearAuthAndRedirect();
+      throw new Error("Session expired. Please log in again.");
+    }
+    
+    try {
+      const newToken = await getRefreshedToken();
+      isRetry = true;
+      res = await performRequest(newToken);
+      
+      // If the retry ALSO fails with 401, we fail out
+      if (res.status === 401) {
+        clearAuthAndRedirect();
+        throw new Error("Session expired. Please log in again.");
+      }
+    } catch (e) {
+      clearAuthAndRedirect();
+      throw new Error("Session expired. Please log in again.");
+    }
+  }
+
+  // ── 5b. Handle 429 Rate Limiting ──────────────────────────────────────────
+  if (res.status === 429) {
+    const err = new Error("429 — Too many requests. Please try again later.");
+    err.status = 429;
+    throw err;
   }
 
   // ── 6. Parse response body ────────────────────────────────────────────────

@@ -23,6 +23,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import API from "../../utils/api";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -131,23 +132,34 @@ const VendorProfilePage = () => {
     averageOrderValue: 0,
   });
 
+  const [statusErrors, setStatusErrors] = useState({});
+  
+  const [isEditingCommission, setIsEditingCommission] = useState(false);
+  const [commissionRate, setCommissionRate] = useState("");
+  const [commissionErrors, setCommissionErrors] = useState({});
+  const [updatingCommission, setUpdatingCommission] = useState(false);
+
   // ── Update vendor status ───────────────────────────────────────────────────
   const updateStatus = async (newStatus) => {
     if (!window.confirm(`Are you sure you want to change the status to ${newStatus}?`)) return;
     setUpdating(true);
+    setStatusErrors({});
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/admin/vendors/${id}/status`, {
+      const data = await API(`/api/admin/vendors/${id}/status`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ status: newStatus }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        alert(data.message || "Failed to update status.");
+      if (!data.success) {
+        if (data.errors && Array.isArray(data.errors)) {
+          const newErrors = {};
+          data.errors.forEach((e) => {
+            const fieldName = e.path && e.path[0];
+            if (fieldName) newErrors[fieldName] = e.message;
+          });
+          setStatusErrors(newErrors);
+        } else {
+          alert(data.message || "Failed to update status.");
+        }
         return;
       }
       setVendor(data.data);
@@ -158,6 +170,36 @@ const VendorProfilePage = () => {
     }
   };
 
+  const updateCommission = async () => {
+    setUpdatingCommission(true);
+    setCommissionErrors({});
+    try {
+      const data = await API(`/api/admin/vendors/${id}/commission`, {
+        method: "PUT",
+        body: JSON.stringify({ commissionRate: Number(commissionRate) }),
+      });
+      if (!data.success) {
+        if (data.errors && Array.isArray(data.errors)) {
+          const newErrors = {};
+          data.errors.forEach((e) => {
+            const fieldName = e.path && e.path[0];
+            if (fieldName) newErrors[fieldName] = e.message;
+          });
+          setCommissionErrors(newErrors);
+        } else {
+          alert(data.message || "Failed to update commission.");
+        }
+        return;
+      }
+      setVendor(data.data);
+      setIsEditingCommission(false);
+    } catch (err) {
+      alert("Network error. Please try again.");
+    } finally {
+      setUpdatingCommission(false);
+    }
+  };
+
   // ── Fetch vendor data ──────────────────────────────────────────────────────
   useEffect(() => {
     const fetchVendor = async () => {
@@ -165,14 +207,9 @@ const VendorProfilePage = () => {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
+        const data = await API(`/api/admin/vendors/${id}`);
 
-        const res = await fetch(`/api/admin/vendors/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
+        if (!data.success) {
           setError(data.message || "Failed to load vendor.");
           return;
         }
@@ -194,14 +231,9 @@ const VendorProfilePage = () => {
       setOrdersError("");
 
       try {
-        const token = localStorage.getItem("token");
+        const data = await API(`/api/admin/vendors/${id}/orders`);
 
-        const res = await fetch(`/api/admin/vendors/${id}/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
+        if (!data.success) {
           setOrdersError(data.message || "Failed to load vendor order data.");
           setVendorOrders([]);
           setVendorStats({
@@ -511,12 +543,61 @@ const VendorProfilePage = () => {
                   </button>
                 )}
               </div>
+              {statusErrors.status && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{statusErrors.status}</div>}
             </div>
             <InfoField label="Join Date" value={formatDate(user.createdAt)} />
-            <InfoField
-              label="Commission"
-              value={`${vendor.commissionRate ?? 10}%`}
-            />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#334155",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  display: "flex",
+                  justifyContent: "space-between"
+                }}
+              >
+                <span>Commission</span>
+                {!isEditingCommission ? (
+                   <button 
+                     onClick={() => {
+                        setCommissionRate(vendor.commissionRate ?? 10);
+                        setIsEditingCommission(true);
+                        setCommissionErrors({});
+                     }}
+                     style={{background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: 12, fontWeight: "bold"}}
+                   >Edit</button>
+                ) : (
+                   <div style={{display: "flex", gap: "8px"}}>
+                     <button onClick={updateCommission} disabled={updatingCommission} style={{background: "#166534", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: 10, fontWeight: "bold"}}>Save</button>
+                     <button onClick={() => setIsEditingCommission(false)} style={{background: "#cbd5e1", color: "#000", border: "none", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: 10, fontWeight: "bold"}}>Cancel</button>
+                   </div>
+                )}
+              </span>
+              <div
+                style={{
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 24,
+                  padding: "12px 20px",
+                  fontSize: 15,
+                  color: "#0f172a",
+                  backgroundColor: "#fff",
+                }}
+              >
+                {!isEditingCommission ? (
+                  `${vendor.commissionRate ?? 10}%`
+                ) : (
+                  <input
+                    type="number"
+                    value={commissionRate}
+                    onChange={(e) => setCommissionRate(e.target.value)}
+                    style={{ border: "none", outline: "none", width: "100%", background: "transparent", fontSize: 15 }}
+                  />
+                )}
+              </div>
+              {commissionErrors.commissionRate && <div style={{color:"#e94560", fontSize:"12px", marginTop:"4px"}}>{commissionErrors.commissionRate}</div>}
+            </div>
           </div>
         </div>
 
@@ -707,7 +788,7 @@ const VendorProfilePage = () => {
                         </td>
                         <td style={{ padding: "12px 16px", fontWeight: 500 }}>{p.name}</td>
                         <td style={{ padding: "12px 16px" }}>₹{p.price}</td>
-                        <td style={{ padding: "12px 16px" }}>{p.stock}</td>
+                        <td style={{ padding: "12px 16px" }}>{p.stock_qty}</td>
                         <td style={{ padding: "12px 16px" }}>
                           <span style={{ color: p.isActive ? "#166534" : "#991b1b", background: p.isActive ? "#dcfce7" : "#fee2e2", padding: "2px 8px", borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
                             {p.isActive ? "Active" : "Inactive"}

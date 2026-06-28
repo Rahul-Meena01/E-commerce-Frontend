@@ -22,6 +22,7 @@ import {
 import API from "../../utils/api";
 import Modal from "../../components/Modal";
 import ImageUploader from "../../components/ImageUploader";
+import Pagination from "../../components/Pagination";
 import "../../styles/vendor.css";
 
 /* ─── Sub-components ───────────────────────────────────────────────────────── */
@@ -396,29 +397,7 @@ function VendorCategories() {
 
             {/* Pagination controls */}
             {totalPages > 1 && (
-              <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                  Page <strong>{page}</strong> of <strong>{totalPages}</strong> ({filteredCategories.length} showing)
-                </div>
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    disabled={page === 1 || loading}
-                    onClick={() => setPage(page - 1)}
-                    title="Previous page"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    disabled={page === totalPages || loading}
-                    onClick={() => setPage(page + 1)}
-                    title="Next page"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination page={page} pages={totalPages} onPageChange={setPage} />
             )}
           </div>
         </div>

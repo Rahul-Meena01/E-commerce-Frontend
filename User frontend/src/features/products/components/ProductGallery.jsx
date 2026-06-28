@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import { ZoomIn } from "lucide-react";
 import { IMAGE_FALLBACK } from "@/constants/images";
+import { useProductPresentation } from "@/features/products/context/ProductPresentationContext";
 import "./ProductGallery.css";
 
 /**
@@ -14,7 +15,11 @@ import "./ProductGallery.css";
  * 
  * Mobile: Native swipeable slider with dot thumbnails.
  */
-const ProductGallery = ({ images = [], alt = "Product image", isMobile = false, openLightbox }) => {
+const ProductGallery = ({ images: propImages, alt: propAlt, isMobile = false, openLightbox }) => {
+  const presentation = useProductPresentation();
+  const images = useMemo(() => propImages || presentation?.gallery?.images || [], [propImages, presentation]);
+  const alt = useMemo(() => propAlt || presentation?.name || "Product image", [propAlt, presentation]);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef(null);
   const heroImgRef = useRef(null);

@@ -20,6 +20,7 @@ import VendorProduct from "../models/vendor/vendorProduct.js";
 import VendorCategory from "../models/vendor/vendorCategory.js";
 import VendorSubCategory from "../models/vendor/vendorSubCategory.js";
 import VendorCoupon from "../models/vendor/vendorCoupon.js";
+import AuditLog from "../models/AuditLog.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @route   GET /api/admin/vendors
@@ -50,7 +51,7 @@ export const getAllVendors = async (req, res) => {
     // skip  → how many documents to skip = (page - 1) * limit
     // e.g. page=2, limit=10 → skip=10 (skip the first 10, return the next 10)
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.max(1, parseInt(req.query.limit) || 10);
+    const limit = Math.max(1, parseInt(req.query.limit) || 20);
     const skip = (page - 1) * limit;
 
     // ── Fetch vendors + total count in parallel ───────────────────────────────
@@ -69,7 +70,7 @@ export const getAllVendors = async (req, res) => {
       success: true,
       total, // total number of matching vendors
       page, // current page
-      totalPages: Math.ceil(total / limit),
+      pages: Math.ceil(total / limit),
       count: vendors.length, // vendors returned in this page
       data: vendors,
     });
@@ -277,17 +278,29 @@ export const updateVendorCommission = async (req, res) => {
       });
     }
 
-    const vendor = await Vendor.findByIdAndUpdate(
-      req.params.id,
-      { commissionRate },
-      { new: true },
-    ).populate("user", "name email");
+    const vendorToUpdate = await Vendor.findById(req.params.id);
 
-    if (!vendor) {
+    if (!vendorToUpdate) {
       return res
         .status(404)
         .json({ success: false, message: "Vendor not found" });
     }
+
+    const oldRate = vendorToUpdate.commissionRate;
+    vendorToUpdate.commissionRate = commissionRate;
+    const vendor = await vendorToUpdate.save();
+    
+    // Repopulate user info for response
+    await vendor.populate("user", "name email");
+
+    await AuditLog.create({
+      action: "COMMISSION_RATE_CHANGE",
+      adminId: req.user._id,
+      targetId: vendor._id,
+      targetModel: "Vendor",
+      before: { commissionRate: oldRate },
+      after: { commissionRate: commissionRate },
+    });
 
     return res.status(200).json({
       success: true,
@@ -336,7 +349,7 @@ export const deleteVendor = async (req, res) => {
 
     // ── Delete the linked User document ──────────────────────────────────────
     // vendor.user is the ObjectId of the User that owns this vendor profile.
-    await User.findByIdAndDelete(vendor.user, { session });
+    await User.findByIdAndUpdate(vendor.user, { isDeleted: true, deletedAt: new Date() }, { session });
 
     // ── Both deletions succeeded — commit the transaction ─────────────────────
     await session.commitTransaction();

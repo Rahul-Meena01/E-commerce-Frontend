@@ -16,10 +16,12 @@ const normalize = (value = "") =>
 
 const getProductCategory = (product) => {
   const parentCategory = product?.subCategory?.parentCategory;
+  const category = product?.category;
+  const categoryName = category && typeof category === "object" ? category.name || category.title : category;
   return (
     parentCategory?.name ||
     parentCategory?.slug ||
-    product?.category ||
+    categoryName ||
     product?.subCategory?.name ||
     "Category"
   );

@@ -362,7 +362,7 @@ function VendorDashboard() {
                   const orderId = order._id || order.id || idx;
                   const shortId = String(orderId).slice(-6).toUpperCase();
                   const customer = order.user?.name || order.user?.email || "Unknown";
-                  const itemCount = order.items?.length || 0;
+                  const itemCount = order.orderItems?.length || 0;
                   const total = order.totalAmount != null
                     ? `₹${Number(order.totalAmount).toLocaleString("en-IN")}`
                     : "—";

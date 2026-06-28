@@ -126,19 +126,6 @@ export async function updateOrderStatus(id, status, note = "") {
   });
 }
 
-/**
- * PUT /api/orders/:id/pay
- * Marks an order as paid after a payment-gateway callback.
- *
- * @param {string} id
- * @param {{ id, status, update_time, email_address }} paymentResult
- */
-export async function markOrderPaid(id, paymentResult) {
-  return apiFetch(`/api/orders/${id}/pay`, {
-    method: "PUT",
-    body: JSON.stringify(paymentResult),
-  });
-}
 
 /**
  * PUT /api/orders/:id/cancel

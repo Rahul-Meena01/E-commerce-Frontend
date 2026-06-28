@@ -8,7 +8,8 @@ const ImageUploader = ({
   label = "Image", 
   aspectRatio = "1/1",
   style = {},
-  className = ""
+  className = "",
+  uploadUrl = "/api/upload"
 }) => {
   const [imageUrl, setImageUrl] = useState(initialUrl);
   const [isUploading, setIsUploading] = useState(false);
@@ -42,7 +43,7 @@ const ImageUploader = ({
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch(uploadUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
@@ -151,7 +152,7 @@ const ImageUploader = ({
           </div>
         ) : imageUrl ? (
           <div className="uploader-state-preview">
-            <img src={imageUrl.startsWith('http') || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:') ? imageUrl : `${window.location.origin}${imageUrl}`} alt="Preview" />
+            <img src={imageUrl.startsWith('http') || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:') ? imageUrl : `${import.meta.env.VITE_API_URL || "http://localhost:3000"}${imageUrl}`} alt="Preview" />
             <div className="uploader-preview-overlay">
               <button className="uploader-btn-remove" onClick={handleRemoveClick} title="Remove image">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>

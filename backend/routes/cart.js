@@ -160,7 +160,7 @@ router.post("/add", async (req, res) => {
       productModel = "VendorProduct";
     }
 
-    if (!product) {
+    if (!product || product.isDeleted) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
@@ -199,10 +199,11 @@ router.post("/add", async (req, res) => {
         });
       }
     } else {
-      if (product.stock < quantity) {
+      const productStockQty = productModel === "VendorProduct" ? product.stock : product.stock_qty;
+      if (productStockQty < quantity) {
         return res.status(400).json({
           success: false,
-          message: `Only ${product.stock} items available`,
+          message: `Only ${productStockQty} items available`,
         });
       }
     }
@@ -225,7 +226,8 @@ router.post("/add", async (req, res) => {
         : product.discountPrice || 0;
     const finalPrice = salePrice > 0 ? salePrice : product.price;
     const image = product.image || (product.images && product.images[0]) || "";
-    const currentStock = variantDoc ? variantDoc.stock : product.stock;
+    const productStockQty = productModel === "VendorProduct" ? product.stock : product.stock_qty;
+    const currentStock = variantDoc ? variantDoc.stock : productStockQty;
 
     if (existingItemIndex > -1) {
       const updatedQuantity = cart.items[existingItemIndex].quantity + quantity;
@@ -248,9 +250,9 @@ router.post("/add", async (req, res) => {
         price: product.price,
         salePrice,
         finalPrice,
-        stock: product.stock,
+        stock: productStockQty,
         subtotal: finalPrice * updatedQuantity,
-        isAvailable: product.stock > 0,
+        isAvailable: productStockQty > 0,
       };
     } else {
       cart.items.push({
@@ -264,9 +266,9 @@ router.post("/add", async (req, res) => {
         price: product.price,
         salePrice,
         finalPrice,
-        stock: product.stock,
+        stock: productStockQty,
         subtotal: finalPrice * quantity,
-        isAvailable: product.stock > 0,
+        isAvailable: productStockQty > 0,
       });
     }
 

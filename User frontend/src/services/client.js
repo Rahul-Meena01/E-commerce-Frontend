@@ -18,11 +18,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      try {
-        clearAuthSession();
-        window.dispatchEvent(new Event("auth:unauthorized"));
-      } catch (err) {
-        void err;
+      const url = error.config?.url || "";
+      if (!url.includes("/payment/")) {
+        try {
+          clearAuthSession();
+          window.dispatchEvent(new Event("auth:unauthorized"));
+        } catch (err) {
+          void err;
+        }
       }
     }
     return Promise.reject(error);

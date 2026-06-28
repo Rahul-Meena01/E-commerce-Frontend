@@ -22,6 +22,8 @@ import express from "express";
 
 import { protect, requireAuth } from "../../middleware/authMiddleware.js";
 import { vendorGuard } from "../../middleware/vendor/vendorMiddleware.js";
+import { validate } from "../../middleware/validate.js";
+import { couponSchema } from "../../middleware/schemas.js";
 import {
   getCoupons,
   getCouponById,
@@ -52,12 +54,12 @@ router.get("/:id", auth, getCouponById);
 // Creates a new coupon for this vendor.
 // Body: { code, discountType: "flat"|"percent", discountValue,
 //          minOrderValue?, maxUses?, expiresAt? }
-router.post("/", auth, createCoupon);
+router.post("/", auth, validate(couponSchema), createCoupon);
 
 // PUT /api/vendor/:vendorSlug/coupons/:id
 // Updates an existing coupon (must belong to this vendor).
 // Any subset of coupon fields can be sent — only provided fields are updated.
-router.put("/:id", auth, updateCoupon);
+router.put("/:id", auth, validate(couponSchema.partial()), updateCoupon);
 
 // DELETE /api/vendor/:vendorSlug/coupons/:id
 // Permanently deletes a coupon (must belong to this vendor).

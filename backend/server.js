@@ -80,11 +80,16 @@ import "dotenv/config";
 // 2.  CORE DEPENDENCIES
 // ─────────────────────────────────────────────────────────────────────────────
 import express      from "express";
+import helmet       from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
 import cors         from "cors";
 import cookieParser from "cookie-parser";
 import http         from "http";
 import path         from "path";
 import { fileURLToPath } from "url";
+
+// Logger
+import logger from "./utils/logger.js";
 
 import { initSocket } from "./socket.js";
 import connectDB    from "./config/db.js";
@@ -97,8 +102,9 @@ import setupCronJobs from "./cron.js";
 
 // ── Public ────────────────────────────────────────────────────────────────────
 import authRoutes from "./routes/auth.js";
+import rateLimit from "express-rate-limit";
 
-// ── Customer-facing ───────────────────────────────────────────────────────────
+// ─── Route Imports ───────────────────────────────────────────────────────────
 import categoryRoutes    from "./routes/category.js";
 import subCategoryRoutes from "./routes/subCategory.js";
 import productRoutes     from "./routes/product.js";
@@ -109,6 +115,7 @@ import couponRoutes      from "./routes/coupon.js";
 import giftCardRoutes    from "./routes/giftCard.js";
 import profileRoutes     from "./routes/profile.js";
 import uploadRoutes      from "./routes/upload.js";
+import addressRoutes     from "./routes/addresses.js";
 
 // ── Order / User / Payment  (protect declared INSIDE each file) ───────────────
 import orderRoutes   from "./routes/order.js";
@@ -117,6 +124,7 @@ import paymentRoutes from "./routes/payment.js";
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 import adminVendorRoutes from "./routes/adminVendorRoutes.js";
+import adminAuditRoutes from "./routes/adminAuditRoutes.js";
 
 // ── Vendor (each file handles protect + vendorMiddleware internally) ──────────
 import vendorProfileRoutes     from "./routes/vendor/vendorProfileRoutes.js";
@@ -131,20 +139,35 @@ import vendorUploadRoutes      from "./routes/vendor/vendorUploadRoutes.js";
 // 4.  APP + SERVER INIT
 // ─────────────────────────────────────────────────────────────────────────────
 const app    = express();
+
+// Apply security middlewares globally before any routes
+app.use(helmet());
+// Fix for Express 5 compatibility with express-mongo-sanitize (req.query is read-only)
+app.use((req, res, next) => {
+  ['body', 'params', 'headers', 'query'].forEach((k) => {
+    if (req[k]) {
+      mongoSanitize.sanitize(req[k]);
+    }
+  });
+  next();
+});
 const server = http.createServer(app);
 const PORT   = process.env.PORT || 3000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-// Allowed frontend origins — comma-separated in .env
-// e.g.  CLIENT_URL=http://localhost:5173,https://mystore.com
-const allowedOrigins = (
-  process.env.CLIENT_URL || "http://localhost:5173,http://localhost:5174"
-)
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+// Allowed frontend origins — dynamic based on environment
+const isProd = process.env.NODE_ENV === 'production';
+const allowedOrigins = isProd
+  ? [process.env.FRONTEND_URL || "https://yourdomain.com"]
+  : ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"];
+
+if (process.env.CLIENT_URL) {
+  process.env.CLIENT_URL.split(",").forEach(url => {
+    if (!allowedOrigins.includes(url.trim())) allowedOrigins.push(url.trim());
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5.  DATABASE + SOCKET
@@ -180,9 +203,13 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow Postman / curl / mobile apps — they send no Origin header
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // In production, strictly enforce origins. Allow Postman/curl only in dev.
+      if (!origin && !isProd) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
       return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true, // required for HTTP-only cookie (JWT)
@@ -202,8 +229,7 @@ app.use(cookieParser());
 
 // ── 6e. Static file serving ───────────────────────────────────────────────────
 // Product images, vendor logos, etc.
-//   GET /uploads/products/image.jpg → ./uploads/products/image.jpg on disk
-app.use("/uploads", express.static("uploads"));
+// app.use("/uploads", express.static("uploads")); // Removed in Phase 2 for Cloudinary migration
 app.use(express.static("frontend"));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -221,8 +247,16 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8.  PUBLIC ROUTES  —  no token required
+// 8.  GLOBAL RATE LIMITER & PUBLIC ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/", apiLimiter);
+
 //  POST /api/auth/register  → create account (customer / vendor / admin)
 //  POST /api/auth/login     → returns JWT in HTTP-only cookie
 //  POST /api/auth/logout    → clears the JWT cookie
@@ -243,6 +277,7 @@ app.use("/api/cart",        protect, cartRoutes);        // all cart ops need au
 app.use("/api/wishlist",    protect, wishlistRoutes);     // all wishlist ops need auth
 app.use("/api/coupon",      protect, couponRoutes);       // coupon apply/remove needs auth
 app.use("/api/giftCard",    protect, giftCardRoutes);     // gift card ops need auth
+app.use("/api/addresses",   addressRoutes);               // protect is inside routes/addresses.js
 
 // FIX 1: Was "/api" — matched EVERY /api/* request including /api/orders,
 //         /api/payment, /api/users, swallowing them before the correct routers.
@@ -275,7 +310,9 @@ app.use("/api/upload",  uploadRoutes);
 //  PATCH  /api/admin/vendors/:id/status   → approve / suspend
 //  PATCH  /api/admin/vendors/:id/commission → set commission %
 //  DELETE /api/admin/vendors/:id          → remove vendor
+//  GET    /api/admin/audit-logs           → list audit logs
 app.use("/api/admin/vendors", adminVendorRoutes);
+app.use("/api/admin/audit-logs", adminAuditRoutes);
 
 /*
  *  Uncomment as you build out the admin panel:
@@ -341,7 +378,7 @@ app.use((req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error("GLOBAL ERROR:", err);
+  logger.error(`GLOBAL ERROR: ${err.message}`, { error: err.stack, url: req.originalUrl, method: req.method });
 
   // If headers already sent, delegate to Express default handler
   if (res.headersSent) return next(err);
@@ -373,12 +410,7 @@ app.use((err, req, res, next) => {
 setupCronJobs();
 
 server.listen(PORT, () => {
-  console.log(`
-╔══════════════════════════════════════════╗
-║   🚀  Server running successfully        ║
-║   🌍  http://localhost:${PORT}              ║
-╚══════════════════════════════════════════╝
-  `);
+  logger.info(`🚀 Server running successfully on port ${PORT}`);
 });
 
 export default app; // exported for testing (Jest / Supertest)
