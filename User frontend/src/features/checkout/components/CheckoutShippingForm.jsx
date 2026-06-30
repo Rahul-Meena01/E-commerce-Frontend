@@ -123,9 +123,12 @@ const CheckoutShippingForm = ({
   // Sync PhoneInput country with formData.countryCode
   useEffect(() => {
     if (phoneInputRef.current && formData.countryCode) {
-      phoneInputRef.current.setCountry(formData.countryCode.toLowerCase());
+      const currentPhone = formData.phone || "";
+      if (currentPhone === "" || currentPhone === "+" || currentPhone.length < 5) {
+        phoneInputRef.current.setCountry(formData.countryCode.toLowerCase());
+      }
     }
-  }, [formData.countryCode]);
+  }, [formData.countryCode, formData.phone]);
 
   const defaultAddress = useMemo(() => {
     return savedAddresses.find((a) => a.isDefault);
@@ -351,15 +354,8 @@ const CheckoutShippingForm = ({
                 ref={phoneInputRef}
                 defaultCountry="in"
                 value={formData.phone}
-                onChange={(phone, meta) => {
-                  setFormData((prev) => {
-                    const next = { ...prev, phone };
-                    if (meta?.country?.iso2 && meta.country.iso2 !== prev.countryCode?.toLowerCase()) {
-                      next.countryCode = meta.country.iso2.toUpperCase();
-                      next.country = meta.country.name;
-                    }
-                    return next;
-                  });
+                onChange={(phone) => {
+                  setFormData((prev) => ({ ...prev, phone }));
                 }}
                 inputProps={{
                   id: "phone",
