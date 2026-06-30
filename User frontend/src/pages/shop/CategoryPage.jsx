@@ -13,13 +13,14 @@ const resolveImage = (path) => {
 };
 
 const CategoryPage = () => {
-  const { category: categorySlug } = useParams();
+  const { category: categorySlugFromParam } = useParams();
+  const categorySlug = categorySlugFromParam || (window.location.pathname.includes("/shop/luxury/designer") ? "luxury/designer" : "");
   const { categories, loading: categoriesLoading } = useCategories();
   
   // Derive selected category directly during render to prevent state-sync layout flash
   const selectedCategory = categories.find(
     (cat) =>
-      cat.slug === categorySlug || cat.slug === categorySlug?.toLowerCase()
+      cat && (cat.slug === categorySlug || cat.slug === categorySlug?.toLowerCase())
   );
   
   const { subcategories } = useSubCategories(selectedCategory?._id);
@@ -42,7 +43,7 @@ const CategoryPage = () => {
             />
           </div>
         </header>
-
+ 
         <section className="cat-grid">
           {[...Array(6)].map((_, i) => (
             <ProductCardSkeleton key={i} />
@@ -63,15 +64,18 @@ const CategoryPage = () => {
       </div>
     );
   }
-
+ 
   // Count products per subcategory
   const counts = {};
-  subcategories.forEach((sub) => {
-    counts[sub._id] = products.filter(
-      (p) => p.subCategory?._id === sub._id || p.subCategory === sub._id,
-    ).length;
+  const subList = Array.isArray(subcategories) ? subcategories : [];
+  subList.forEach((sub) => {
+    if (sub && sub._id) {
+      counts[sub._id] = (Array.isArray(products) ? products : []).filter(
+        (p) => p && (p.subCategory?._id === sub._id || p.subCategory === sub._id),
+      ).length;
+    }
   });
-
+ 
   return (
     <div className="category-page">
       <header className="cat-hero">
@@ -79,17 +83,20 @@ const CategoryPage = () => {
           <h1 className="cat-title">{selectedCategory.name} Edit</h1>
         </div>
       </header>
-
+ 
       <section className="cat-grid">
-        {subcategories.map((sub) => (
-          <CategoryCard
-            key={sub._id}
-            title={sub.name}
-            image={resolveImage(sub.image)}
-            count={loading ? 0 : counts[sub._id] || 0}
-            to={`/shop/${selectedCategory.slug}/${sub.slug}`}
-          />
-        ))}
+        {subList.map((sub) => {
+          if (!sub || !sub._id) return null;
+          return (
+            <CategoryCard
+              key={sub._id}
+              title={sub.name}
+              image={resolveImage(sub.image)}
+              count={loading ? 0 : counts[sub._id] || 0}
+              to={`/shop/${selectedCategory.slug}/${sub.slug}`}
+            />
+          );
+        })}
       </section>
     </div>
   );

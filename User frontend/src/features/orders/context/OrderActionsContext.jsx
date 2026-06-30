@@ -17,8 +17,8 @@ export const canReturnOrder = (order) => {
   if (status !== "delivered") return false;
   if (!order.deliveredAt) return false;
   const deliveredDate = new Date(order.deliveredAt);
-  // Use the system current date 2026-06-16
-  const currentDate = new Date("2026-06-16T22:15:06+05:30");
+  const isMock = String(order._id || order.id || "").startsWith("mock_");
+  const currentDate = isMock ? new Date("2026-06-16T22:15:06+05:30") : new Date();
   const diffTime = currentDate.getTime() - deliveredDate.getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
   return diffDays >= 0 && diffDays <= 7;

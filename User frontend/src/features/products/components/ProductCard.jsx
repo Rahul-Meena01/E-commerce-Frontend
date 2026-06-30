@@ -14,6 +14,8 @@ const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const toast = useToast();
 
+  if (!product) return null;
+
   const productId = product._id || product.id;
   const wishlisted = isInWishlist(productId);
 

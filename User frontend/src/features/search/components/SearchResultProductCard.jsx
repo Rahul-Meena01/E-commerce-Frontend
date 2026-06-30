@@ -3,7 +3,8 @@ import OptimizedImage from "@/shared/components/ui/OptimizedImage";
 import { formatPrice } from "@/utils/pricing";
 
 export default function SearchResultProductCard({ product, onSelect }) {
-  const productId = product?._id || product?.id || product?.productId;
+  if (!product) return null;
+  const productId = product._id || product.id || product.productId;
   const primaryImage =
     product?.image ||
     product?.image1 ||

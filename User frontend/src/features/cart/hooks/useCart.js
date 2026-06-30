@@ -35,8 +35,30 @@ export const useCartQuery = () => {
     if (!isAuthenticated) return;
     const localItems = loadLocalCart();
     if (localItems.length > 0) {
-      localStorage.removeItem(STORAGE_KEY);
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      const syncCart = async () => {
+        for (const item of localItems) {
+          try {
+            const pId = typeof item.product === "object" && item.product ? (item.product._id || item.product.id) : item.product;
+            if (pId) {
+              await cartApi.addItem({
+                productId: pId,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                size: item.size || "",
+                color: item.color || "",
+                image: item.image || "",
+                variant: item.variant || null,
+              });
+            }
+          } catch (err) {
+            console.error("Failed to sync guest cart item:", err);
+          }
+        }
+        localStorage.removeItem(STORAGE_KEY);
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+      };
+      syncCart();
     }
   }, [isAuthenticated, queryClient]);
   

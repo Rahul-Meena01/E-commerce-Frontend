@@ -42,6 +42,7 @@ const rankValue = (label, query) => {
 };
 
 const buildSuggestions = (products, query) => {
+  if (!Array.isArray(products)) return [];
   const productSuggestions = [];
   const brandSuggestions = new Map();
   const categorySuggestions = new Map();

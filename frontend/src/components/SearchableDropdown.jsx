@@ -16,6 +16,10 @@ export default function SearchableDropdown({
   const dropdownRef = useRef(null);
 
   const fetchOptions = async (query = "") => {
+    if (!fetchUrl) {
+      setOptions([]);
+      return;
+    }
     setLoading(true);
     try {
       const separator = fetchUrl.includes("?") ? "&" : "?";

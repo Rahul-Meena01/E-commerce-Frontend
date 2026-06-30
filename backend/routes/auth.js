@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import rateLimit from "express-rate-limit";
 import slugify from "slugify"; // npm i slugify
-import { sendWelcomeEmail } from "../services/emailService.js";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "../services/emailService.js";
 import User from "../models/User.js";
 import Vendor from "../models/VendorSchema.js";
 import { validate } from "../middleware/validate.js";
@@ -376,20 +376,8 @@ router.post("/forgot-password", async (req, res) => {
     // In a real app, this should be the frontend URL
     const resetUrl = `${req.protocol}://${req.get("host")}/reset-password/${resetToken}`;
 
-    const message = `
-      <h1>Password Reset Request</h1>
-      <p>You requested a password reset. Please go to this link to reset your password:</p>
-      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-      <p>This link will expire in 10 minutes.</p>
-    `;
-
     try {
-      const { default: sendEmail } = await import("../services/emailService.js");
-      await sendEmail({
-        to: user.email,
-        subject: "Password Reset Request",
-        html: message,
-      });
+      await sendPasswordResetEmail(user, resetUrl);
 
       res.status(200).json({ success: true, message: "If the email is registered, a reset link will be sent." });
     } catch (err) {

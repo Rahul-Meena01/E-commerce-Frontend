@@ -33,7 +33,7 @@ import VariantSelector from "@/features/products/components/VariantSelector";
 
 // Context & Presentation Builder imports
 import { ProductPresentationProvider, useProductPresentation } from "@/features/products/context/ProductPresentationContext";
-import { buildProductPresentation, ProductUIState } from "@/features/products/utils/productPresentation";
+import { buildProductPresentation } from "@/features/products/utils/productPresentation";
 
 /**
  * Clean dynamic specifications and shipping policies accordion.
@@ -47,7 +47,7 @@ const ProductAccordion = () => {
     setOpenIndex(openIndex === index ? -1 : index);
   };
 
-  const { description, specs, materials, care } = presentation;
+  const { description, specs, materials, care } = presentation || {};
   const { policies } = siteContent;
 
   const items = useMemo(() => {
@@ -173,7 +173,7 @@ const ProductDetailContent = ({
   displayCategory,
 }) => {
   const presentation = useProductPresentation();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [addedToCart, setAddedToCart] = useState(false);
   const toast = useToast();
@@ -184,6 +184,38 @@ const ProductDetailContent = ({
   const productVariants = useMemo(() => {
     return product?.variants || [];
   }, [product]);
+
+  const qtyInCart = useMemo(() => {
+    if (!product || !cartItems) return 0;
+    const item = cartItems.find((i) => {
+      const pId = typeof i.product === "object" && i.product ? (i.product._id || i.product.id) : i.product;
+      return pId === product._id &&
+             (i.size || "") === (selectedVariant?.size || "") &&
+             (i.color || "") === (selectedVariant?.color || "");
+    });
+    return item ? item.quantity : 0;
+  }, [product, cartItems, selectedVariant]);
+
+  const effectiveMaxStock = useMemo(() => {
+    return Math.max(0, presentation.availability.stock - qtyInCart);
+  }, [presentation.availability.stock, qtyInCart]);
+
+  useEffect(() => {
+    if (effectiveMaxStock <= 0) {
+      setQuantity(0);
+    } else {
+      setQuantity((prev) => {
+        const currentQty = Number(prev) || 1;
+        if (currentQty > effectiveMaxStock) {
+          return effectiveMaxStock;
+        }
+        if (currentQty === 0) {
+          return 1;
+        }
+        return currentQty;
+      });
+    }
+  }, [effectiveMaxStock, setQuantity]);
 
   const handleWishlistToggle = (e) => {
     e.preventDefault();
@@ -210,17 +242,15 @@ const ProductDetailContent = ({
     }
     const num = parseInt(cleanVal, 10);
     if (!isNaN(num)) {
-      const maxStock = presentation.availability.stock;
-      setQuantity(Math.max(1, Math.min(num, maxStock)));
+      setQuantity(Math.max(1, Math.min(num, effectiveMaxStock)));
     }
   };
 
   const handleQuantityBlur = () => {
     let qty = quantity === "" || isNaN(quantity) || quantity < 1 ? 1 : parseInt(quantity, 10);
-    const maxStock = presentation.availability.stock;
-    if (qty > maxStock) {
-      qty = maxStock;
-      toast.info(`Only ${maxStock} units available.`);
+    if (qty > effectiveMaxStock) {
+      qty = effectiveMaxStock;
+      toast.info(`Only ${effectiveMaxStock} units available.`);
     }
     setQuantity(qty);
   };
@@ -232,43 +262,50 @@ const ProductDetailContent = ({
     return "";
   }, [selectedVariant]);
 
-  const handleAddToCart = () => {
-
+  const handleAddToCart = async () => {
     if (!presentation.availability.inStock) {
       toast.error("This product is currently out of stock.");
       return;
     }
 
+    if (effectiveMaxStock <= 0) {
+      toast.error("You have already added all available units to your cart.");
+      return;
+    }
+
     const qtyToSubmit = Math.max(1, parseInt(quantity, 10) || 1);
-    const maxStock = presentation.availability.stock;
-    if (qtyToSubmit > maxStock) {
-      toast.warning(`Only ${maxStock} units available. Quantity adjusted.`);
+    if (qtyToSubmit > effectiveMaxStock) {
+      toast.warning(`Only ${effectiveMaxStock} units available. Quantity adjusted.`);
     }
 
     const size = selectedVariant?.size || "";
     const color = selectedVariant?.color || "";
     const variantId = selectedVariant?._id || null;
 
-    addToCart({
-      product: {
-        productId: product._id,
-        id: product._id,
-        name: product.name,
-        price: presentation.pricing.price,
-        image: presentation.gallery.images[0]?.src || product.image,
-        brand: product.brand,
-        stock: presentation.availability.stock,
-      },
-      size,
-      color,
-      quantity: qtyToSubmit,
-      variant: variantId,
-    });
+    try {
+      await addToCart({
+        product: {
+          productId: product._id,
+          id: product._id,
+          name: product.name,
+          price: presentation.pricing.price,
+          image: presentation.gallery.images[0]?.src || product.image,
+          brand: product.brand,
+          stock: presentation.availability.stock,
+        },
+        size,
+        color,
+        quantity: qtyToSubmit,
+        variant: variantId,
+      });
 
-    toast.success(`${product.name} added to bag!`);
-    setAddedToCart(true);
-    setQuantity(1);
-    setTimeout(() => setAddedToCart(false), 2500);
+      toast.success(`${product.name} added to bag!`);
+      setAddedToCart(true);
+      setQuantity(effectiveMaxStock - qtyToSubmit > 0 ? 1 : 0);
+      setTimeout(() => setAddedToCart(false), 2500);
+    } catch (err) {
+      toast.error(err.message || "Failed to add item to bag");
+    }
   };
 
   const expectedDeliveryDate = useMemo(() => {
@@ -349,7 +386,7 @@ const ProductDetailContent = ({
                 type="button"
                 className="pd-qty-btn"
                 onClick={() => setQuantity((prev) => Math.max(1, (Number(prev) || 1) - 1))}
-                disabled={Number(quantity) <= 1}
+                disabled={Number(quantity) <= 1 || effectiveMaxStock <= 0}
                 aria-label="Decrease quantity"
               >
                 -
@@ -361,21 +398,21 @@ const ProductDetailContent = ({
                 onChange={handleQuantityChange}
                 onBlur={handleQuantityBlur}
                 aria-label="Quantity input"
+                disabled={effectiveMaxStock <= 0}
               />
               <button
                 type="button"
                 className="pd-qty-btn"
                 onClick={() => {
                   const next = (Number(quantity) || 1) + 1;
-                  const maxStock = presentation.availability.stock;
-                  if (next > maxStock) {
-                    toast.info(`Only ${maxStock} units available.`);
+                  if (next > effectiveMaxStock) {
+                    toast.info(`Only ${effectiveMaxStock} units available.`);
                     return;
                   }
                   setQuantity(next);
                 }}
                 aria-label="Increase quantity"
-                disabled={Number(quantity) >= presentation.availability.stock}
+                disabled={Number(quantity) >= effectiveMaxStock}
               >
                 +
               </button>
@@ -398,10 +435,10 @@ const ProductDetailContent = ({
               <button
                 className={`pd-add-to-cart ${addedToCart ? "added" : ""}`}
                 onClick={handleAddToCart}
-                disabled={!presentation.availability.inStock}
+                disabled={!presentation.availability.inStock || effectiveMaxStock <= 0}
               >
                 <ShoppingBag size={18} style={{ marginRight: "8px", verticalAlign: "middle" }} />
-                {addedToCart ? "Added ✓" : "Add to Bag"}
+                {addedToCart ? "Added ✓" : effectiveMaxStock <= 0 ? "All Available in Bag" : "Add to Bag"}
               </button>
               <button
                 type="button"
@@ -640,7 +677,7 @@ const ProductDetail = () => {
   }, [productVariants]);
 
   const selectedVariant = useMemo(() => {
-    return productVariants.find((v) => v._id === selectedVariantId) || null;
+    return Array.isArray(productVariants) ? productVariants.find((v) => v && v._id === selectedVariantId) || null : null;
   }, [productVariants, selectedVariantId]);
 
   // Derived presentation layer model

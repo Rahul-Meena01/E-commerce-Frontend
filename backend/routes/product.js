@@ -153,7 +153,7 @@ router.post("/create", protect, cpUpload, async (req, res) => {
 
 router.get("/all", protect, async (req, res) => {
   try {
-    const { search, limit, page, status, subCategory, category } = req.query;
+    const { search, limit, page, status, subCategory, category, q } = req.query;
 
     const query = {};
 
@@ -183,10 +183,12 @@ router.get("/all", protect, async (req, res) => {
       baseQuery.subCategory = { $in: categorySubcategories.map((sub) => sub._id) };
     }
 
-    if (search) {
+    const querySearch = search || q;
+
+    if (querySearch) {
       baseQuery.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { brand: { $regex: search, $options: "i" } },
+        { name: { $regex: querySearch, $options: "i" } },
+        { brand: { $regex: querySearch, $options: "i" } },
       ];
     }
 

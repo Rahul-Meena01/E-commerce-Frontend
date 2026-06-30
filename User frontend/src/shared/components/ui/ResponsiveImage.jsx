@@ -23,6 +23,7 @@ const ResponsiveImage = ({
   alt = "",
   loading = "lazy",
   className = "",
+  style,
   ...rest
 }) => {
   const [inView, setInView] = useState(loading !== "lazy");
@@ -66,7 +67,7 @@ const ResponsiveImage = ({
     <div
       ref={wrapperRef}
       className={"ri-wrapper " + (className || "")}
-      style={rest.style}
+      style={style}
     >
       <picture>
         {sources.map((s, i) => (

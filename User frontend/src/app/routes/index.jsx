@@ -39,6 +39,22 @@ export const routes = [
     ),
   },
   {
+    path: "/shop/luxury/designer",
+    element: (
+      <WithLayout>
+        <CategoryPage />
+      </WithLayout>
+    ),
+  },
+  {
+    path: "/shop/luxury/designer/:subCategory",
+    element: (
+      <WithLayout>
+        <SubCategoryPage />
+      </WithLayout>
+    ),
+  },
+  {
     path: "/shop/:category",
     element: (
       <WithLayout>

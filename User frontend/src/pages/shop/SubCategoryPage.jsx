@@ -15,7 +15,8 @@ const Filters = lazy(() => import("@/features/products/components/Filters"));
 const ITEMS_PER_PAGE = 20;
 
 const SubCategoryPage = () => {
-  const { category, subCategory } = useParams();
+  const { category: categoryParam, subCategory } = useParams();
+  const category = categoryParam || (window.location.pathname.includes("/shop/luxury/designer") ? "luxury/designer" : "");
 
   const [searchParams, setSearchParams] = useSearchParams();
 

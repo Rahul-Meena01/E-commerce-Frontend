@@ -876,6 +876,8 @@ import "./VariantProduct.css";
 import StatCard from "../../components/admin/StatCard";
 import AdminButton from "../../components/admin/AdminButton";
 import Pagination from "../../components/Pagination";
+import ImageUploader from "../../components/ImageUploader";
+import SearchableDropdown from "../../components/SearchableDropdown";
 import { ToggleLeft, ToggleRight, Edit2, Trash2, Plus } from "lucide-react";
 import API from "../../utils/api";
 
@@ -1176,38 +1178,28 @@ function VariantProducts() {
   // IMAGE BOX
 
   const renderImageBox = (field, isHero = false) => {
-    const preview = getPreview(field);
+    const current = images[field];
 
     return (
-      <label
-        className={`vp-upload-box ${
-          isHero ? "vp-upload-hero" : "vp-upload-small"
-        }`}
-      >
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageChange(field, e)}
-        />
-
-        {preview ? (
-          <>
-            <img src={preview} alt="preview" className="vp-preview-image" />
-
-            <button
-              type="button"
-              className="vp-remove-btn"
-              onClick={() => removeImage(field)}
-            >
-              ×
-            </button>
-          </>
-        ) : (
-          <div className="vp-upload-placeholder">
-            <span>{isHero ? "Main Variant Image" : "Upload"}</span>
-          </div>
-        )}
-      </label>
+      <ImageUploader
+        label={isHero ? "Main Variant Image" : ""}
+        initialUrl={current.existing}
+        onUploadSuccess={(url) => {
+          setImages((prev) => ({
+            ...prev,
+            [field]: { file: null, existing: url },
+          }));
+        }}
+        onRemove={() => {
+          setImages((prev) => ({
+            ...prev,
+            [field]: { file: null, existing: "" },
+          }));
+        }}
+        aspectRatio="1/1"
+        style={{ height: "100%", width: "100%" }}
+        className={`vp-upload-box ${isHero ? "vp-upload-hero" : "vp-upload-small"}`}
+      />
     );
   };
 
@@ -1303,7 +1295,7 @@ function VariantProducts() {
                     <td>
                       {variant.image ? (
                         <img
-                          src={variant.image.startsWith("http") ? variant.image : `${API_URL}${variant.image}`}
+                          src={variant.image.startsWith("http") ? variant.image : `${API_URL}${variant.image.startsWith('/') ? '' : '/'}${variant.image}`}
                           alt={variant.name}
                           className="vp-table-image"
                         />
@@ -1417,35 +1409,19 @@ function VariantProducts() {
 
               {/* PRODUCT SELECT */}
 
-              <div className="vp-product-select">
-                <input
-                  type="text"
-                  placeholder="Search Base Product..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="vp-input"
+              <div className="vp-product-select" style={{ marginBottom: "18px", zIndex: 50, position: "relative" }}>
+                <label className="vp-label" style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#334155" }}>Base Product</label>
+                <SearchableDropdown
+                  value={formData.parentProduct}
+                  onChange={(val) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      parentProduct: val,
+                    }))
+                  }
+                  fetchUrl="/api/product/all"
+                  placeholder="Search and Select Base Product..."
                 />
-
-                <div className="vp-product-list">
-                  {filteredProducts.map((product) => (
-                    <div
-                      key={product._id}
-                      className={`vp-product-item ${
-                        formData.parentProduct === product._id
-                          ? "vp-product-selected"
-                          : ""
-                      }`}
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          parentProduct: product._id,
-                        }))
-                      }
-                    >
-                      {product.name}
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* ROW 1 */}

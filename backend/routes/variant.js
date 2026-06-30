@@ -35,12 +35,12 @@ const getImagePath = (files, field) => {
 // Create variant product
 router.post("/create", protect, variantUpload, async (req, res) => {
   try {
-    const { parentProduct, name, brand, price, discountPercent, status } = req.body;
-    const image = getImagePath(req.files, "image");
-    const image1 = getImagePath(req.files, "image1");
-    const image2 = getImagePath(req.files, "image2");
-    const image3 = getImagePath(req.files, "image3");
-    const image4 = getImagePath(req.files, "image4");
+    const { parentProduct, name, brand, price, discountPercent, status, image: bodyImage, image1: bodyImage1, image2: bodyImage2, image3: bodyImage3, image4: bodyImage4 } = req.body;
+    const image = getImagePath(req.files, "image") || bodyImage;
+    const image1 = getImagePath(req.files, "image1") || bodyImage1;
+    const image2 = getImagePath(req.files, "image2") || bodyImage2;
+    const image3 = getImagePath(req.files, "image3") || bodyImage3;
+    const image4 = getImagePath(req.files, "image4") || bodyImage4;
     const isProduct = await Product.findById(parentProduct);
 
     if (!isProduct) {
@@ -117,7 +117,7 @@ router.put("/update/:id", protect, variantUpload, async (req, res) => {
     const imageFields = ["image", "image1", "image2", "image3", "image4"];
 
     imageFields.forEach((field) => {
-      const newImage = getImagePath(req.files, field);
+      const newImage = getImagePath(req.files, field) || req.body[field];
 
       if (newImage) {
         updatedData[field] = newImage;

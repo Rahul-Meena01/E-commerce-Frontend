@@ -221,8 +221,8 @@ app.use(
 // ── 6c. Body parsers ──────────────────────────────────────────────────────────
 //  Note: /api/payment/webhook is already handled above with express.raw(),
 //  so it will NOT be re-parsed here.
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // ── 6d. Cookie parser ─────────────────────────────────────────────────────────
 app.use(cookieParser());

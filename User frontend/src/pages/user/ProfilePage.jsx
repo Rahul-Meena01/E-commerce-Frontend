@@ -881,6 +881,7 @@ const ProfilePage = () => {
         cameraInputRef={cameraInputRef}
         handleAvatarFileSelect={handleAvatarFileSelect}
         handleSaveAvatar={handleSaveAvatar}
+        isSaving={isSaving}
       />
 
       {showSuccessToast && (

@@ -105,12 +105,69 @@ router.get("/", async (req, res) => {
 
     // Create empty cart for new users
     if (!cart) {
-      cart = await Cart.create({ user: req.user.id, items: [] });
+      try {
+        cart = await Cart.create({ user: req.user.id, items: [] });
+      } catch (createErr) {
+        if (createErr.code === 11000) {
+          cart = await Cart.findOne({ user: req.user.id }).populate("coupon");
+        } else {
+          throw createErr;
+        }
+      }
       return res.status(200).json({
         success: true,
         message: "Cart fetched successfully",
         data: cart,
       });
+    }
+
+    // Sync item stock and isAvailable with latest DB values, and cap quantities if they exceed stock
+    let cartModified = false;
+    for (const item of cart.items) {
+      let product = await Product.findById(item.product);
+      let productModel = item.productModel || "Product";
+      if (!product) {
+        product = await VendorProduct.findById(item.product);
+        productModel = "VendorProduct";
+      }
+
+      if (!product || product.isDeleted || (productModel === "Product" && product.status !== "Active") || (productModel === "VendorProduct" && !product.isActive)) {
+        if (item.isAvailable !== false || item.stock !== 0) {
+          item.isAvailable = false;
+          item.stock = 0;
+          cartModified = true;
+        }
+      } else {
+        let currentStock = 0;
+        if (item.variant) {
+          const variantDoc = await Variant.findById(item.variant);
+          if (variantDoc && variantDoc.status === "Active") {
+            currentStock = variantDoc.stock;
+          } else {
+            currentStock = 0;
+          }
+        } else {
+          currentStock = product.stock;
+        }
+
+        const isAvail = currentStock > 0;
+        if (item.stock !== currentStock || item.isAvailable !== isAvail) {
+          item.stock = currentStock;
+          item.isAvailable = isAvail;
+          cartModified = true;
+        }
+
+        // Cap quantity to stock if it exceeds
+        if (item.quantity > currentStock) {
+          item.quantity = Math.max(1, currentStock);
+          item.subtotal = item.finalPrice * item.quantity;
+          cartModified = true;
+        }
+      }
+    }
+
+    if (cartModified) {
+      cart.markModified("items");
     }
 
     calculateCartTotals(cart, null, null);
@@ -199,7 +256,7 @@ router.post("/add", async (req, res) => {
         });
       }
     } else {
-      const productStockQty = productModel === "VendorProduct" ? product.stock : product.stock_qty;
+      const productStockQty = product.stock;
       if (productStockQty < quantity) {
         return res.status(400).json({
           success: false,
@@ -211,7 +268,15 @@ router.post("/add", async (req, res) => {
     // Get or create cart
     let cart = await Cart.findOne({ user: req.user.id });
     if (!cart) {
-      cart = await Cart.create({ user: req.user.id, items: [] });
+      try {
+        cart = await Cart.create({ user: req.user.id, items: [] });
+      } catch (createErr) {
+        if (createErr.code === 11000) {
+          cart = await Cart.findOne({ user: req.user.id });
+        } else {
+          throw createErr;
+        }
+      }
     }
 
     const existingItemIndex = cart.items.findIndex(
@@ -226,7 +291,7 @@ router.post("/add", async (req, res) => {
         : product.discountPrice || 0;
     const finalPrice = salePrice > 0 ? salePrice : product.price;
     const image = product.image || (product.images && product.images[0]) || "";
-    const productStockQty = productModel === "VendorProduct" ? product.stock : product.stock_qty;
+    const productStockQty = product.stock;
     const currentStock = variantDoc ? variantDoc.stock : productStockQty;
 
     if (existingItemIndex > -1) {
@@ -333,9 +398,40 @@ router.put("/update", async (req, res) => {
       cart.items.splice(itemIndex, 1);
     } else {
       const item = cart.items[itemIndex];
+
+      let product = await Product.findById(item.product);
+      let productModel = item.productModel || "Product";
+      if (!product) {
+        product = await VendorProduct.findById(item.product);
+        productModel = "VendorProduct";
+      }
+
+      if (!product || product.isDeleted) {
+        return res.status(404).json({ success: false, message: "Product not found or deleted" });
+      }
+
+      let currentStock = 0;
+      if (item.variant) {
+        const variantDoc = await Variant.findById(item.variant);
+        if (!variantDoc || variantDoc.status !== "Active") {
+          return res.status(400).json({ success: false, message: "Selected variant is unavailable" });
+        }
+        currentStock = variantDoc.stock;
+      } else {
+        currentStock = product.stock;
+      }
+
+      if (quantity > currentStock) {
+        return res.status(400).json({
+          success: false,
+          message: `Only ${currentStock} units available in stock`,
+        });
+      }
+
       cart.items[itemIndex] = {
         ...item.toObject(),
         quantity,
+        stock: currentStock,
         subtotal: item.finalPrice * quantity,
       };
     }

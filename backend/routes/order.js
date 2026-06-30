@@ -21,6 +21,10 @@ import CouponUsage from "../models/CouponUsages.js";
 import Coupon from "../models/Coupon.js";
 import GiftCard from "../models/GiftCard.js";
 import { protect, requireAuth } from "../middleware/authMiddleware.js";
+import {
+  sendOrderConfirmationEmail,
+  sendShippingConfirmationEmail,
+} from "../services/emailService.js";
 import { getIO } from "../socket.js";
 import { validate } from "../middleware/validate.js";
 import { orderSchema } from "../middleware/schemas.js";
@@ -224,8 +228,8 @@ router.post("/", protect, validate(orderSchema), async (req, res) => {
         } else {
           bulkOpsProduct.push({
             updateOne: {
-              filter: { _id: item.product, stock_qty: { $gte: item.qty } },
-              update: { $inc: { stock_qty: -item.qty } },
+              filter: { _id: item.product, stock: { $gte: item.qty } },
+              update: { $inc: { stock: -item.qty } },
             },
           });
         }
@@ -326,6 +330,13 @@ router.post("/", protect, validate(orderSchema), async (req, res) => {
         io.emit("newOrder", formatOrder(createdOrder));
       } catch (err) {
         console.error("Socket error on new order:", err);
+      }
+
+      // Trigger order confirmation email asynchronously for Cash on Delivery
+      if (paymentMethod === "COD") {
+        sendOrderConfirmationEmail(createdOrder).catch((emailErr) => {
+          console.error("[OrderRoute] Asynchronous COD order confirmation email failed:", emailErr);
+        });
       }
 
       return res.status(201).json(formatOrder(createdOrder));
@@ -498,7 +509,7 @@ router.put("/:id/cancel", protect, async (req, res) => {
           restoreOpsProduct.push({
             updateOne: {
               filter: { _id: item.product },
-              update: { $inc: { stock_qty: item.qty } },
+              update: { $inc: { stock: item.qty } },
             },
           });
         }
@@ -645,12 +656,12 @@ router.put("/:id/status", protect, requireAuth("admin"), async (req, res) => {
               },
             });
           } else {
-            restoreOpsProduct.push({
-              updateOne: {
-                filter: { _id: item.product },
-                update: { $inc: { stock_qty: item.qty } },
-              },
-            });
+          restoreOpsProduct.push({
+            updateOne: {
+              filter: { _id: item.product },
+              update: { $inc: { stock: item.qty } },
+            },
+          });
           }
         });
 
@@ -709,6 +720,13 @@ router.put("/:id/status", protect, requireAuth("admin"), async (req, res) => {
         io.emit("orderUpdated", formatOrder(updatedOrder));
       } catch (err) {
         console.error("Socket error on order status update:", err);
+      }
+
+      // Trigger shipping confirmation email asynchronously
+      if (newStatus === "Shipped") {
+        sendShippingConfirmationEmail(updatedOrder).catch((emailErr) => {
+          console.error("[OrderRoute] Failed to send shipping confirmation email:", emailErr);
+        });
       }
 
       res.json(formatOrder(updatedOrder));

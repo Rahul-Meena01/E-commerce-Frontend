@@ -7,7 +7,8 @@ export default function SearchDiscoveryProductCard({
   onSelect,
   badge,
 }) {
-  const productId = product?._id || product?.id || product?.productId;
+  if (!product) return null;
+  const productId = product._id || product.id || product.productId;
   const primaryImage =
     product?.image ||
     product?.image1 ||

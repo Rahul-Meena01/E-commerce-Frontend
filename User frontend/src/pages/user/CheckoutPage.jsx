@@ -321,6 +321,42 @@ const CheckoutPage = () => {
         );
       }
 
+      if (rzpOrderData.razorpayOrderId.startsWith("rzp_mock_")) {
+        console.info("Using developer sandbox checkout bypass...");
+        try {
+          const verifyPayload = {
+            orderId,
+            razorpayPaymentId: `pay_mock_${Math.random().toString(36).substring(7)}`,
+            razorpayOrderId: rzpOrderData.razorpayOrderId,
+            razorpaySignature: "mock_signature_bypass",
+          };
+
+          const verificationResult = await verifyRazorpayPayment(verifyPayload);
+
+          if (verificationResult?.success && verificationResult?.orderId) {
+            await redeemGiftCard();
+            clearCart();
+            isOrderCompletedRef.current = true;
+            navigate(`/order-success/${verificationResult.orderId}`);
+          } else {
+            throw new Error(verificationResult?.message || "Verification failed");
+          }
+        } catch (verifyErr) {
+          setOrderError(verifyErr?.message || "Payment verification failed");
+          try {
+            await api.put(`/orders/${orderId}/cancel`, { note: "Payment verification failed." });
+          } catch (cancelErr) {
+            console.error("Failed to cancel order on verification failure:", cancelErr);
+          }
+          setCreatedOrderId(null);
+        } finally {
+          setIsPaying(false);
+          setIsPreparingPayment(false);
+          isSubmittingRef.current = false;
+        }
+        return;
+      }
+
       // Regression validation: Assert checkoutTotal === handoffModalTotal === razorpayAmount
       const expectedAmountInPaise = Math.round(total * 100);
       if (rzpOrderData.amount !== expectedAmountInPaise) {

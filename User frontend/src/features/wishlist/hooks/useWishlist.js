@@ -59,8 +59,21 @@ export const useWishlistQuery = () => {
     if (!isAuthenticated) return;
     const localItems = loadLocalWishlist();
     if (localItems.length > 0) {
-      localStorage.removeItem(STORAGE_KEY);
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      const syncWishlist = async () => {
+        for (const item of localItems) {
+          try {
+            const pId = typeof item.product === "object" && item.product ? (item.product._id || item.product.id) : item.product;
+            if (pId) {
+              await wishlistApi.addToWishlist(pId);
+            }
+          } catch (err) {
+            console.error("Failed to sync guest wishlist item:", err);
+          }
+        }
+        localStorage.removeItem(STORAGE_KEY);
+        queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      };
+      syncWishlist();
     }
   }, [isAuthenticated, queryClient]);
 

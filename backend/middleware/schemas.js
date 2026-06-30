@@ -21,7 +21,7 @@ export const loginSchema = z.object({
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   price: z.number().positive("Price must be positive"),
-  stock_qty: z.number().int().nonnegative("Stock quantity must be non-negative").default(0),
+  stock: z.number().int().nonnegative("Stock must be non-negative").default(0),
   category: z.string().min(1, "Category is required"),
   subCategory: z.string().optional(),
   description: z.string().optional()

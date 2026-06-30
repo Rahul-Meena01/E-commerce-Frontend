@@ -9,6 +9,7 @@ const ProfileAvatarModal = ({
   cameraInputRef,
   handleAvatarFileSelect,
   handleSaveAvatar,
+  isSaving,
 }) => {
   if (!showAvatarModal) return null;
 
@@ -16,7 +17,7 @@ const ProfileAvatarModal = ({
     <div
       className="profile-modal-overlay"
       onClick={(e) => {
-        if (e.target === e.currentTarget) handleCloseAvatarModal();
+        if (e.target === e.currentTarget && !isSaving) handleCloseAvatarModal();
       }}
     >
       <div className="profile-modal profile-avatar-modal">
@@ -26,6 +27,7 @@ const ProfileAvatarModal = ({
             className="profile-modal-close"
             onClick={handleCloseAvatarModal}
             aria-label="Close photo editor"
+            disabled={isSaving}
           >
             <X />
           </button>
@@ -50,6 +52,7 @@ const ProfileAvatarModal = ({
               type="button"
               className="profile-avatar-source-btn"
               onClick={() => uploadInputRef.current?.click()}
+              disabled={isSaving}
             >
               <Upload />
               Upload from device
@@ -58,6 +61,7 @@ const ProfileAvatarModal = ({
               type="button"
               className="profile-avatar-source-btn secondary"
               onClick={() => cameraInputRef.current?.click()}
+              disabled={isSaving}
             >
               <Camera />
               Take a photo
@@ -71,6 +75,7 @@ const ProfileAvatarModal = ({
             onChange={handleAvatarFileSelect}
             className="profile-avatar-hidden-input"
             aria-label="Upload profile photo from device"
+            disabled={isSaving}
           />
           <input
             ref={cameraInputRef}
@@ -80,6 +85,7 @@ const ProfileAvatarModal = ({
             onChange={handleAvatarFileSelect}
             className="profile-avatar-hidden-input"
             aria-label="Take a new profile photo"
+            disabled={isSaving}
           />
         </div>
 
@@ -87,14 +93,17 @@ const ProfileAvatarModal = ({
           <button
             className="profile-modal-btn cancel"
             onClick={handleCloseAvatarModal}
+            disabled={isSaving}
           >
             Cancel
           </button>
           <button
             className="profile-modal-btn save"
             onClick={handleSaveAvatar}
+            disabled={isSaving}
+            style={isSaving ? { opacity: 0.7, cursor: "not-allowed" } : {}}
           >
-            Save Photo
+            {isSaving ? "Saving..." : "Save Photo"}
           </button>
         </div>
       </div>

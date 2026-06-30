@@ -57,13 +57,15 @@ const ProductSlider = ({ title, fetchUrl, viewAllLink }) => {
       const res = await productsApi.getProducts(fetchUrl);
       if (!res.ok) throw new Error(`Failed to load products for ${title}`);
       const data = await res.json();
-      return data.data || [];
+      const list = data?.data || data?.items || data;
+      return Array.isArray(list) ? list : [];
     },
     staleTime: 5 * 60 * 1000, // 5 min cache
   });
 
   const products = useMemo(() => {
-    if (!rawProducts || rawProducts.length === 0) return [];
+    const rawList = Array.isArray(rawProducts) ? rawProducts : [];
+    if (rawList.length === 0) return [];
     
     // Parse URL params
     let sortVal = "";
@@ -83,7 +85,7 @@ const ProductSlider = ({ title, fetchUrl, viewAllLink }) => {
       if (limitMatch) limitVal = parseInt(limitMatch[1], 10);
     }
 
-    let items = [...rawProducts];
+    let items = [...rawList];
 
     // Apply client-side sorting
     if (sortVal === "newest") {

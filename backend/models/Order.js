@@ -115,6 +115,9 @@ const orderSchema = new mongoose.Schema(
     cancelledBy: { type: String, enum: ["user", "admin"] }, // who cancelled
     cancellationNote: { type: String, trim: true }, // optional reason
     cancelledAt: { type: Date },
+
+    // 8. Email tracking
+    emailSent: { type: Boolean, default: false },
   },
   {
     timestamps: true, // auto adds createdAt + updatedAt
