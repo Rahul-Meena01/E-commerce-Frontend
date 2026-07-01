@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { siteContent } from "@/config/siteContent";
 import { useToast } from "@/context/ToastContext";
+import authFetch from "@/shared/utils/http";
 import "../../../styles/Newsletter.css";
 
 const Newsletter = () => {
@@ -20,7 +21,7 @@ const Newsletter = () => {
     };
   }, []);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
     const trimmedEmail = email.trim();
     if (!trimmedEmail) return;
@@ -28,18 +29,41 @@ const Newsletter = () => {
     setLoading(true);
     setStatusMessage("Subscribing...");
 
-    timeoutRef.current = setTimeout(() => {
-      setLoading(false);
-      setSubscribed(true);
-      setEmail("");
-      setStatusMessage("Thank you for subscribing!");
-      toast.success("✓ Thank you for subscribing to our Luxury Edit!");
+    try {
+      const res = await authFetch("/api/newsletter/subscribe", {
+        method: "POST",
+        body: { email: trimmedEmail },
+      });
 
-      timeoutRef.current = setTimeout(() => {
-        setSubscribed(false);
-        setStatusMessage("");
-      }, 3000);
-    }, 800);
+      if (res.ok) {
+        setLoading(false);
+        setSubscribed(true);
+        setEmail("");
+        setStatusMessage("Thank you for subscribing!");
+        toast.success("✓ Thank you for subscribing to our Luxury Edit!");
+
+        timeoutRef.current = setTimeout(() => {
+          setSubscribed(false);
+          setStatusMessage("");
+        }, 3000);
+      } else {
+        setLoading(false);
+        if (res.status === 404 || res.status === 501) {
+          console.warn("Newsletter subscription endpoint is not implemented on the backend yet.");
+          toast.error("Newsletter service is temporarily unavailable. Please try again later.");
+          setStatusMessage("Service unavailable.");
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          toast.error(errData.message || "Failed to subscribe. Please try again.");
+          setStatusMessage("Subscription failed.");
+        }
+      }
+    } catch (err) {
+      setLoading(false);
+      console.error("Newsletter subscription error:", err);
+      toast.error("Connection error. Please try again.");
+      setStatusMessage("Connection error.");
+    }
   };
 
   return (

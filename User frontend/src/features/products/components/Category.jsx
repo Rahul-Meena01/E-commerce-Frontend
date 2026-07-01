@@ -20,9 +20,13 @@ const getRandomSubCategories = (sourceArray, count, excludeArray = []) => {
     }
   }
 
-  // Shuffle and pick
-  const shuffled = [...availableItems].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, Math.random() > 0.5 ? count : count); // Just standard slice, keeping syntax simple
+  // Uniform Fisher-Yates Shuffle
+  const shuffled = [...availableItems];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
 };
 
 const Category = () => {

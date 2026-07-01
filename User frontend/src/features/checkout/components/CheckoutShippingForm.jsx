@@ -4,8 +4,9 @@ import Select from "react-select";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 import { Country, State, City } from "country-state-city";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAddressesQuery } from "@/features/auth/hooks/useAddressesQuery";
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -69,56 +70,76 @@ const CheckoutShippingForm = ({
   orderError,
 }) => {
   const { user } = useAuth();
-  const [savedAddresses, setSavedAddresses] = useState([]);
   const phoneInputRef = useRef(null);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
 
-  // Load saved addresses for quick selection during checkout
-  useEffect(() => {
-    try {
-      let loaded = user?.addresses || [];
-      const localKey = user?.email ? `loft_addresses_${user.email}` : "loft_addresses_guest";
-      const stored = localStorage.getItem(localKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          loaded = [
-            ...loaded,
-            ...parsed.filter((p) => !loaded.some((l) => l._id === p._id)),
-          ];
-        }
-      }
+  // Fetch addresses using React Query
+  const { data: dbAddresses = [] } = useAddressesQuery(!!user);
 
-      // Check legacy primary address
-      if (user?.address || user?.city || user?.pincode) {
-        const legacyId = "legacy-address-id";
-        const hasLegacy = loaded.some((addr) => addr._id === legacyId);
-        if (!hasLegacy) {
-          loaded.unshift({
-            _id: legacyId,
-            title: "Legacy Primary Address",
-            fullName: user.name || "",
-            phoneNumber: user.phone || "",
-            country: "India",
-            countryCode: "IN",
-            state: "",
-            stateCode: "",
-            city: user.city || "",
-            postalCode: user.pincode || "",
-            addressLine1: user.address || "",
-            addressLine2: "",
-            isLegacy: true,
-          });
-        }
+  // Combine DB addresses and user model legacy address
+  const savedAddresses = useMemo(() => {
+    let list = [...dbAddresses];
+    if (user?.address || user?.city || user?.pincode) {
+      const legacyId = "legacy-address-id";
+      const hasLegacy = list.some((addr) => addr._id === legacyId);
+      if (!hasLegacy) {
+        list.unshift({
+          _id: legacyId,
+          title: "Legacy Primary Address",
+          country: "India",
+          city: user.city || "",
+          postalCode: user.pincode || "",
+          address: user.address || "",
+          isLegacy: true,
+        });
       }
-      // Ensure at least one default address is selected
-      if (loaded.length > 0 && !loaded.some((a) => a.isDefault)) {
-        loaded[0].isDefault = true;
-      }
-      setSavedAddresses(loaded);
-    } catch (e) {
-      console.error("Failed to load saved addresses for checkout:", e);
     }
-  }, [user]);
+    return list;
+  }, [dbAddresses, user]);
+
+  const populateAddressForm = useCallback((addr) => {
+    if (!addr) return;
+    const countryObj = Country.getAllCountries().find((c) => c.name === addr.country);
+    const countryCode = countryObj ? countryObj.isoCode : "";
+    
+    // Try to find the state of the city to prefill it for validation convenience
+    let derivedState = "";
+    let derivedStateCode = "";
+    if (countryCode && addr.city) {
+      const states = State.getStatesOfCountry(countryCode);
+      for (const s of states) {
+        const cities = City.getCitiesOfState(countryCode, s.isoCode);
+        if (cities.some((c) => c.name.toLowerCase() === addr.city.toLowerCase())) {
+          derivedState = s.name;
+          derivedStateCode = s.isoCode;
+          break;
+        }
+      }
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      country: addr.country || "",
+      countryCode: countryCode,
+      street: addr.address || "",
+      apartment: "",
+      state: derivedState,
+      stateCode: derivedStateCode,
+      city: addr.city || "",
+      postalCode: addr.postalCode || "",
+      fullName: prev.fullName || user?.name || "",
+      phone: prev.phone || user?.phone || "",
+    }));
+  }, [user, setFormData]);
+
+  // Auto-preselect first address on load
+  useEffect(() => {
+    if (savedAddresses.length > 0 && selectedAddressId === null) {
+      const firstAddr = savedAddresses[0];
+      setSelectedAddressId(firstAddr._id);
+      populateAddressForm(firstAddr);
+    }
+  }, [savedAddresses, selectedAddressId, populateAddressForm]);
 
   // Sync PhoneInput country with formData.countryCode
   useEffect(() => {
@@ -130,59 +151,17 @@ const CheckoutShippingForm = ({
     }
   }, [formData.countryCode, formData.phone]);
 
-  const defaultAddress = useMemo(() => {
-    return savedAddresses.find((a) => a.isDefault);
-  }, [savedAddresses]);
-
-  // Safely auto-prefill default address if form is empty and untouched
-  useEffect(() => {
-    if (defaultAddress) {
-      const isEmpty =
-        !formData.fullName &&
-        !formData.street &&
-        !formData.city &&
-        !formData.postalCode &&
-        !formData.phone;
-
-      if (isEmpty) {
-        setFormData((prev) => ({
-          ...prev,
-          fullName: defaultAddress.fullName || prev.fullName || "",
-          phone: defaultAddress.phoneNumber || prev.phone || "",
-          country: defaultAddress.country || "",
-          countryCode: defaultAddress.countryCode || "",
-          street: defaultAddress.addressLine1 || defaultAddress.address || "",
-          apartment: defaultAddress.addressLine2 || "",
-          state: defaultAddress.state || "",
-          stateCode: defaultAddress.stateCode || "",
-          city: defaultAddress.city || "",
-          postalCode: defaultAddress.postalCode || "",
-        }));
-      }
+  const handleFormInputChange = (e) => {
+    const { name } = e.target;
+    // Clear card selection if manual input changes the address fields
+    if (["street", "apartment", "city", "state", "postalCode", "country"].includes(name)) {
+      setSelectedAddressId(null);
     }
-  }, [defaultAddress, setFormData, formData.fullName, formData.street, formData.city, formData.postalCode, formData.phone]);
-
-  const handleSavedAddressSelect = (selectedOption) => {
-    if (!selectedOption) return;
-    const addr = savedAddresses.find((a) => a._id === selectedOption.value);
-    if (addr) {
-      setFormData((prev) => ({
-        ...prev,
-        fullName: addr.fullName || prev.fullName || "",
-        phone: addr.phoneNumber || prev.phone || "",
-        country: addr.country || "",
-        countryCode: addr.countryCode || "",
-        street: addr.addressLine1 || addr.address || "",
-        apartment: addr.addressLine2 || "",
-        state: addr.state || "",
-        stateCode: addr.stateCode || "",
-        city: addr.city || "",
-        postalCode: addr.postalCode || "",
-      }));
-    }
+    handleInputChange(e);
   };
 
   const handleCountryChange = (selectedOption) => {
+    setSelectedAddressId(null);
     if (selectedOption) {
       setFormData((prev) => ({
         ...prev,
@@ -191,7 +170,7 @@ const CheckoutShippingForm = ({
         state: "",
         stateCode: "",
         city: "",
-        postalCode: "", // country change resets state, city, postal code
+        postalCode: "",
       }));
     } else {
       setFormData((prev) => ({
@@ -207,13 +186,14 @@ const CheckoutShippingForm = ({
   };
 
   const handleStateChange = (selectedOption) => {
+    setSelectedAddressId(null);
     if (selectedOption) {
       setFormData((prev) => ({
         ...prev,
         state: selectedOption.label,
         stateCode: selectedOption.value,
         city: "",
-        postalCode: "", // state change resets city, postal code
+        postalCode: "",
       }));
     } else {
       setFormData((prev) => ({
@@ -227,6 +207,7 @@ const CheckoutShippingForm = ({
   };
 
   const handleCityChange = (selectedOption) => {
+    setSelectedAddressId(null);
     if (selectedOption) {
       setFormData((prev) => ({
         ...prev,
@@ -240,7 +221,6 @@ const CheckoutShippingForm = ({
     }
   };
 
-  // Setup options list with memoization to prevent unnecessary recomputations
   const countriesOptions = useMemo(() => Country.getAllCountries().map((c) => ({
     value: c.isoCode,
     label: c.name,
@@ -277,11 +257,6 @@ const CheckoutShippingForm = ({
     ? { value: formData.city, label: formData.city }
     : null, [formData.city]);
 
-  const addressQuickOptions = useMemo(() => savedAddresses.map((a) => ({
-    value: a._id,
-    label: `${a.title}: ${a.fullName}, ${a.addressLine1 || a.address}, ${a.city}`,
-  })), [savedAddresses]);
-
   return (
     <form onSubmit={handleShippingSubmit} className="checkout-step-form" noValidate>
       {orderError && (
@@ -292,22 +267,92 @@ const CheckoutShippingForm = ({
       <div className="checkout-section">
         <h2 className="checkout-section-title">Shipping Information</h2>
 
-        {addressQuickOptions.length > 0 && (
-          <div className="ds-field checkout-form-group-full" style={{ marginBottom: "20px" }}>
-            <label id="quick-address-select-label" htmlFor="quick-address-select" className="ds-label">
+        {/* Premium Saved Addresses Selector Section */}
+        {savedAddresses.length > 0 && (
+          <div className="saved-addresses-selector" style={{ marginBottom: "30px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "15px", fontFamily: 'var(--ds-font-sans, "Jost", sans-serif)' }}>
               Use a Saved Address
-            </label>
-            <div className="react-select-container">
-              <Select
-                instanceId="checkout-quick-address-select"
-                inputId="quick-address-select"
-                aria-labelledby="quick-address-select-label"
-                options={addressQuickOptions}
-                onChange={handleSavedAddressSelect}
-                styles={customSelectStyles}
-                placeholder="Select a saved address..."
-                isClearable
-              />
+            </h3>
+            <div className="checkout-address-cards-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "15px", marginBottom: "20px" }}>
+              {savedAddresses.map((addr) => {
+                const isSelected = selectedAddressId === addr._id;
+                return (
+                  <div
+                    key={addr._id}
+                    onClick={() => {
+                      setSelectedAddressId(addr._id);
+                      populateAddressForm(addr);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedAddressId(addr._id);
+                        populateAddressForm(addr);
+                      }
+                    }}
+                    tabIndex={0}
+                    className={`checkout-address-card ${isSelected ? "active" : ""}`}
+                    style={{
+                      border: isSelected ? "2px solid var(--ds-color-brand, #C9A96E)" : "1px solid var(--ds-color-border-strong, #D1D1D1)",
+                      borderRadius: "var(--ds-radius-md, 6px)",
+                      padding: "15px",
+                      cursor: "pointer",
+                      backgroundColor: isSelected ? "var(--ds-color-surface-hover, #fdfbfa)" : "var(--ds-color-surface, #fff)",
+                      transition: "all 0.2s ease",
+                      outline: "none",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                      <input
+                        type="radio"
+                        name="selectedAddress"
+                        checked={isSelected}
+                        onChange={() => {}} // click event handled on parent container
+                        style={{ cursor: "pointer", margin: 0 }}
+                      />
+                      <span style={{ fontWeight: "600", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{addr.title}</span>
+                      {addr.isLegacy && (
+                        <span style={{ fontSize: "9px", background: "#f5f0eb", color: "#a89968", padding: "2px 6px", borderRadius: "3px", fontWeight: "bold" }}>
+                          PRIMARY
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: "0 0 6px 0", fontSize: "13px", color: "var(--ds-color-text-muted, #777)" }}>
+                      <strong>Recipient:</strong> {user?.name} {user?.phone ? `(${user.phone})` : ""}
+                    </p>
+                    <p style={{ margin: "0", fontSize: "13px", color: "var(--ds-color-text, #1A1A1A)", lineHeight: "1.4" }}>
+                      {addr.address}
+                      <br />
+                      {addr.city}, {addr.postalCode}
+                      <br />
+                      {addr.country}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAddressId(null);
+                  setFormData((prev) => ({
+                    ...prev,
+                    country: "",
+                    countryCode: "",
+                    street: "",
+                    apartment: "",
+                    city: "",
+                    state: "",
+                    stateCode: "",
+                    postalCode: "",
+                  }));
+                }}
+                className="btn secondary sm"
+                style={{ fontSize: "12px", padding: "6px 12px", minHeight: "32px", display: "inline-flex", alignItems: "center" }}
+              >
+                Clear & Enter New Address
+              </button>
             </div>
           </div>
         )}
@@ -322,7 +367,7 @@ const CheckoutShippingForm = ({
               type="text"
               name="fullName"
               value={formData.fullName}
-              onChange={handleInputChange}
+              onChange={handleFormInputChange}
               placeholder="Enter your full name"
               className="ds-input"
               required
@@ -338,7 +383,7 @@ const CheckoutShippingForm = ({
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleInputChange}
+              onChange={handleFormInputChange}
               placeholder="Enter your email address"
               className="ds-input"
               required
@@ -355,6 +400,7 @@ const CheckoutShippingForm = ({
                 defaultCountry="in"
                 value={formData.phone}
                 onChange={(phone) => {
+                  setSelectedAddressId(null); // Clear selection if phone changes
                   setFormData((prev) => ({ ...prev, phone }));
                 }}
                 inputProps={{
@@ -385,7 +431,6 @@ const CheckoutShippingForm = ({
             </div>
           </div>
 
-          {/* Autocomplete Target Area (Future Google Places/Mapbox/OpenStreetMap autocomplete binding) */}
           <div className="ds-field checkout-form-group-full">
             <label htmlFor="street" className="ds-label">
               Street Address
@@ -395,7 +440,7 @@ const CheckoutShippingForm = ({
               type="text"
               name="street"
               value={formData.street}
-              onChange={handleInputChange}
+              onChange={handleFormInputChange}
               placeholder="Enter your street address"
               className="ds-input"
               required
@@ -411,7 +456,7 @@ const CheckoutShippingForm = ({
               type="text"
               name="apartment"
               value={formData.apartment}
-              onChange={handleInputChange}
+              onChange={handleFormInputChange}
               placeholder="Apartment, suite, unit, etc. (optional)"
               className="ds-input"
             />
@@ -439,7 +484,7 @@ const CheckoutShippingForm = ({
                 type="text"
                 name="state"
                 value={formData.state}
-                onChange={handleInputChange}
+                onChange={handleFormInputChange}
                 placeholder="State / Province / Region"
                 className="ds-input"
                 required
@@ -469,7 +514,7 @@ const CheckoutShippingForm = ({
                 type="text"
                 name="city"
                 value={formData.city}
-                onChange={handleInputChange}
+                onChange={handleFormInputChange}
                 placeholder="Enter your city"
                 className="ds-input"
                 required
@@ -484,7 +529,7 @@ const CheckoutShippingForm = ({
               type="text"
               name="postalCode"
               value={formData.postalCode}
-              onChange={handleInputChange}
+              onChange={handleFormInputChange}
               placeholder="Enter postal code"
               className="ds-input"
               required

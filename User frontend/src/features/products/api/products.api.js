@@ -151,6 +151,9 @@ export const fetchProductBySlug = (slug) =>
 export const fetchProduct = (productId) =>
   client.get(`/product/public/${productId}`);
 export const fetchCategories = () => client.get("/category/public/all");
-export const fetchSubCategories = () => client.get("/subCategory/public/all");
+export const fetchSubCategories = (categoryId) => {
+  const query = categoryId ? `?parentCategory=${categoryId}` : "";
+  return client.get(`/subCategory/public/all${query}`);
+};
 export const searchProducts = (query, limit = 6, options = {}) =>
   fetchProducts({ search: query, limit }, options);

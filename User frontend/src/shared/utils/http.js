@@ -1,16 +1,5 @@
 import api from "../../services/client";
 
-let onUnauthorized = null;
-
-window.addEventListener("auth:unauthorized", () => {
-  if (onUnauthorized) {
-    onUnauthorized();
-  }
-});
-
-export function setUnauthorizedCallback(callback) {
-  onUnauthorized = callback;
-}
 
 export async function authFetch(path, options = {}) {
   const method = (options.method || "GET").toLowerCase();

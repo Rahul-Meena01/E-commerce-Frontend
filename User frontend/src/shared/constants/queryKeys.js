@@ -21,4 +21,7 @@ export const queryKeys = {
   variants: {
     all: ["variants"],
   },
+  addresses: {
+    all: ["addresses"],
+  },
 };

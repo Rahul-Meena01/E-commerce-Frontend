@@ -15,7 +15,7 @@ createRoot(document.getElementById("root")).render(
           <App>
             <Routes>
               {routes.map((route, index) => (
-                <Route key={index} {...route} />
+                <Route key={route.path || index} {...route} />
               ))}
             </Routes>
           </App>

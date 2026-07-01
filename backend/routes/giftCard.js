@@ -82,6 +82,28 @@ router.post("/create", async (req, res) => {
   }
 });
 
+// GET MY (USER'S) GIFT CARDS
+router.get("/my", async (req, res) => {
+  try {
+    const cards = await GiftCard.find({
+      receiverName: { $regex: req.user?.name || "", $options: "i" },
+      status: "active",
+      expiryDate: { $gte: new Date() },
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: cards,
+    });
+  } catch (error) {
+    console.error("Error fetching user gift cards:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching gift cards",
+    });
+  }
+});
+
 // GET ALL GIFT CARDS
 router.get("/list", async (req, res) => {
   try {

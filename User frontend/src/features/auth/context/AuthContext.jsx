@@ -13,7 +13,7 @@ import {
   saveAuthSession,
   clearAuthSession,
 } from '@/shared/utils/authStorage';
-import authFetch, { setUnauthorizedCallback } from '@/shared/utils/http';
+import authFetch from '@/shared/utils/http';
 import logger from '@/shared/utils/logger';
 
 export const AuthContext = createContext(null);
@@ -30,9 +30,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    setUnauthorizedCallback(handleUnauthorized);
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
     return () => {
-      setUnauthorizedCallback(null);
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
     };
   }, [handleUnauthorized]);
 

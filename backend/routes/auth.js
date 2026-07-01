@@ -36,7 +36,7 @@ const registerLimiter = rateLimit({
 
 const createAccessToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: "15m",
+    expiresIn: "24h",
   });
 
 const createRefreshToken = (user) =>
@@ -70,7 +70,7 @@ const sendAuthResponse = (res, statusCode, message, user, vendor = null) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000, // 15 mins
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
   });
 
   res.cookie("refreshToken", refreshToken, {
@@ -510,7 +510,7 @@ router.post("/refresh", async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
     
     return res.json({ success: true, token: newAccessToken });

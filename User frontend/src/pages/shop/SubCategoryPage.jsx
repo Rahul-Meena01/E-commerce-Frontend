@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useMemo, useState, lazy, Suspense } from "react";
+import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import Breadcrumb from "@/features/products/components/Breadcrumb";
@@ -20,7 +20,7 @@ const SubCategoryPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const readFiltersFromURL = () => ({
+  const readFiltersFromURL = useCallback(() => ({
     brands: searchParams.getAll("brand"),
     colors: searchParams.getAll("color"),
     sizes: searchParams.getAll("size"),
@@ -30,7 +30,7 @@ const SubCategoryPage = () => {
     rating: searchParams.get("rating") || "",
     stock: searchParams.get("stock") || "all",
     sort: searchParams.get("sort") || "newest",
-  });
+  }), [searchParams]);
 
   const [filters, setFilters] = useState(() => readFiltersFromURL());
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -38,8 +38,7 @@ const SubCategoryPage = () => {
 
   useEffect(() => {
     setFilters(readFiltersFromURL());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [readFiltersFromURL]);
 
   const { data: queryData, isLoading } = useProductsQuery({
     category,
